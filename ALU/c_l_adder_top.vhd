@@ -24,7 +24,7 @@ BEGIN
 	
 	cells: for i in 0 to (CELL_NUM -1) generate
 	begin
-		cell: entity work.c_l_adder_8mod(Behavioral)
+		cell: entity work.c_l_adder_cell(Behavioral)
 		generic map (WIDTH => CELL_WIDTH)
 		port map(
 			x_in=>x_in(((i+1)*CELL_WIDTH)-1 downto i*CELL_WIDTH),

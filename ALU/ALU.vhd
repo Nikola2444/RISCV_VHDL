@@ -1,7 +1,7 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.std_logic_unsigned.ALL;
-
+USE ieee.std_logic_arith.ALL;
 -- Arithmetic Logic Unit (ALU)
 -- OP:
 -- 00 00 -> bitwise and
@@ -28,13 +28,13 @@ ARCHITECTURE behavioral OF ALU IS
 
 	SIGNAL    ainv_s,binv_s : STD_LOGIC;
 	SIGNAL    op_s      : STD_LOGIC_VECTOR(1 DOWNTO 0);
-	SIGNAL 	 carry, of_s : STD_LOGIC;
-	SIGNAL    adder_res,or_res,and_res,res_s  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+	SIGNAL 	  carry, of_s : STD_LOGIC;
+	SIGNAL    less_res,adder_res,or_res,and_res,res_s  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 	SIGNAL    a_s,b_s   :    STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 
 BEGIN
-	ainv<=op_i(3);
-	binv<=op_i(2);
+	ainv_s<=op_i(3);
+	binv_s<=op_i(2);
 	op_s<=op_i(1 downto 0);
 	
 
@@ -45,18 +45,18 @@ BEGIN
 						CELL_NUM => 8)
 		port map(x_in=>a_s,
 					y_in=>b_s,
-					c_in=>binv,
+					c_in=>binv_s,
 					sum=>adder_res,
 					c_out=>carry);
 
 		
 	--invert a depending on ainv signal
-	a_s <= a when ainv = '0' else
-			 not a;
+	a_s <= a_i when ainv_s = '0' else
+			 not a_i;
 
 	--invert b depending on binv signal
-	b_s <= b when binv = '0' else
-			 not b;
+	b_s <= b_i when binv_s = '0' else
+			 not b_i;
 
 	-- and gate
 	and_res <= a_s and b_s;
@@ -65,7 +65,7 @@ BEGIN
 	or_res <= a_s or b_s;
 
 	-- a_i is less than b_i if the result of their subtraction is negative and no ovorflow occured
-	less_res <= conv_std_logic_vector(1,WIDTH) when (adder_res = '1' and of_s = '0') else
+	less_res <= conv_std_logic_vector(1,WIDTH) when (adder_res(WIDTH-1) = '1' and of_s = '0') else
 					conv_std_logic_vector(0,WIDTH);
 					
 
@@ -75,17 +75,16 @@ BEGIN
 	with op_s select
 		res_s <= and_res when "00", --and, nand
 					or_res when "01", --or, nor
-					add_res when "10", --add, sub
+					adder_res when "10", --add, sub
 					less_res when others; -- set less than
 
 	-- set zero output flag when result is zero
-	zero_o <= '1' when res_s = (others=>'0') else
+	zero_o <= '1' when res_s = conv_std_logic_vector(0,WIDTH) else
 				 '0';
 	--overflow
 	of_o <= of_s;
 	-- overflow happens when inputs are of same sign, and output is of different
-	of_s <= '1' when ((a_s(WIDTH-1) and b_s(WIDTH-1) and not res_s(WIDTH-1)) or 
-						  (not a_s(WIDTH-1) and not b_s(WIDTH-1) and res_s(WIDTH-1))) else
+	of_s <= '1' when ((a_s(WIDTH-1)='1' and b_s(WIDTH-1)='1' and adder_res(WIDTH-1)='0') or (a_s(WIDTH-1)='0' and b_s(WIDTH-1)='0' and adder_res(WIDTH-1)='1')) else
 			  '0';
 
 
