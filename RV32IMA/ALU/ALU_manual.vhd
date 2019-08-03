@@ -17,7 +17,7 @@ ENTITY ALU IS
 	PORT(
 		a_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
 		b_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-		op_i  :  IN   STD_LOGIC_VECTOR(3 DOWNTO 0); --operation select
+		op_i  :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
 		res_o   :  OUT  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
 		zero_o   :  OUT  STD_LOGIC; --zero flag
 		of_o   :  OUT  STD_LOGIC); --overflow flag
@@ -29,6 +29,7 @@ ARCHITECTURE behavioral OF ALU IS
 	SIGNAL    op_s      : STD_LOGIC_VECTOR(2 DOWNTO 0);
 	SIGNAL 	 carry, of_s : STD_LOGIC;
 	SIGNAL    lts_res,ltu_res,adder_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+	SIGNAL    sll_res,srl_res,sra_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 	SIGNAL 	 adder_res_tmp : STD_LOGIC_VECTOR(WIDTH DOWNTO 0);
 	SIGNAL    a_s,b_s   :    STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 	SIGNAL    nota_s,notb_s   :    STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
@@ -36,17 +37,13 @@ ARCHITECTURE behavioral OF ALU IS
 BEGIN
 
 	-- control signals
-	binv_cin_s<=op_i(3); --signal for inverting b input, and carry_in to adder at the same time
-	op_s<=op_i(2 downto 0);
-	
-		
+	binv_cin_s<=op_i(4); --signal for inverting b input, and carry_in to adder at the same time
+	op_s<=op_i(3 downto 0);
 	-- semantics
 	a_s <= a_i;
 	--invert b_s depending on binv signal
 	b_s <= b_i when binv_cin_s = '0' else
 			 not b_i;
-
-	
 	
 
 	-- GENERATE ARITHMETIC OPERATIONS
@@ -55,31 +52,35 @@ BEGIN
 	adder_res <= adder_res_tmp	(WIDTH-1 downto 0);
 	-- and gate
 	and_res <= a_s and b_s;
-
 	-- or gate
 	or_res <= a_s or b_s;
-
 	-- xor gate
 	xor_res <= a_s xor b_s;
-	
-
-	-- a_i is less than b_i if the result of their subtraction is negative and no ovorflow occured
+	-- a_i is less than b_i if the result of their subtraction is negative and no ovorflow occured [SIGNED]
 	lts_res <= conv_std_logic_vector(1,WIDTH) when (adder_res(WIDTH-1) = '1' and of_s = '0') else
 					conv_std_logic_vector(0,WIDTH);
-	
+	-- a_i is less than b_i if the result of their subtraction is negative [UNSIGNED]
 	ltu_res <= conv_std_logic_vector(1,WIDTH) when (adder_res(WIDTH-1) = '1') else
 					conv_std_logic_vector(0,WIDTH);
+
+	--shift results
+	sll_res <= a_s sll b_s;
+	srl_res <= a_s srl b_s;
+	sra_res <= a_s sra b_s;
 					
 
 	-- SELECT RESULT
 	res_o <= res_s;
 	with op_s select
-		res_s <= and_res when "000", --and
-					or_res when "001", --or
-					xor_res when "010", --xor
-					adder_res when "011", --add, sub
-					lts_res when "100", -- set less than signed
-					ltu_res when others; -- set less than unsigned
+		res_s <= and_res when "0000", --and
+					or_res when "0001", --or
+					xor_res when "0010", --xor
+					adder_res when "0011", --add, sub
+					lts_res when "0100", -- set less than signed
+					ltu_res when "0101", -- set less than unsigned
+					sll_res when "0110", -- set less than unsigned
+					srl_res when "0111", -- set less than unsigned
+					sra_res when others; -- set less than unsigned
 
 
 	-- FLAG OUTPUTS
