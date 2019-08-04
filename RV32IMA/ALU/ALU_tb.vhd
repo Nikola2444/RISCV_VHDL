@@ -1,7 +1,8 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.STD_LOGIC_UNSIGNED.ALL;
+--use IEEE.STD_LOGIC_ARITH.ALL;
+USE ieee.numeric_std.ALL;
 
 
 entity ALU_tb is
@@ -11,7 +12,7 @@ architecture Behavioral of ALU_tb is
 	constant WIDTH : NATURAL := 32;
 	SIGNAL a_i  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
 	SIGNAL b_i  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-	SIGNAL op_i  :  STD_LOGIC_VECTOR(3 DOWNTO 0); --operation select
+	SIGNAL op_i  :  STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
 	SIGNAL res_o   :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
 	SIGNAL zero_o   :  STD_LOGIC; --zero flag
 	SIGNAL of_o   :  STD_LOGIC; --overflow flag
@@ -30,36 +31,41 @@ port map(
 
 -- Arithmetic Logic Unit (ALU)
 -- OP:
--- 00 00 -> bitwise and
--- 00 01 -> bitwise or
--- 00 10 -> bitwise xor
--- 00 11 -> add a_i and b_i 
--- 10 11 -> sub a_i and b_i
--- 11 00 -> set less than signed
--- 11 01 -> set less than unsigned
+-- 00000 -> bitwise and
+-- 00001 -> bitwise or
+-- 00010 -> bitwise xor
+-- 00011 -> add a_i and b_i
+-- 10011 -> sub a_i and b_i
+-- 10100 -> set less than signed
+-- 10101 -> set less than unsigned
+-- 00110 -> shift left logic
+-- 00111 -> shift right logic
+-- 01000-> shift right arithmetic
 
-op_i <= "0000", "001" after 50 ns,"0001" after 100 ns,"0010" after 150 ns,"0011" after 200 ns,"1011" after 350 ns,"1100" after 400 ns,"1101" after 500 ns;
+op_i <= "00000", "00001" after 50 ns,"00001" after 100 ns,"00010" after 150 ns,"00011" after 200 ns,"10011" after 350 ns,"10100" after 400 ns,"10101" after 500 ns,"00110" after 600 ns,"00111" after 630 ns, "01000" after 670 ns;
 
-a_i <= conv_std_logic_vector(65280,WIDTH),		conv_std_logic_vector(65280,WIDTH) after 175 ns,	
+a_i <= std_logic_vector(to_unsigned(65280,WIDTH)),		std_logic_vector(to_unsigned(65280,WIDTH)) after 175 ns,	
 		  
-		  conv_std_logic_vector(3,WIDTH) after 200 ns,  conv_std_logic_vector(-3,WIDTH) after 225 ns,	 
-		  conv_std_logic_vector(-2147483647,WIDTH) after 250 ns, conv_std_logic_vector(-2147483648,WIDTH) after 275 ns,
-		  conv_std_logic_vector( 2147483647,WIDTH) after 300 ns,conv_std_logic_vector(-10,WIDTH) after 350 ns,
+		  std_logic_vector(to_unsigned(3,WIDTH)) after 200 ns,  std_logic_vector(to_signed(-3,WIDTH)) after 225 ns,	 
+		  std_logic_vector(to_signed(-2147483647,WIDTH)) after 250 ns, std_logic_vector(to_signed(-2147483648,WIDTH)) after 275 ns,
+		  std_logic_vector(to_unsigned( 2147483647,WIDTH)) after 300 ns,std_logic_vector(to_signed(-10,WIDTH)) after 350 ns,
 		  
-		  conv_std_logic_vector(7,WIDTH) after 400 ns, conv_std_logic_vector(5,WIDTH) after 425 ns,
-		  conv_std_logic_vector(-7,WIDTH) after 450 ns, conv_std_logic_vector(6,WIDTH) after 475 ns,
-		  conv_std_logic_vector(7,WIDTH) after 500 ns, conv_std_logic_vector(5,WIDTH) after 525 ns,
-		  conv_std_logic_vector(-7,WIDTH) after 550 ns, conv_std_logic_vector(6,WIDTH) after 575 ns;
+		  std_logic_vector(to_unsigned(7,WIDTH)) after 400 ns, std_logic_vector(to_unsigned(5,WIDTH)) after 425 ns,
+		  std_logic_vector(to_signed(-7,WIDTH)) after 450 ns, std_logic_vector(to_unsigned(6,WIDTH)) after 475 ns,
+		  std_logic_vector(to_unsigned(7,WIDTH)) after 500 ns, std_logic_vector(to_unsigned(5,WIDTH)) after 525 ns,
+		  std_logic_vector(to_signed(-7,WIDTH)) after 550 ns, std_logic_vector(to_unsigned(6,WIDTH)) after 575 ns,
+		  (others=>'1') after 600 ns, std_logic_vector(to_signed(-65227,WIDTH)) after 700 ns;
 
-b_i <= conv_std_logic_vector(61680,WIDTH),		conv_std_logic_vector(65280,WIDTH) after 175 ns,		
+b_i <= std_logic_vector(to_unsigned(61680,WIDTH)),		std_logic_vector(to_unsigned(65280,WIDTH)) after 175 ns,		
 		  
-		  conv_std_logic_vector(5,WIDTH) after 200 ns,	conv_std_logic_vector(-5,WIDTH) after 225 ns,	 
-		  conv_std_logic_vector(-2147483647,WIDTH) after 250 ns, conv_std_logic_vector(-2147483648,WIDTH) after 275 ns,
-		  conv_std_logic_vector( 2147483647,WIDTH) after 300 ns,conv_std_logic_vector(-20,WIDTH) after 350 ns,
+		  std_logic_vector(to_unsigned(5,WIDTH)) after 200 ns,	std_logic_vector(to_signed(-5,WIDTH)) after 225 ns,	 
+		  std_logic_vector(to_signed(-2147483647,WIDTH)) after 250 ns, std_logic_vector(to_signed(-2147483648,WIDTH)) after 275 ns,
+		  std_logic_vector(to_unsigned( 2147483647,WIDTH)) after 300 ns,std_logic_vector(to_unsigned(2147483647,WIDTH)) after 350 ns,
 		  
-		  conv_std_logic_vector(5,WIDTH) after 400 ns, conv_std_logic_vector(7,WIDTH) after 425 ns,
-		  conv_std_logic_vector(6,WIDTH) after 450 ns, conv_std_logic_vector(-7,WIDTH) after 475 ns,
-		  conv_std_logic_vector(5,WIDTH) after 500 ns, conv_std_logic_vector(7,WIDTH) after 525 ns,
-		  conv_std_logic_vector(6,WIDTH) after 550 ns, conv_std_logic_vector(-7,WIDTH) after 575 ns;
-    
+		  std_logic_vector(to_unsigned(5,WIDTH)) after 400 ns, std_logic_vector(to_unsigned(7,WIDTH)) after 425 ns,
+		  std_logic_vector(to_unsigned(6,WIDTH)) after 450 ns, std_logic_vector(to_signed(-7,WIDTH)) after 475 ns,
+		  std_logic_vector(to_unsigned(5,WIDTH)) after 500 ns, std_logic_vector(to_unsigned(7,WIDTH)) after 525 ns,
+		  std_logic_vector(to_unsigned(6,WIDTH)) after 550 ns, std_logic_vector(to_signed(-7,WIDTH)) after 575 ns,
+          std_logic_vector(to_unsigned(31,WIDTH)) after 600 ns, std_logic_vector(to_unsigned(32,WIDTH)) after 700 ns;
+
 end Behavioral;
