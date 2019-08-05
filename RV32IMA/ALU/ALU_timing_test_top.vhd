@@ -38,7 +38,7 @@ entity test_top is
 		clk   :  IN  STD_LOGIC; --zero flag
 		a_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
 		b_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-		op_i  :  IN   STD_LOGIC_VECTOR(3 DOWNTO 0); --operation select
+		op_i  :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
 		res_o   :  OUT  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
 		zero_o   :  OUT  STD_LOGIC; --zero flag
 		of_o   :  OUT  STD_LOGIC); --overflow flag
@@ -47,7 +47,7 @@ end test_top;
 architecture Behavioral of test_top is
 		signal a_s  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
 		signal b_s  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-		signal op_s  :  STD_LOGIC_VECTOR(3 DOWNTO 0); --operation select
+		signal op_s  :  STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
 		signal res_s   :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
 		signal zero_s   :  STD_LOGIC; --zero flag
 		signal of_s   :  STD_LOGIC; --overflow flag

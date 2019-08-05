@@ -3,7 +3,7 @@ USE ieee.std_logic_1164.ALL;
 --USE ieee.std_logic_arith.ALL;
 --USE ieee.unsigned.ALL
 USE ieee.numeric_std.ALL;
-use IEEE.math_real.all;
+use ieee.math_real.all;
 
 -- Arithmetic Logic Unit (ALU)
 -- OP:
@@ -40,7 +40,7 @@ ARCHITECTURE behavioral OF ALU IS
 
 	SIGNAL 	 adder_res_tmp : UNSIGNED(WIDTH DOWNTO 0);
 	SIGNAL    a_s,b_s   :    STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-    constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
+   constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
 BEGIN
 
 	-- control signals
