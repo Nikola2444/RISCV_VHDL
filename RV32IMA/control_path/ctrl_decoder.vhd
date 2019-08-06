@@ -31,7 +31,14 @@ begin
       alu_2bit_op_o <= "00";
 
       case opcode_i is
-         when "0000000" => 
+         when "0000011" => --LOAD, 5v ~ funct3
+            alu_2bit_op_o <= "00";
+         when "0100011" => --STORE, 3v ~ funct3
+            alu_2bit_op_o <= "00";
+         when "0110011" => --ARITH, 10v ~ funct3,5
+            alu_2bit_op_o <= "10";
+         when "1100011" => --BEQ,BNE ~ funct3
+            alu_2bit_op_o <= "01";
          when others =>
       end case;
    end process;
