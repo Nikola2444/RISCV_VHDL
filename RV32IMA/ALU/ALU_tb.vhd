@@ -19,7 +19,7 @@ architecture Behavioral of ALU_tb is
 
 begin
 
-addr: entity work.ALU(Behavioral)
+alu: entity work.ALU(Behavioral)
 generic map (WIDTH => WIDTH)
 port map(
 		a_i=>a_i,
@@ -40,9 +40,18 @@ port map(
 -- 10101 -> set less than unsigned
 -- 00110 -> shift left logic
 -- 00111 -> shift right logic
--- 01000-> shift right arithmetic
+-- 01000 -> shift right arithmetic
+-- 01001 -> multiply lower
+-- 01010 -> multiply higher signed
+-- 01011 -> multiply higher signed and unsigned
+-- 01100 -> multiply higher unsigned
+-- 01101 -> divide unsigned
+-- 01110 -> divide signed
+-- 01111 -> reminder unsigned
+-- 10000 -> reminder signed
 
-op_i <= "00000", "00001" after 50 ns,"00001" after 100 ns,"00010" after 150 ns,"00011" after 200 ns,"10011" after 350 ns,"10100" after 400 ns,"10101" after 500 ns,"00110" after 600 ns,"00111" after 630 ns, "01000" after 670 ns;
+op_i <= "00000", "00001" after 50 ns,"00001" after 100 ns,"00010" after 150 ns,"00011" after 200 ns,"10011" after 350 ns,"10100" after 400 ns,"10101" after 500 ns,"00110" after 600 ns,"00111" after 630 ns, "01000" after 670 ns,
+					  "01001" after 800 ns,"01010" after 850 ns,"01011" after 900 ns,"01100" after 950 ns,"01101" after 1000 ns,"01110" after 1050 ns,"01111" after 1100 ns,"10000" after 1150 ns;
 
 a_i <= std_logic_vector(to_unsigned(65280,WIDTH)),		std_logic_vector(to_unsigned(65280,WIDTH)) after 175 ns,	
 		  
@@ -54,7 +63,9 @@ a_i <= std_logic_vector(to_unsigned(65280,WIDTH)),		std_logic_vector(to_unsigned
 		  std_logic_vector(to_signed(-7,WIDTH)) after 450 ns, std_logic_vector(to_unsigned(6,WIDTH)) after 475 ns,
 		  std_logic_vector(to_unsigned(7,WIDTH)) after 500 ns, std_logic_vector(to_unsigned(5,WIDTH)) after 525 ns,
 		  std_logic_vector(to_signed(-7,WIDTH)) after 550 ns, std_logic_vector(to_unsigned(6,WIDTH)) after 575 ns,
-		  (others=>'1') after 600 ns, std_logic_vector(to_signed(-65227,WIDTH)) after 700 ns;
+		  (others=>'1') after 600 ns, std_logic_vector(to_signed(-65227,WIDTH)) after 700 ns,
+		  std_logic_vector(to_signed(-173692672,WIDTH)) after 800 ns, std_logic_vector(to_signed(-173692672,WIDTH)) after 850 ns,
+		  std_logic_vector(to_signed(-100,WIDTH)) after 1000 ns, std_logic_vector(to_signed(-201,WIDTH)) after 1100 ns;
 
 b_i <= std_logic_vector(to_unsigned(61680,WIDTH)),		std_logic_vector(to_unsigned(65280,WIDTH)) after 175 ns,		
 		  
@@ -66,6 +77,8 @@ b_i <= std_logic_vector(to_unsigned(61680,WIDTH)),		std_logic_vector(to_unsigned
 		  std_logic_vector(to_unsigned(6,WIDTH)) after 450 ns, std_logic_vector(to_signed(-7,WIDTH)) after 475 ns,
 		  std_logic_vector(to_unsigned(5,WIDTH)) after 500 ns, std_logic_vector(to_unsigned(7,WIDTH)) after 525 ns,
 		  std_logic_vector(to_unsigned(6,WIDTH)) after 550 ns, std_logic_vector(to_signed(-7,WIDTH)) after 575 ns,
-          std_logic_vector(to_unsigned(31,WIDTH)) after 600 ns, std_logic_vector(to_unsigned(32,WIDTH)) after 700 ns;
+		  std_logic_vector(to_unsigned(31,WIDTH)) after 600 ns, std_logic_vector(to_unsigned(32,WIDTH)) after 700 ns,
+		  std_logic_vector(to_signed(-173692672,WIDTH)) after 800 ns, std_logic_vector(to_signed(-173692672,WIDTH)) after 850 ns,
+		  std_logic_vector(to_signed(10,WIDTH)) after 1000 ns, std_logic_vector(to_signed(7,WIDTH)) after 1100 ns;
 
 end Behavioral;

@@ -16,6 +16,14 @@ use ieee.math_real.all;
 -- 00110 -> shift left logic
 -- 00111 -> shift right logic
 -- 01000 -> shift right arithmetic
+-- 01001 -> multiply lower
+-- 01010 -> multiply higher signed
+-- 01011 -> multiply higher signed and unsigned
+-- 01100 -> multiply higher unsigned
+-- 01101 -> divide unsigned
+-- 01110 -> divide signed
+-- 01111 -> reminder unsigned
+-- 10000 -> reminder signed
 
 ENTITY ALU IS
 	GENERIC(
@@ -31,9 +39,14 @@ END ALU;
 
 ARCHITECTURE behavioral OF ALU IS
 
+   constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
 	SIGNAL    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 	SIGNAL    sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
+	SIGNAL    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+	SIGNAL    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
+	SIGNAL    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
+
+	
 
 BEGIN
 
@@ -60,7 +73,17 @@ BEGIN
 	sll_res <= std_logic_vector(shift_left(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
 	srl_res <= std_logic_vector(shift_right(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
 	sra_res <= std_logic_vector(shift_right(signed(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
-
+	--multiplication
+	muls_res <= std_logic_vector(signed(a_i)*signed(b_i));
+	mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); --mulsu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i)) when a_i(WIDTH-1)='0' elsestd_logic_vector(not((unsigned(not a_i)+1)*unsigned(b_i))+1);  
+	mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));
+    --division
+   	divs_res <= std_logic_vector(signed(a_i)/signed(b_i));
+	divu_res <= std_logic_vector(unsigned(a_i)/unsigned(b_i));
+    --mode
+    rems_res <= std_logic_vector(signed(a_i) rem signed(b_i));
+	remu_res <= std_logic_vector(unsigned(a_i) rem unsigned(b_i));
+    
 	-- SELECT RESULT
 	res_o <= res_s;
 	with op_i select
@@ -73,7 +96,16 @@ BEGIN
 					ltu_res when "10101", -- set less than unsigned
 					sll_res when "00110", -- shift left logic
 					srl_res when "00111", -- shift right logic
-					sra_res when others; -- shift right arithmetic
+					sra_res when "01000", -- shift right arithmetic
+					mulu_res(WIDTH-1 downto 0) when "01001", -- multiply lower
+					muls_res(2*WIDTH-1 downto WIDTH) when "01010", -- multiply higher signed
+					mulsu_res(2*WIDTH-1 downto WIDTH) when "01011", -- multiply higher signed and unsigned
+					mulu_res(2*WIDTH-1 downto WIDTH) when "01100", -- multiply higher unsigned
+					divu_res when "01101", -- multiply higher unsigned
+					divs_res when "01110",
+					remu_res when "01111", -- multiply higher unsigned
+					rems_res when "10000",
+					(others => 'X') when others; -- multiply higher unsigned
 
 
 	-- FLAG OUTPUTS

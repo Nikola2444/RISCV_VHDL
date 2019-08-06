@@ -1,5 +1,3 @@
-
-Collaborator Nikola Kovacevic
 # RISCV_VHDL
 **Development of simple RV32IMA instruction set pipelined processor core**
 Code will be written in VHDL.
