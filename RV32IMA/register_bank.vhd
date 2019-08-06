@@ -23,29 +23,29 @@ entity register_bank is
 end entity;
 
 architecture Behavioral of register_bank is
-  type reg_bank is array  (5 downto 0) of std_logic_vector(31 downto 0);
-  signal reg_bank_i: reg_bank;
+  type reg_bank is array  (0 to 31) of std_logic_vector(31 downto 0);
+  signal reg_bank_i: reg_bank := (others => (others => '0'));
   
 begin
 
   reg_bank_write: process (clk) is
   begin
-    if (rising_edge(clk))then
-      if (reset = '0')then
-        reg_bank_i <= (others => (others => '0'));
-      else
+    if (falling_edge(clk))then      
         if (reg_write = '1') then
           reg_bank_i(to_integer(unsigned(write_reg))) <= write_data;
         end if;
       end if;      
-    end if;
   end process;
 
   reg_bank_read: process (clk) is
   begin
-    if (falling_edge(clk))then      
-      read_data1 <= reg_bank_i(to_integer(unsigned(read_reg1)));
-      read_data2 <= reg_bank_i(to_integer(unsigned(read_reg2)));        
+    if (rising_edge(clk))then
+      if (reset = '0')then
+        reg_bank_i <= (others => (others => '0'));
+      else
+        read_data1 <= reg_bank_i(to_integer(unsigned(read_reg1)));
+        read_data2 <= reg_bank_i(to_integer(unsigned(read_reg2)));
+      end if;
     end if;          
   end process;
   
