@@ -14,7 +14,7 @@ end entity;
 architecture structural of TOP_RISCV is
 begin
   -- Data_path will be instantiated here
-  data_path_1: entity work.data_path
+  d_path: entity work.data_path
     generic map (
       WIDTH => WIDTH)
     port map (
@@ -30,7 +30,7 @@ begin
   c_path: entity work.control_path(Behavioral)
     port map(clk => clk,
              reset => reset,
-             opcode => instruction(6 downto 0));
+             instruction => instruction);
 
   
 
