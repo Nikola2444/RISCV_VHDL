@@ -1,29 +1,9 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
---USE ieee.std_logic_arith.ALL;
 USE ieee.numeric_std.ALL;
 use ieee.math_real.all;
+use work.alu_ops_pkg.all;
 
--- Arithmetic Logic Unit (ALU)
--- OP:
--- 00000 -> bitwise and
--- 00001 -> bitwise or
--- 00010 -> bitwise xor
--- 00011 -> add a_i and b_i
--- 10011 -> sub a_i and b_i
--- 10100 -> set less than signed
--- 10101 -> set less than unsigned
--- 00110 -> shift left logic
--- 00111 -> shift right logic
--- 01000 -> shift right arithmetic
--- 01001 -> multiply lower
--- 01010 -> multiply higher signed
--- 01011 -> multiply higher signed and unsigned
--- 01100 -> multiply higher unsigned
--- 01101 -> divide unsigned
--- 01110 -> divide signed
--- 01111 -> reminder unsigned
--- 10000 -> reminder signed
 
 ENTITY ALU IS
    GENERIC(
@@ -49,10 +29,6 @@ ARCHITECTURE behavioral OF ALU IS
    
 
 BEGIN
-
-   
-   
-
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));
    -- subtraction
@@ -87,24 +63,24 @@ BEGIN
    -- SELECT RESULT
    res_o <= res_s;
    with op_i select
-      res_s <= and_res when "00000", --and
-      or_res when "00001", --or
-      xor_res when "00011", --xor
-      add_res when "00010", --add (changed opcode)
-      sub_res when "00110", --sub
-      lts_res when "10100", -- set less than signed
-      ltu_res when "10101", -- set less than unsigned
-      sll_res when "10110", -- shift left logic
-      srl_res when "00111", -- shift right logic
-      sra_res when "01000", -- shift right arithmetic
-      mulu_res(WIDTH-1 downto 0) when "01001", -- multiply lower
-      muls_res(2*WIDTH-1 downto WIDTH) when "01010", -- multiply higher signed
-      mulsu_res(2*WIDTH-1 downto WIDTH) when "01011", -- multiply higher signed and unsigned
-      mulu_res(2*WIDTH-1 downto WIDTH) when "01100", -- multiply higher unsigned
-      divu_res when "01101", -- multiply higher unsigned
-      divs_res when "01110",
-      remu_res when "01111", -- multiply higher unsigned
-      rems_res when "10000",
+      res_s <= and_res when and_op, --and
+      or_res when or_op, --or
+      xor_res when xor_op, --xor
+      add_res when add_op, --add (changed opcode)
+      sub_res when sub_op, --sub
+      lts_res when lts_op, -- set less than signed
+      ltu_res when ltu_op, -- set less than unsigned
+      sll_res when sll_op, -- shift left logic
+      srl_res when srl_op, -- shift right logic
+      sra_res when sra_op, -- shift right arithmetic
+      mulu_res(WIDTH-1 downto 0) when mulu_op, -- multiply lower
+      muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
+      mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
+      mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
+      divu_res when divu_op, -- multiply higher unsigned
+      divs_res when divs_op,
+      remu_res when remu_op, -- multiply higher unsigned
+      rems_res when rems_op,
       (others => 'X') when others; -- multiply higher unsigned
 
 
