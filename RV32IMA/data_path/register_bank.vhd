@@ -10,13 +10,13 @@ entity register_bank is
 
         reg_write: in std_logic;
         
-        read_reg1: in std_logic_vector(5 downto 0);
-        read_reg2: in std_logic_vector(5 downto 0);
+        read_reg1: in std_logic_vector(4 downto 0);
+        read_reg2: in std_logic_vector(4 downto 0);
 
         read_data1: out std_logic_vector(WIDTH - 1 downto 0);
         read_data2: out std_logic_vector(WIDTH - 1 downto 0);
 
-        write_reg: in std_logic_vector(5 downto 0);
+        write_reg: in std_logic_vector(4 downto 0);
         write_data: in std_logic_vector(WIDTH - 1 downto 0));
 
   
