@@ -37,8 +37,8 @@ begin
    alu_dec: entity work.alu_decoder(behavioral)
    port map(
         alu_2bit_op_i => alu_2bit_op_s,
-        funct3_i => instruction(14 downto 12),
-        funct7_i => instruction(31 downto 25),
+        funct3_i => instruction_i(14 downto 12),
+        funct7_i => instruction_i(31 downto 25),
         alu_op_o => alu_op_o);
 
 

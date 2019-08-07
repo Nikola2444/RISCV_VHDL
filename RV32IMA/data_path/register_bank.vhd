@@ -8,17 +8,16 @@ entity register_bank is
   port (clk: in std_logic;
         reset: in std_logic;
 
-        reg_write: in std_logic;
+        reg_write_i: in std_logic;
         
-        read_reg1: in std_logic_vector(4 downto 0);
-        read_reg2: in std_logic_vector(4 downto 0);
+        read_reg1_i: in std_logic_vector(4 downto 0);
+        read_reg2_i: in std_logic_vector(4 downto 0);
 
-        read_data1: out std_logic_vector(WIDTH - 1 downto 0);
-        read_data2: out std_logic_vector(WIDTH - 1 downto 0);
+        read_data1_o: out std_logic_vector(WIDTH - 1 downto 0);
+        read_data2_o: out std_logic_vector(WIDTH - 1 downto 0);
 
-        write_reg: in std_logic_vector(4 downto 0);
-        write_data: in std_logic_vector(WIDTH - 1 downto 0));
-
+        write_reg_i: in std_logic_vector(4 downto 0);
+        write_data_i: in std_logic_vector(WIDTH - 1 downto 0));
   
 end entity;
 
@@ -31,8 +30,8 @@ begin
   reg_bank_write: process (clk) is
   begin
     if (falling_edge(clk))then      
-        if (reg_write = '1') then
-          reg_bank_i(to_integer(unsigned(write_reg))) <= write_data;
+        if (reg_write_i = '1') then
+          reg_bank_i(to_integer(unsigned(write_reg_i))) <= write_data_i;
         end if;
       end if;      
   end process;
@@ -43,8 +42,8 @@ begin
       if (reset = '0')then
         reg_bank_i <= (others => (others => '0'));
       else
-        read_data1 <= reg_bank_i(to_integer(unsigned(read_reg1)));
-        read_data2 <= reg_bank_i(to_integer(unsigned(read_reg2)));
+        read_data1_o <= reg_bank_i(to_integer(unsigned(read_reg1_i)));
+        read_data2_o <= reg_bank_i(to_integer(unsigned(read_reg2_i)));
       end if;
     end if;          
   end process;

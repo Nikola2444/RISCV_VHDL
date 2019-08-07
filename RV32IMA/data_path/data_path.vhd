@@ -4,29 +4,28 @@ use ieee.numeric_std.all;
 
 
 entity data_path is
-   generic (DATA_WIDTH: positive := 32;
-            INSTRUCTION_WIDTH: positive := 32);
+   generic (DATA_WIDTH: positive := 32);
    port(
       -- ********* Sync ports *****************************
       clk: in std_logic;
       reset: in std_logic;      
       -- ********* INSTRUCTION memory i/o *******************
-      pc: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
-      instruction: in std_logic_vector(INSTRUCTION_WIDTH - 1 downto 0);
+      pc_o: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
+      instruction_i: in std_logic_vector(31 downto 0);
       -- ********* DATA memory i/o **************************
 
-      data_address: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      write_data: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      read_data: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
+      ext_data_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
+      write_ext_data_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
+      read_ext_data_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
       -- ********* control signals **************************
       
-      branch: in std_logic;
-      mem_read: in std_logic;
-      mem_to_reg: in std_logic;
-      ALU_op: in std_logic_vector (4 downto 0);      
+      branch_i: in std_logic;
+      mem_read_i: in std_logic;
+      mem_to_reg_i: in std_logic;
+      alu_op_i: in std_logic_vector (4 downto 0);      
       --mem_write: in std_logic;-- data_path doenst need it
-      ALU_src: in std_logic;      
-      reg_write: in std_logic
+      alu_src_i: in std_logic;      
+      reg_write_i: in std_logic
     -- ******************************************************
       );
    
@@ -36,7 +35,7 @@ end entity;
 architecture Behavioral of data_path is
    --**************REGISTERS*********************************
    
-   signal pc_reg, pc_next: std_logic_vector (INSTRUCTION_WIDTH - 1 downto 0);
+   signal pc_reg, pc_next: std_logic_vector (31 downto 0);
    
    --********************************************************
 
@@ -49,9 +48,9 @@ architecture Behavioral of data_path is
    -- Alu signals   
    signal alu_zero_s, alu_of_o_s: std_logic;
    signal b_i_s, a_i_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-   signal ALU_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal alu_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
    
-   --********************************************************
+--********************************************************
 begin
 
    --***********Sequential logic******************
@@ -73,17 +72,17 @@ begin
    --***********Combinational logic***************
    
    -- PC_reg update
-   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch = '1' and alu_zero_s = '1') else
+   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and alu_zero_s = '1') else
               std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
 
    -- update of alu inputs
-   b_i_s <= read_data2_s when ALU_src = '1' else
+   b_i_s <= read_data2_s when alu_src_i = '1' else
             immediate_extended_s;
    a_i_s <= read_data1_s;
 
-   -- Reg_bank write_data update
-   write_data_s <= read_data when mem_to_reg = '1' else
-                   ALU_result_s;
+   -- Reg_bank write_data_o update
+   write_data_s <= read_ext_data_i when mem_to_reg_i = '1' else
+                   alu_result_s;
    
    --********************************************
    
@@ -95,13 +94,13 @@ begin
       port map (
          clk        => clk,
          reset      => reset,
-         reg_write  => reg_write,
-         read_reg1  => instruction(19 downto 15),
-         read_reg2  => instruction(24 downto 20),
-         read_data1 => read_data1_s,
-         read_data2 => read_data2_s,
-         write_reg  => instruction(11 downto 7),
-         write_data => write_data_s);
+         reg_write_i  => reg_write_i,
+         read_reg1_i  => instruction_i(19 downto 15),
+         read_reg2_i  => instruction_i(24 downto 20),
+         read_data1_o => read_data1_s,
+         read_data2_o => read_data2_s,
+         write_reg_i  => instruction_i(11 downto 7),
+         write_data_i => write_data_s);
 
    --*********************************************
    
@@ -110,11 +109,10 @@ begin
    
    immediate_1: entity work.immediate
       generic map (
-         DATA_WIDTH        => DATA_WIDTH,
-         INSTRUCTION_WIDTH => INSTRUCTION_WIDTH)
+         DATA_WIDTH        => DATA_WIDTH)
       port map (
-         instruction        => instruction,
-         immediate_extended => immediate_extended_s);
+         instruction_i        => instruction_i,
+         immediate_extended_o => immediate_extended_s);
    
    --********************************************
 
@@ -125,17 +123,17 @@ begin
       port map (
          a_i    => a_i_s,
          b_i    => b_i_s,
-         op_i   => ALU_op,
-         res_o  => ALU_result_s,
+         op_i   => alu_op_i,
+         res_o  => alu_result_s,
          zero_o => alu_zero_s,
          of_o   => alu_of_o_s);
    --********************************************    
 
 
    --***********Outputs**************************
-   pc <= pc_reg;
-   data_address <= ALU_result_s;
-   write_data <= read_data2_s;
+   pc_o <= pc_reg;
+   ext_data_address_o <= alu_result_s;
+   write_ext_data_o <= read_data2_s;
    
 end architecture;
 
