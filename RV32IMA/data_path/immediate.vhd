@@ -6,8 +6,8 @@ use ieee.numeric_std.all;
 entity immediate is
    generic (DATA_WIDTH: positive := 32;
             INSTRUCTION_WIDTH: positive := 32);
-  port (instruction: in std_logic_vector (INSTRUCTION_WIDTH - 1 downto 0);
-        immediate_extended: out std_logic_vector (DATA_WIDTH - 1 downto 0));
+   port (instruction: in std_logic_vector (INSTRUCTION_WIDTH - 1 downto 0);
+         immediate_extended: out std_logic_vector (DATA_WIDTH - 1 downto 0));
 end entity;
 
 

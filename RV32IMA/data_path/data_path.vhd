@@ -52,7 +52,7 @@ begin
    --***********Sequential logic******************
    
    pc_proc:process (clk) is
-   begin
+x   begin
       if (rising_edge(clk)) then
          if (reset = '0')then
             pc_reg <= (others => '0');
