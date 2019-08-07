@@ -7,22 +7,24 @@ entity data_path is
    generic (DATA_WIDTH: positive := 32;
             INSTRUCTION_WIDTH: positive := 32);
    port(
-      -- ********* Sync signals *****************************
+      -- ********* Sync ports *****************************
       clk: in std_logic;
       reset: in std_logic;      
       -- ********* INSTRUCTION memory i/o *******************
       pc: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
       instruction: in std_logic_vector(INSTRUCTION_WIDTH - 1 downto 0);
       -- ********* DATA memory i/o **************************
+
       data_address: out std_logic_vector(DATA_WIDTH - 1 downto 0);
       write_data: out std_logic_vector(DATA_WIDTH - 1 downto 0);
       read_data: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
       -- ********* control signals **************************
+      
       branch: in std_logic;
       mem_read: in std_logic;
       mem_to_reg: in std_logic;
-      ALU_op: in std_logic_vector (4 downto 0);
-      mem_write: in std_logic;-- data_path doenst need it
+      ALU_op: in std_logic_vector (4 downto 0);      
+      --mem_write: in std_logic;-- data_path doenst need it
       ALU_src: in std_logic;      
       reg_write: in std_logic
     -- ******************************************************
@@ -33,7 +35,9 @@ end entity;
 
 architecture Behavioral of data_path is
    --**************REGISTERS*********************************
+   
    signal pc_reg, pc_next: std_logic_vector (INSTRUCTION_WIDTH - 1 downto 0);
+   
    --********************************************************
 
 
@@ -46,13 +50,14 @@ architecture Behavioral of data_path is
    signal alu_zero_s, alu_of_o_s: std_logic;
    signal b_i_s, a_i_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal ALU_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   
    --********************************************************
 begin
 
    --***********Sequential logic******************
    
    pc_proc:process (clk) is
-x   begin
+   begin
       if (rising_edge(clk)) then
          if (reset = '0')then
             pc_reg <= (others => '0');

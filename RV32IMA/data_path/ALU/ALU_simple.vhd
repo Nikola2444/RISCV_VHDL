@@ -89,12 +89,12 @@ BEGIN
    with op_i select
       res_s <= and_res when "00000", --and
       or_res when "00001", --or
-      xor_res when "00010", --xor
-      add_res when "00011", --add
-      sub_res when "10011", --sub
+      xor_res when "00011", --xor
+      add_res when "00010", --add (changed opcode)
+      sub_res when "00110", --sub
       lts_res when "10100", -- set less than signed
       ltu_res when "10101", -- set less than unsigned
-      sll_res when "00110", -- shift left logic
+      sll_res when "10110", -- shift left logic
       srl_res when "00111", -- shift right logic
       sra_res when "01000", -- shift right arithmetic
       mulu_res(WIDTH-1 downto 0) when "01001", -- multiply lower

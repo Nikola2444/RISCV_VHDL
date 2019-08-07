@@ -27,9 +27,8 @@ begin
          when i_type_instruction =>
             immediate_extended <= extension & instruction(31 downto 20);
          when s_type_instruction =>
-            --shift left 1 was not included because our processors instructions
-            --have 4 bytes offset architecture.
-            immediate_extended <= extension & instruction(31 downto 25) & instruction(11 downto 7);
+            immediate_extended <= extension(DATA_WIDTH - 12 - 2 downto 0) & instruction(31) &
+                                  instruction(29 downto 24) & instruction(11 downto 8) & instruction(30) & '0';
          when others => null;
       end case;
    end process;
