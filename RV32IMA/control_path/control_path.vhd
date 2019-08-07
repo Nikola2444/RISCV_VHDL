@@ -13,14 +13,33 @@ entity control_path is
 		  mem_to_reg_o: out std_logic;
         mem_write_o: out std_logic;
         alu_src_o: out std_logic;
-        reg_write_o: out std_logic
+        reg_write_o: out std_logic;
+        alu_op_o: out std_logic_vector(4 downto 0)
         );  
 end entity;
 
 
 architecture behavioral of control_path is
-   signal alu_op_s: std_logic_vector(4 downto 0);
+   signal alu_2bit_op_s: std_logic_vector(1 downto 0);
 begin
+
+   ctrl_dec: entity work.ctrl_decoder(behavioral)
+   port map(
+        opcode_i => instruction_i(6 downto 0),
+		  branch_o => branch_o,
+		  mem_read_o => mem_read_o,
+		  mem_to_reg_o => mem_to_reg_o,
+        mem_write_o => mem_write_o,
+        alu_src_o => alu_src_o,
+        reg_write_o => reg_write_o,
+        alu_2bit_op_o => alu_2bit_op_s);
+
+   alu_dec: entity work.alu_decoder(behavioral)
+   port map(
+        alu_2bit_op_i => alu_2bit_op_s,
+        funct3_i => instruction(14 downto 12),
+        funct7_i => instruction(31 downto 25),
+        alu_op_o => alu_op_o);
 
 
 end architecture;
