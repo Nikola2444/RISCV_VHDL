@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.alu_ops_pkg.all;
 
 entity alu_decoder is
   port ( -- from data_path
@@ -13,10 +14,6 @@ entity alu_decoder is
 end entity;
 
 architecture behavioral of alu_decoder is
-   constant add_op: std_logic_vector (4 downto 0):="00010";
-   constant sub_op: std_logic_vector (4 downto 0):="00110";
-   constant and_op: std_logic_vector (4 downto 0):="00000";
-   constant or_op: std_logic_vector (4 downto 0):="00001";
 begin
 
    alu_dec:process(alu_2bit_op_i,funct3_i,funct7_i)is
