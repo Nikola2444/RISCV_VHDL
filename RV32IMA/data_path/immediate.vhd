@@ -19,7 +19,7 @@ architecture Behavioral of immediate is
 begin
    opcode <= instruction_i(6 downto 0);
    extension <= (others => instruction_i(31));
-   process (instruction_i, extension) is
+   process (instruction_i, extension, opcode) is
    begin
       -- opcode can be optimized so we only check for two bits in it and not 7
       case opcode is
