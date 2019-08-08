@@ -1,7 +1,7 @@
 
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-module BRAM #(parameter integer WADDR = 10, parameter integer WDATA = 16)
+module BRAM #(parameter integer WADDR = 10, parameter integer WDATA = 32)
    (pi_clka,pi_clkb,pi_ena,pi_enb,pi_wea,pi_web,pi_addra,pi_addrb,pi_dia,pi_dib,po_doa,po_dob);
    input        pi_clka,pi_clkb,pi_ena,pi_enb,pi_wea,pi_web;
    input [WADDR-1:0] pi_addra,pi_addrb;

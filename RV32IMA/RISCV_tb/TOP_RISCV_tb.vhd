@@ -41,8 +41,7 @@ begin
    -- PORT A : test bench instruction initializationa
    -- PORT B : 
    instruction_mem: entity work.BRAM(behavioral)
-      generic map(WADDR => 10,
-                  WDATA => 32)
+      generic map(WADDR => 10)
       port map (clk_a => clk,
                 clk_b => clk,
                 en_a_i => '1',    -- memory always enabled
@@ -59,8 +58,7 @@ begin
 
    -- Data memory
    data_mem: entity work.BRAM(behavioral)
-      generic map(WADDR => 10,
-                  WDATA => 32)
+      generic map(WADDR => 10)
       port map (clk_a=> clk,
                 clk_b => clk,
                 en_a_i => '1',    -- memory always enabled
@@ -101,7 +99,7 @@ begin
          readline(RISCV_instructions, row);
          addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
          dia_instr_s <= to_std_logic_vector(string(row));         
-         i := i + 1;
+         i := i + 4;
          wait until rising_edge(clk);
       end loop;
       ena_instr_s <= '0';
