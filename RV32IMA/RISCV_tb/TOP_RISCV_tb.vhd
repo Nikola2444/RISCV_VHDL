@@ -12,10 +12,10 @@ end entity;
 
 architecture Behavioral of TOP_RISCV_tb is
    -- file operands   
-   file RISCV_instructions: text open read_mode is "/home/nikola/Documents/git_repos/RISCV_VHDL/RV32IMA/RISCV_tb/assembly_code.txt";   
+   file RISCV_instructions: text open read_mode is "../../../../../RISCV_tb/assembly_code.txt";   
    -- **************************************************
    signal clk: std_logic:='0';
-   signal reset: std_logic:='1';       
+   signal reset: std_logic;       
    --Instruction_mem_signals
    signal ena_instr_s,enb_instr_s,wea_instr_s,web_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
@@ -93,7 +93,7 @@ begin
       variable row: line;
       variable i: integer:= 0;
    begin
-      ena_instr_s <= '1';
+      
       wea_instr_s <= '1';      
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
@@ -102,7 +102,7 @@ begin
          i := i + 4;
          wait until rising_edge(clk);
       end loop;
-      ena_instr_s <= '0';
+      
       wea_instr_s <= '0';
       wait;
    end process;
