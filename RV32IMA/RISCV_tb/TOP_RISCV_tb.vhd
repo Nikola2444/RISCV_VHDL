@@ -12,17 +12,17 @@ end entity;
 
 architecture Behavioral of TOP_RISCV_tb is
    -- file operands   
-   file RISCV_instructions: text open read_mode is "/home/nikola/Documents/git_repos/RISCV_VHDL/RV32IMA/RISCV_tb/assembly_code.txt";   
+   file RISCV_instructions: text open read_mode is "../../../../../RISCV_tb/assembly_code.txt";   
    -- **************************************************
    signal clk: std_logic:='0';
    signal reset: std_logic:='1';       
    --Instruction_mem_signals
-   signal ena_instr_s,enb_instr_s,wea_instr_s,web_instr_s: std_logic;
+   signal wea_instr_s,web_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
    signal dia_instr_s,dib_instr_s:std_logic_vector(31 downto 0);
    signal doa_instr_s,dob_instr_s:std_logic_vector(31 downto 0);
    --Data_mem_signals
-   signal ena_data_s,enb_data_s,wea_data_s,web_data_s:std_logic;
+   signal wea_data_s,web_data_s:std_logic;
    signal addra_data_s,addrb_data_s: std_logic_vector(9 downto 0);
    signal dia_data_s,dib_data_s:std_logic_vector(31 downto 0);
    signal doa_data_s,dob_data_s:std_logic_vector(31 downto 0);
@@ -93,7 +93,6 @@ begin
       variable row: line;
       variable i: integer:= 0;
    begin
-      ena_instr_s <= '1';
       wea_instr_s <= '1';      
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
@@ -102,7 +101,6 @@ begin
          i := i + 4;
          wait until rising_edge(clk);
       end loop;
-      ena_instr_s <= '0';
       wea_instr_s <= '0';
       wait;
    end process;
@@ -115,6 +113,7 @@ begin
       wait for 200 ns;
    end process;
 
+    reset <= '0', '1' after 50 ns;
    
    
    
