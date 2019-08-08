@@ -42,8 +42,7 @@ begin
    -- PORT B : 
    instruction_mem: entity work.BRAM(behavioral)
       generic map(WADDR => 10)
-      port map (clk_a => clk,
-                clk_b => clk,
+      port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
                 en_b_i => '1',
                 we_a_i => wea_instr_s,
@@ -59,8 +58,7 @@ begin
    -- Data memory
    data_mem: entity work.BRAM(behavioral)
       generic map(WADDR => 10)
-      port map (clk_a=> clk,
-                clk_b => clk,
+      port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
                 en_b_i => '1',
                 we_a_i => wea_data_s,
