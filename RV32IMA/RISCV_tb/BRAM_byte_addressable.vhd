@@ -33,10 +33,10 @@ architecture behavioral of BRAM is
 begin
 
    -- Port A
-   process(clk_a,en_a_i)
+   process(clk_a)
    begin
-      if(en_a_i='1') then
-         if(rising_edge(clk_a)) then
+      if(rising_edge(clk_a)) then
+         if(en_a_i='1') then
             if(we_a_i = '1') then
                ram_s(to_integer(unsigned(addr_a_i))) <= data_a_i(31 downto 24);
                ram_s(to_integer(unsigned(addr_a_i)+1)) <= data_a_i(23 downto 16);
@@ -52,10 +52,10 @@ begin
       end if;
    end process;
    -- Port B
-   process(clk_b,en_b_i)
+   process(clk_b)
    begin
-      if(en_b_i='1') then
-         if(rising_edge(clk_b)) then
+      if(rising_edge(clk_b)) then
+          if(en_b_i='1') then
             if(we_b_i = '1') then
                ram_s(to_integer(unsigned(addr_b_i))) <= data_b_i(31 downto 24);
                ram_s(to_integer(unsigned(addr_b_i)+1)) <= data_b_i(23 downto 16);
