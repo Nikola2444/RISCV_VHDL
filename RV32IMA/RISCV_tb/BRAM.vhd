@@ -27,8 +27,11 @@ entity BRAM is
 end BRAM;
 
 architecture behavioral of BRAM is
+
    
    type ram_type is array(0 to 2**WADDR) of std_logic_vector(WDATA - 1 downto 0);
+   
+
    signal ram_s : ram_type := (others => (others => '0'));
    
 begin

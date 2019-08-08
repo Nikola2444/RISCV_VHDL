@@ -73,24 +73,24 @@ begin
                 data_b_i => dib_data_s,
                 data_a_o => doa_data_s,
                 data_b_o => dob_data_s);
---
---
---   --******TOP_RISCV instance**********************
---   TOP_RISCV_1: entity work.TOP_RISCV
---      generic map (
---         DATA_WIDTH => 32)
---      port map (
---         clk                => clk,
---         reset              => reset,
---         instruction_i      => dob_instr_s,
---         pc_o               => addrb_instr_extended_s,         
---         mem_ext_write_o    => wea_data_s,
---         ext_data_address_o => addra_data_extended_s,
---         read_ext_data_i    => dob_data_s,
---         write_ext_data_o   => dob_data_s);
---   
---   --******Filling instruction MEM*****************
---   --
+
+
+   --******TOP_RISCV instance**********************
+   TOP_RISCV_1: entity work.TOP_RISCV
+      generic map (
+         DATA_WIDTH => 32)
+      port map (
+         clk                => clk,
+         reset              => reset,
+         instruction_i      => dob_instr_s,
+         pc_o               => addrb_instr_extended_s,         
+         mem_ext_write_o    => wea_data_s,
+         ext_data_address_o => addra_data_extended_s,
+         read_ext_data_i    => dob_data_s,
+         write_ext_data_o   => dob_data_s);
+   
+   --******Filling instruction MEM*****************
+   --
    read_file_proc:process
       variable row: line;
       variable i: integer:= 0;
