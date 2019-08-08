@@ -15,7 +15,7 @@ architecture Behavioral of TOP_RISCV_tb is
    file RISCV_instructions: text open read_mode is "../../../../../RISCV_tb/assembly_code.txt";   
    -- **************************************************
    signal clk: std_logic:='0';
-   signal reset: std_logic:='1';       
+   signal reset: std_logic;       
    --Instruction_mem_signals
    signal wea_instr_s,web_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
@@ -93,6 +93,7 @@ begin
       variable row: line;
       variable i: integer:= 0;
    begin
+      reset <= '0';
       wea_instr_s <= '1';      
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
@@ -101,7 +102,9 @@ begin
          i := i + 4;
          wait until rising_edge(clk);
       end loop;
+      
       wea_instr_s <= '0';
+      reset <= '1';
       wait;
    end process;
    --****************************************************
@@ -113,7 +116,6 @@ begin
       wait for 200 ns;
    end process;
 
-    reset <= '0', '1' after 50 ns;
    
    
    

@@ -29,34 +29,33 @@ end BRAM;
 architecture behavioral of BRAM is
 
    
-   type ram_type is array(0 to 2**WADDR) of std_logic_vector(WDATA - 1 downto 0);
+   type ram_type1 is array(0 to 2**WADDR - 1) of std_logic_vector(WDATA - 1 downto 0);
    
 
-   signal ram_s : ram_type := (others => (others => '0'));
-   
+   shared variable ram_s : ram_type1:= (others => (others =>'0'));   
 begin
 
    -- Port A
-   process(clk_a)
+   a:process(clk_a)is
    begin
-      
       if(rising_edge(clk_a)) then
-         if(en_a_i='1') then
+         if(en_a_i = '1') then
             if(we_a_i = '1') then
-               ram_s(to_integer(unsigned(addr_a_i))) <= data_a_i;
+               ram_s(to_integer(unsigned(addr_a_i))) := data_a_i;
             else
                data_a_o <= ram_s(to_integer(unsigned(addr_a_i)));
             end if;
          end if;
       end if;
    end process;
+   
    -- Port B
-   process(clk_b,en_b_i)
+   b:process(clk_b)is
    begin
       if(rising_edge(clk_b)) then
-         if(en_b_i='1') then
+         if(en_b_i = '1') then
             if(we_b_i = '1') then
-               ram_s(to_integer(unsigned(addr_b_i))) <= data_b_i;
+               ram_s(to_integer(unsigned(addr_b_i))) := data_b_i;
             else
                data_b_o <= ram_s(to_integer(unsigned(addr_b_i)));
             end if;
