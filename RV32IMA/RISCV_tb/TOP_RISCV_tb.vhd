@@ -93,7 +93,7 @@ begin
       variable row: line;
       variable i: integer:= 0;
    begin
-      
+      reset <= '0';
       wea_instr_s <= '1';      
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
@@ -104,6 +104,7 @@ begin
       end loop;
       
       wea_instr_s <= '0';
+      reset <= '1';
       wait;
    end process;
    --****************************************************
