@@ -11,22 +11,11 @@ end entity;
 
 
 architecture Behavioral of TOP_RISCV_tb is
-   -- file operands
-   constant NUM_COL: integer := 2;   -- number of columns of file
-   file RISCV_instructions: text open read_mode is "/home/nikola/Documents/git_repos/RISCV_VHDL/RV32IMA/RISCV_tb/assembly_code.txt";
-   type t_integer_array       is array(integer range <> )  of integer;
-   signal instruction_read: std_logic_vector(31 downto 0);
+   -- file operands   
+   file RISCV_instructions: text open read_mode is "/home/nikola/Documents/git_repos/RISCV_VHDL/RV32IMA/RISCV_tb/assembly_code.txt";   
    -- **************************************************
-   
-   signal clk                : std_logic:= '0';
-   signal reset              : std_logic;
-   signal instruction_i      : std_logic_vector(31 downto 0);
-   signal pc_o               : std_logic_vector(31 downto 0);
-   signal mem_ext_write_o    : std_logic;
-   signal ext_data_address_o : std_logic_vector(31 downto 0);
-   signal read_ext_data_i    : std_logic_vector(31 downto 0);
-   signal write_ext_data_o   : std_logic_vector(31 downto 0);
-
+   signal clk: std_logic:='0';
+   signal reset: std_logic:='1';       
    --Instruction_mem_signals
    signal ena_instr_s,enb_instr_s,wea_instr_s,web_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
@@ -84,24 +73,24 @@ begin
                 data_b_i => dib_data_s,
                 data_a_o => doa_data_s,
                 data_b_o => dob_data_s);
-
-
-   --******TOP_RISCV instance**********************
-   TOP_RISCV_1: entity work.TOP_RISCV
-      generic map (
-         DATA_WIDTH => 32)
-      port map (
-         clk                => clk,
-         reset              => reset,
-         instruction_i      => dob_instr_s,
-         pc_o               => addrb_instr_extended_s,         
-         mem_ext_write_o    => wea_data_s,
-         ext_data_address_o => addra_data_extended_s,
-         read_ext_data_i    => dob_data_s,
-         write_ext_data_o   => dob_data_s);
-   
-   --******Filling instruction MEM*****************
-   --
+--
+--
+--   --******TOP_RISCV instance**********************
+--   TOP_RISCV_1: entity work.TOP_RISCV
+--      generic map (
+--         DATA_WIDTH => 32)
+--      port map (
+--         clk                => clk,
+--         reset              => reset,
+--         instruction_i      => dob_instr_s,
+--         pc_o               => addrb_instr_extended_s,         
+--         mem_ext_write_o    => wea_data_s,
+--         ext_data_address_o => addra_data_extended_s,
+--         read_ext_data_i    => dob_data_s,
+--         write_ext_data_o   => dob_data_s);
+--   
+--   --******Filling instruction MEM*****************
+--   --
    read_file_proc:process
       variable row: line;
       variable i: integer:= 0;
@@ -111,8 +100,7 @@ begin
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
          addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
-         dia_instr_s <= to_std_logic_vector(string(row));
-         instruction_read <= to_std_logic_vector(string(row));
+         dia_instr_s <= to_std_logic_vector(string(row));         
          i := i + 1;
          wait until rising_edge(clk);
       end loop;
