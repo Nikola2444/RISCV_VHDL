@@ -76,7 +76,7 @@ begin
               std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
 
    -- update of alu inputs
-   b_i_s <= read_data2_s when alu_src_i = '1' else
+   b_i_s <= read_data2_s when alu_src_i = '0' else
             immediate_extended_s;
    a_i_s <= read_data1_s;
 
