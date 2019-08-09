@@ -77,11 +77,11 @@ BEGIN
       muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
       mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
       mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
-      divu_res when divu_op, -- multiply higher unsigned
-      divs_res when divs_op,
-      remu_res when remu_op, -- multiply higher unsigned
-      rems_res when rems_op,
-      (others => 'X') when others; -- multiply higher unsigned
+      --divu_res when divu_op, 
+      --divs_res when divs_op,
+      --remu_res when remu_op, 
+      --rems_res when rems_op,
+      (others => '1') when others; 
 
 
    -- FLAG OUTPUTS

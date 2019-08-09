@@ -41,6 +41,8 @@ begin
     if (rising_edge(clk))then
       if (reset = '0')then
         reg_bank_i <= (others => (others => '0'));
+        read_data1_o <= (others => '0');
+        read_data2_o <= (others => '0');
       else
         read_data1_o <= reg_bank_i(to_integer(unsigned(read_reg1_i)));
         read_data2_o <= reg_bank_i(to_integer(unsigned(read_reg2_i)));

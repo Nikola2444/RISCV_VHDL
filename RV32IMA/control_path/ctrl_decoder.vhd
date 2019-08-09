@@ -41,10 +41,14 @@ begin
             alu_2bit_op_o <= "00";
             mem_write_o <= '1';
             alu_src_o <= '1';
-         when "0110011" => --R, 10v ~ funct3,5
+         when "0110011" => --R type, 10v ~ funct3,5
             alu_2bit_op_o <= "10";
             reg_write_o <= '1';
-         when "1100011" => --BEQ,BNE ~ funct3
+         when "0010011" => --I type
+            alu_2bit_op_o <= "00";
+            alu_src_o <= '1';
+            reg_write_o <= '1';
+         when "1100011" => --B type BEQ,BNE ~ funct3
             alu_2bit_op_o <= "01";
             branch_o <= '1';
          when others =>
