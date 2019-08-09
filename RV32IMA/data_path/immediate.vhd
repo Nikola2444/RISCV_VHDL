@@ -60,11 +60,11 @@ begin
             immediate_extended_o <= extension(18 downto 0) & instruction_i(31) & instruction_i(7) &
                                    instruction_i(30 downto 25) & instruction_i(11 downto 8) & '0';
          when s_type_instruction =>
-            immediate_extended_o <= extension(18 downto 0) & instruction_i(31 downto 25) & instruction_i(11 downto 7);
+            immediate_extended_o <= extension(19 downto 0) & instruction_i(31 downto 25) & instruction_i(11 downto 7);
          when u_type_instruction =>
             immediate_extended_o <= instruction_i(31 downto 12) & std_logic_vector(to_unsigned(0,12));
          when j_type_instruction =>
-            immediate_extended_o <= extension(9 downto 0) & instruction_i(31) &  instruction_i(19 downto 12) &
+            immediate_extended_o <= extension(10 downto 0) & instruction_i(31) &  instruction_i(19 downto 12) &
                                     instruction_i(20) & instruction_i(30 downto 21) & '0';
          when others =>
             immediate_extended_o <= (others =>'0');

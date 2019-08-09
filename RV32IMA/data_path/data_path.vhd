@@ -108,8 +108,6 @@ begin
    --***********Immediate unit instance***********
    
    immediate_1: entity work.immediate
-      generic map (
-         DATA_WIDTH        => DATA_WIDTH)
       port map (
          instruction_i        => instruction_i,
          immediate_extended_o => immediate_extended_s);
