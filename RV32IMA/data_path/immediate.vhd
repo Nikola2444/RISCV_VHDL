@@ -16,9 +16,9 @@ architecture Behavioral of immediate is
    -- for the signal below 12 is the length of immediate field
    signal extension: std_logic_vector(19 downto 0);
    
-   constant r_type_instruction: std_logic_vector(2 downto 0):= "010";
-   constant i_type_instruction: std_logic_vector(2 downto 0):= "000";
-   constant s_type_instruction: std_logic_vector(2 downto 0):= "001";
+   constant r_type_instruction: std_logic_vector(2 downto 0):= "000";
+   constant i_type_instruction: std_logic_vector(2 downto 0):= "001";
+   constant s_type_instruction: std_logic_vector(2 downto 0):= "010";
    constant b_type_instruction: std_logic_vector(2 downto 0):= "011";
    constant u_type_instruction: std_logic_vector(2 downto 0):= "100";
    constant j_type_instruction: std_logic_vector(2 downto 0):= "101";

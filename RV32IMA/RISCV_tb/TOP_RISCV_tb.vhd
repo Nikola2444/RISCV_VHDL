@@ -36,10 +36,12 @@ begin
 
    addrb_instr_s <= addrb_instr_extended_s(9 downto 0);
    addra_data_s  <= addra_data_extended_s(9 downto 0);
+   web_instr_s <= '0';
+   dib_instr_s <= (others => '0');
 
    -- Instruction Memory
    -- PORT A : test bench instruction initializationa
-   -- PORT B : 
+   -- PORT B : cpu reads instructions
    instruction_mem: entity work.BRAM(behavioral)
       generic map(WADDR => 10)
       port map (clk=> clk,
@@ -82,8 +84,8 @@ begin
          pc_o               => addrb_instr_extended_s,         
          mem_ext_write_o    => wea_data_s,
          ext_data_address_o => addra_data_extended_s,
-         read_ext_data_i    => dob_data_s,
-         write_ext_data_o   => dob_data_s);
+         read_ext_data_i    => doa_data_s,
+         write_ext_data_o   => dia_data_s);
    
    --******Filling instruction MEM*****************
    --
