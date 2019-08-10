@@ -22,7 +22,7 @@ entity register_bank is
 end entity;
 
 architecture Behavioral of register_bank is
-  type reg_bank is array  (0 to 31) of std_logic_vector(31 downto 0);
+  type reg_bank is array  (1 to 31) of std_logic_vector(31 downto 0);
   signal reg_bank_s: reg_bank;
   
 begin
@@ -38,9 +38,8 @@ begin
       end if;      
    end process;
 
-   reg_bank_read: process (clk) is
+   reg_bank_read: process (read_reg1_i,read_reg2_i,reg_bank_s) is
    begin
-      if (rising_edge(clk))then
 
          if(to_integer(unsigned(read_reg1_i))=0) then
             read_data1_o <= std_logic_vector(to_unsigned(0,WIDTH));
@@ -54,7 +53,6 @@ begin
             read_data2_o <= reg_bank_s(to_integer(unsigned(read_reg2_i)));
          end if;
 
-      end if;          
    end process;
 
 end architecture;
