@@ -44,13 +44,13 @@ begin
          when "1100011" =>
             instruction_type <= b_type_instruction;
          when "0100011" =>
-            instruction_type <= b_type_instruction;
+            instruction_type <= s_type_instruction;
          when others =>
             instruction_type <= j_type_instruction;
       end case;
    end process;
    
-   process (instruction_i, extension) is
+   process (instruction_i,instruction_type,extension) is
    begin
       -- opcode can be optimized so we only check for two bits in it and not 7
       case instruction_type is

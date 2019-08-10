@@ -28,7 +28,7 @@ begin
             alu_op_o <= sub_op;
          when others =>
             if(funct3_i = "000") then
-               if(funct7_i(5)='1') then
+               if(funct7_i(5)='0') then
                   alu_op_o <= add_op;
                else
                   alu_op_o <= sub_op;
