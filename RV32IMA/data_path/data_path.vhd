@@ -129,7 +129,7 @@ begin
 
 
    --***********Outputs**************************
-   pc_o <= pc_reg;
+   pc_o <= pc_next;
    ext_data_address_o <= alu_result_s;
    write_ext_data_o <= read_data2_s;
    

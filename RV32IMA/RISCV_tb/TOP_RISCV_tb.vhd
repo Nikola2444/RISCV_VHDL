@@ -104,7 +104,7 @@ begin
       end loop;
       
       wea_instr_s <= '0';
-      reset <= '1';
+      reset <= '1' after 20 ns;
       wait;
    end process;
    --****************************************************
