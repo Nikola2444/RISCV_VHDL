@@ -33,7 +33,7 @@ begin
    
    process (opcode) is
    begin
-      -- opcode can be optimized so we only check for two bits in it and not 7
+      -- opcode can be optimized so we only check for three bits in it and not 7
       case opcode is
          when "0110011" =>
             instruction_type <= r_type_instruction;
@@ -52,7 +52,7 @@ begin
    
    process (instruction_i,instruction_type,extension) is
    begin
-      -- opcode can be optimized so we only check for two bits in it and not 7
+      -- opcode can be optimized so we only check for three bits in it and not 7
       case instruction_type is
          when i_type_instruction =>
             immediate_extended_o <= extension & instruction_i(31 downto 20);
