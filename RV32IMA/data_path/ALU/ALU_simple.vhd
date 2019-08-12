@@ -21,14 +21,19 @@ ARCHITECTURE behavioral OF ALU IS
 
    constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
    SIGNAL    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   SIGNAL    sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   SIGNAL    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    SIGNAL    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    SIGNAL    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
    SIGNAL    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
+   SIGNAL    b_i_not_zero_s : STD_LOGIC := '0';
 
    
 
 BEGIN
+   b_i_not_zero_s <= '1' when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
+                     '0';
+
+
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));
    -- subtraction
@@ -39,6 +44,9 @@ BEGIN
    or_res <= a_i or b_i;
    -- xor gate
    xor_res <= a_i xor b_i;
+   -- equal
+   eq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) = signed(b_i)) else
+             std_logic_vector(to_unsigned(0,WIDTH));
    -- less then signed
    lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) < signed(b_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
@@ -54,11 +62,15 @@ BEGIN
    mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); --mulsu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i)) when a_i(WIDTH-1)='0' elsestd_logic_vector(not((unsigned(not a_i)+1)*unsigned(b_i))+1);  
    mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));
    --division
-   divs_res <= std_logic_vector(signed(a_i)/signed(b_i));
-   divu_res <= std_logic_vector(unsigned(a_i)/unsigned(b_i));
+   divs_res <= std_logic_vector(signed(a_i)/signed(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
+               (others => '1');
+   divu_res <= std_logic_vector(unsigned(a_i)/unsigned(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
+               (others => '1');
    --mode
-   rems_res <= std_logic_vector(signed(a_i) rem signed(b_i));
-   remu_res <= std_logic_vector(unsigned(a_i) rem unsigned(b_i));
+   rems_res <= std_logic_vector(signed(a_i) rem signed(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
+               (others => '1');
+   remu_res <= std_logic_vector(unsigned(a_i) rem unsigned(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
+               (others => '1');
    
    -- SELECT RESULT
    res_o <= res_s;
@@ -81,6 +93,7 @@ BEGIN
       divs_res when divs_op,
       remu_res when remu_op, 
       rems_res when rems_op,
+      eq_res when eq_op,
       (others => '1') when others; 
 
 

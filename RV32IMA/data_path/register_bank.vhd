@@ -22,7 +22,7 @@ entity register_bank is
 end entity;
 
 architecture Behavioral of register_bank is
-   type reg_bank is array  (1 to 31) of std_logic_vector(31 downto 0);
+   type reg_bank is array  (0 to 31) of std_logic_vector(31 downto 0);
    signal reg_bank_s: reg_bank;
    
 begin

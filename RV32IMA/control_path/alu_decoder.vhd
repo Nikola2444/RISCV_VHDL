@@ -25,13 +25,13 @@ begin
          when "00" => 
             alu_op_o <= add_op;
          when "01" =>
-            case(funct3(2 downto 1))is
+            case(funct3_i(2 downto 1))is
             when "00" =>
-               alu_op_o <= sub_op;
+               alu_op_o <= eq_op;
             when "10" =>
-               alu_op_o <= slt_op;
+               alu_op_o <= lts_op;
             when others =>
-               alu_op_o <= sltu_op;
+               alu_op_o <= ltu_op;
             end case;
          when others =>
             case funct3_i is
@@ -41,28 +41,28 @@ begin
                   if(funct7_i(5)='1')then
                      alu_op_o <= sub_op;
                   elsif(funct7_i(0)='1')then
-                     alu_op_o <= mul_op;
+                     alu_op_o <= mulu_op;
                   end if;
                end if;
             when "001" =>
                alu_op_o <= sll_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= mulh_op;
+                     alu_op_o <= mulhs_op;
                end if;
             when "010" =>
-               alu_op_o <= slt_op;
+               alu_op_o <= lts_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
                      alu_op_o <= mulhsu_op;
                end if;
             when "011" =>
-               alu_op_o <= sltu_op;
+               alu_op_o <= ltu_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
                      alu_op_o <= mulhu_op;
                end if;
             when "100" =>
                alu_op_o <= xor_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= div_op;
+                     alu_op_o <= divs_op;
                end if;
             when "101" =>
                alu_op_o <= srl_op;
@@ -75,12 +75,12 @@ begin
             when "110" =>
                alu_op_o <= or_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= rem_op;
+                     alu_op_o <= rems_op;
                end if;
             when others =>
                alu_op_o <= and_op;
                if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= rem_op;
+                     alu_op_o <= remu_op;
                end if;
             end case;
       end case;

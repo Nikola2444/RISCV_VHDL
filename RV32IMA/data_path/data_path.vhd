@@ -72,7 +72,7 @@ begin
    --***********Combinational logic***************
    
    -- PC_reg update
-   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and alu_zero_s = '1') else
+   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and alu_zero_s = '0') else
               std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
 
    -- update of alu inputs
