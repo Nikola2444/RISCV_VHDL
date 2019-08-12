@@ -54,11 +54,11 @@ BEGIN
    mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); --mulsu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i)) when a_i(WIDTH-1)='0' elsestd_logic_vector(not((unsigned(not a_i)+1)*unsigned(b_i))+1);  
    mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));
    --division
-   --divs_res <= std_logic_vector(signed(a_i)/signed(b_i));
-   --divu_res <= std_logic_vector(unsigned(a_i)/unsigned(b_i));
+   divs_res <= std_logic_vector(signed(a_i)/signed(b_i));
+   divu_res <= std_logic_vector(unsigned(a_i)/unsigned(b_i));
    --mode
-   --rems_res <= std_logic_vector(signed(a_i) rem signed(b_i));
-   --remu_res <= std_logic_vector(unsigned(a_i) rem unsigned(b_i));
+   rems_res <= std_logic_vector(signed(a_i) rem signed(b_i));
+   remu_res <= std_logic_vector(unsigned(a_i) rem unsigned(b_i));
    
    -- SELECT RESULT
    res_o <= res_s;
@@ -77,10 +77,10 @@ BEGIN
       muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
       mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
       mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
-      --divu_res when divu_op, 
-      --divs_res when divs_op,
-      --remu_res when remu_op, 
-      --rems_res when rems_op,
+      divu_res when divu_op, 
+      divs_res when divs_op,
+      remu_res when remu_op, 
+      rems_res when rems_op,
       (others => '1') when others; 
 
 
