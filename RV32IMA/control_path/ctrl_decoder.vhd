@@ -30,25 +30,25 @@ begin
       reg_write_o <= '0';
       alu_2bit_op_o <= "00";
 
-      case opcode_i is
-         when "0000011" => --LOAD, 5v ~ funct3
+      case opcode_i(6 downto 2) is
+         when "00000" => --LOAD, 5v ~ funct3
             alu_2bit_op_o <= "00";
             mem_read_o <= '1';
             mem_to_reg_o <= '1';
             alu_src_o <= '1';
             reg_write_o <= '1';
-         when "0100011" => --STORE, 3v ~ funct3
+         when "01000" => --STORE, 3v ~ funct3
             alu_2bit_op_o <= "00";
             mem_write_o <= '1';
             alu_src_o <= '1';
-         when "0110011" => --R type, 10v ~ funct3,5
+         when "01100" => --R type, 
             alu_2bit_op_o <= "10";
             reg_write_o <= '1';
-         when "0010011" => --I type
-            alu_2bit_op_o <= "00";
+         when "00100" => --I type
+            alu_2bit_op_o <= "11";
             alu_src_o <= '1';
             reg_write_o <= '1';
-         when "1100011" => --B type BEQ,BNE ~ funct3
+         when "11000" => --B type BEQ,BNE ~ funct3
             alu_2bit_op_o <= "01";
             branch_o <= '1';
          when others =>

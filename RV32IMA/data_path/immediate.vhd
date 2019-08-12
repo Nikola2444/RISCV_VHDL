@@ -23,8 +23,8 @@ architecture Behavioral of immediate is
    constant b_type_instruction: std_logic_vector(2 downto 0):= "011";
    constant u_type_instruction: std_logic_vector(2 downto 0):= "100";
    constant j_type_instruction: std_logic_vector(2 downto 0):= "101";
+   constant shamt_instruction : std_logic_vector(2 downto 0):= "110"; 
    constant fence_ecall_ebreak: std_logic_vector(2 downto 0):= "111"; -- TODO vidjeti sta ove instrukcije rade
-   constant shamt_instruction: std_logic_vector(2 downto 0):= "110"; 
 
 begin
    opcode <= instruction_i(6 downto 0);
@@ -32,12 +32,11 @@ begin
                 (others => '0');
    funct3 <= instruction_i(14 downto 12);
    
-   --TODO nece sve instrukcije tretirati immediate kao signed, potrebno nekada prosiriti nulama, implementirati logiku za signed_unsigned bit
-   signed_unsigned <= '1';
    
    process (opcode) is
    begin
       -- opcode can be optimized so we only check for three bits in it and not 7
+      signed_unsigned <= '1';
       case opcode(6 downto 2) is
          when "01100" =>
             instruction_type <= r_type_instruction;
@@ -48,6 +47,9 @@ begin
                instruction_type <= shamt_instruction;
             else
                instruction_type <= i_type_instruction;
+            end if;
+            if(funct3 = "011") then
+               signed_unsigned <= '0';
             end if;
          when "11001" =>
             instruction_type <= i_type_instruction;
@@ -66,7 +68,7 @@ begin
       end case;
    end process;
    
-   process (instruction_i,instruction_type,extension) is
+   process (instruction_i,instruction_type,extension,funct3) is
    begin
       case instruction_type is
          when i_type_instruction =>
