@@ -25,14 +25,9 @@ ARCHITECTURE behavioral OF ALU IS
    SIGNAL    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    SIGNAL    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
    SIGNAL    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
-   SIGNAL    b_i_not_zero_s : STD_LOGIC := '0';
 
    
-
 BEGIN
-   b_i_not_zero_s <= '1' when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
-                     '0';
-
 
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));
