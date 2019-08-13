@@ -38,7 +38,7 @@ begin
                when "000" =>
                   alu_op_o <= add_op;
                   if(alu_2bit_op_i = "10") then 
-                     if(funct7_i(5)='1')then -- mislim da bi trebalo funct7_i(6)!!
+                     if(funct7_i(5)='1')then 
                         alu_op_o <= sub_op;
                      elsif(funct7_i(0)='1')then
                         alu_op_o <= mulu_op;

@@ -54,7 +54,7 @@ architecture Behavioral of data_path is
    
 --********************************************************
 begin
-   bcc <= instruction_i(12);
+   
 
    --***********Sequential logic******************
    
@@ -73,7 +73,7 @@ begin
 
    
    --***********Combinational logic***************
-   
+   bcc <= instruction_i(12);
    -- PC_reg update
    pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and (alu_zero_s xor bcc) = '0') else
               std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
