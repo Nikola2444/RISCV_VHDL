@@ -42,7 +42,7 @@ architecture Behavioral of data_path is
 
    --**************SIGNALS*********************************
    
-   signal read_data1_s, read_data2_s, write_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);
+   signal read_data1_s, read_data2_s, write_data_s, extended_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);
    signal immediate_extended_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
 
    -- Alu signals   
@@ -84,11 +84,17 @@ begin
    a_i_s <= read_data1_s;
 
    -- Reg_bank write_data_o update
-   write_data_s <= read_ext_data_i when mem_to_reg_i = '1' else
+   write_data_s <= extended_data_s when mem_to_reg_i = '1' else
                    alu_result_s;
    
    --********************************************
-   
+
+   with instruction_i(14 downto 12) select
+      extended_data_s <= (31 downto 8 => read_ext_data_i(7)) & read_ext_data_i(7 downto 0) when "000",
+                          (31 downto 16 => read_ext_data_i(15)) & read_ext_data_i(15 downto 0) when "001",
+                          std_logic_vector(to_unsigned(0,24)) & read_ext_data_i(7 downto 0) when "100",
+                          std_logic_vector(to_unsigned(0,16)) & read_ext_data_i(15 downto 0) when "101",
+                          read_ext_data_i when others;
 
    --***********Register bank instance***********
    register_bank_1: entity work.register_bank
