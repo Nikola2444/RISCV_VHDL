@@ -35,7 +35,7 @@ begin
    
    process (opcode) is
    begin
-      -- opcode can be optimized so we only check for three bits in it and not 7
+
       signed_unsigned <= '1';
       case opcode(6 downto 2) is
          when "01100" =>
