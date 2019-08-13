@@ -12,7 +12,6 @@ end entity;
 architecture Behavioral of immediate is
    signal opcode: std_logic_vector(6 downto 0);
    signal instruction_type: std_logic_vector(2 downto 0);
-   signal signed_unsigned: std_logic;
    signal funct3 : std_logic_vector(2 downto 0);
    -- for the signal below 12 is the length of immediate field
    signal extension: std_logic_vector(19 downto 0);
@@ -28,15 +27,12 @@ architecture Behavioral of immediate is
 
 begin
    opcode <= instruction_i(6 downto 0);
-   extension <= (others => instruction_i(31)) when signed_unsigned='1' else
-                (others => '0');
+   extension <= (others => instruction_i(31));
    funct3 <= instruction_i(14 downto 12);
    
    
    process (opcode) is
    begin
-
-      signed_unsigned <= '1';
       case opcode(6 downto 2) is
          when "01100" =>
             instruction_type <= r_type_instruction;
@@ -47,9 +43,6 @@ begin
                instruction_type <= shamt_instruction;
             else
                instruction_type <= i_type_instruction;
-            end if;
-            if(funct3 = "011") then
-               signed_unsigned <= '0';
             end if;
          when "11001" =>
             instruction_type <= i_type_instruction;
