@@ -1,3 +1,2 @@
-jal a5, L1
-li, a1, 10
-L1:li, a2, 10
+li, a0, 10
+auipc, a0, 1

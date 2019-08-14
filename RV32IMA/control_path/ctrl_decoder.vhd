@@ -51,10 +51,14 @@ begin
          when "11000" => --B type BEQ,BNE ~ funct3
             alu_2bit_op_o <= "01";
             branch_o <= '1';
-         when "11011" => -- JAL instruction
+         when "11011" => -- JAL instruction            
             reg_write_o <= '1';
             mem_to_reg_o <= "01";
             branch_o <= '1';
+         when "00101" => -- AUIPC instruction
+            alu_2bit_op_o <= "00";
+            reg_write_o <= '1';
+            alu_src_o <= '1';
          when others =>
       end case;
    end process;

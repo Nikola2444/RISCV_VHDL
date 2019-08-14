@@ -52,9 +52,10 @@ architecture Behavioral of data_path is
 
    signal bcc : std_logic; --branch condition complement
 
-   --pc_adder signal
-   signal pc_adder: std_logic_vector (31 downto 0);
-   
+   --pc_adder_s signal
+   signal pc_adder_s: std_logic_vector (31 downto 0);
+   --branch_adder signal
+   signal branch_adder_s: std_logic_vector (31 downto 0);
 --********************************************************
 begin
    
@@ -78,32 +79,36 @@ begin
    --***********Combinational logic***************
    bcc <= instruction_i(12);
 
-   --PC_adder update
-   pc_adder <= std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
-   
+   --pc_adder_s update
+   pc_adder_s <= std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
+
+   --branch_adder update
+   branch_adder_s <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg));
    -- PC_reg update
 
-   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' or instruction_i(3 downto 2) = "11")) else   
-              pc_adder;
+   --this mux covers conditional and unconditional branches
+   pc_next <= branch_adder_s when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' or instruction_i(3 downto 2) = "11")) else
+              pc_adder_s;
    
    -- update of alu inputs
    b_i_s <= read_data2_s when alu_src_i = '0' else
             immediate_extended_s;
-   a_i_s <= read_data1_s;
+   a_i_s <= read_data1_s when alu_src_i = '0' else
+            pc_reg;
 
    -- Reg_bank write_data_o update
    write_data_s <= extended_data_s when mem_to_reg_i = "10" else
-                   pc_adder when mem_to_reg_i = "01" else
+                   pc_adder_s when mem_to_reg_i = "01" else
                    alu_result_s;
    
    --********************************************
 
    with instruction_i(14 downto 12) select
       extended_data_s <= (31 downto 8 => read_ext_data_i(7)) & read_ext_data_i(7 downto 0) when "000",
-                          (31 downto 16 => read_ext_data_i(15)) & read_ext_data_i(15 downto 0) when "001",
-                          std_logic_vector(to_unsigned(0,24)) & read_ext_data_i(7 downto 0) when "100",
-                          std_logic_vector(to_unsigned(0,16)) & read_ext_data_i(15 downto 0) when "101",
-                          read_ext_data_i when others;
+      (31 downto 16 => read_ext_data_i(15)) & read_ext_data_i(15 downto 0) when "001",
+      std_logic_vector(to_unsigned(0,24)) & read_ext_data_i(7 downto 0) when "100",
+      std_logic_vector(to_unsigned(0,16)) & read_ext_data_i(15 downto 0) when "101",
+      read_ext_data_i when others;
 
    --***********Register bank instance***********
    register_bank_1: entity work.register_bank
