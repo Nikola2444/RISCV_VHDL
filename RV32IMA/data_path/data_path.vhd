@@ -24,7 +24,9 @@ entity data_path is
       mem_to_reg_i: in std_logic_vector(1 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
       --mem_write: in std_logic;-- data_path doenst need it
-      alu_src_i: in std_logic;      
+      alu_src_b_i: in std_logic;
+      alu_src_a_i: in std_logic;
+
       reg_write_i: in std_logic
     -- ******************************************************
       );
@@ -87,20 +89,23 @@ begin
    -- PC_reg update
 
    --this mux covers conditional and unconditional branches
-   pc_next <= branch_adder_s when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' or instruction_i(3 downto 2) = "11")) else
+   -- TODO: maybe insert more control signals to chose between jumps
+   pc_next <= branch_adder_s when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' and instruction_i(3 downto 2) = "00")) else --conditional_branches
+              branch_adder_s when (branch_i = '1' and instruction_i(3 downto 2) = "11") else --jal_instruction
+
+              alu_result_s when (branch_i = '1' and instruction_i(3 downto 2) = "01") else ----jarl_instruction
               pc_adder_s;
    
    -- update of alu inputs
-   b_i_s <= read_data2_s when alu_src_i = '0' else
+   b_i_s <= read_data2_s when alu_src_b_i = '0' else
             immediate_extended_s;
-   a_i_s <= read_data1_s when alu_src_i = '0' else
+   a_i_s <= read_data1_s when alu_src_a_i = '0' else
             pc_reg;
 
    -- Reg_bank write_data_o update
-   write_data_s <= extended_data_s when mem_to_reg_i = "10" else
-                   pc_adder_s when mem_to_reg_i = "01" else
+   write_data_s <= pc_adder_s when mem_to_reg_i = "01" else
+                   extended_data_s when mem_to_reg_i = "10"else
                    alu_result_s;
-   
    --********************************************
 
    with instruction_i(14 downto 12) select

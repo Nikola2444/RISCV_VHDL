@@ -12,7 +12,8 @@ entity control_path is
          mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
          mem_write_o: out std_logic;
-         alu_src_o: out std_logic;
+         alu_src_b_o: out std_logic;
+         alu_src_a_o: out std_logic;
          reg_write_o: out std_logic;
          alu_op_o: out std_logic_vector(4 downto 0)
          );  
@@ -30,7 +31,8 @@ begin
          mem_read_o => mem_read_o,
          mem_to_reg_o => mem_to_reg_o,
          mem_write_o => mem_write_o,
-         alu_src_o => alu_src_o,
+         alu_src_b_o => alu_src_b_o,
+         alu_src_a_o => alu_src_a_o,
          reg_write_o => reg_write_o,
          alu_2bit_op_o => alu_2bit_op_s);
 

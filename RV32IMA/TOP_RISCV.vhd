@@ -26,7 +26,8 @@ architecture structural of TOP_RISCV is
    signal mem_to_reg_s: std_logic_vector(1 downto 0);
    signal alu_op_s: std_logic_vector (4 downto 0);
    signal mem_write_s: std_logic;
-   signal alu_src_s: std_logic;
+   signal alu_src_b_s: std_logic;
+   signal alu_src_a_s: std_logic;
    signal reg_write_s: std_logic;
 begin
    -- Data_path will be instantiated here
@@ -46,7 +47,8 @@ begin
          mem_read_i         => mem_read_s,
          mem_to_reg_i       => mem_to_reg_s,
          alu_op_i           => alu_op_s,
-         alu_src_i          => alu_src_s,
+         alu_src_b_i          => alu_src_b_s,
+         alu_src_a_i          => alu_src_a_s,
          reg_write_i        => reg_write_s);
    -- Control_path will be instantiated here
    control_path_1: entity work.control_path
@@ -58,7 +60,8 @@ begin
          mem_read_o    => mem_read_s,
          mem_to_reg_o  => mem_to_reg_s,
          mem_write_o   => mem_ext_write_o,
-         alu_src_o     => alu_src_s,
+         alu_src_b_o     => alu_src_b_s,
+         alu_src_a_o     => alu_src_a_s,
          reg_write_o   => reg_write_s,
          alu_op_o      => alu_op_s);
 
