@@ -23,7 +23,7 @@ end entity;
 architecture structural of TOP_RISCV is
    signal branch_s: std_logic;
    signal mem_read_s: std_logic;
-   signal mem_to_reg_s: std_logic;
+   signal mem_to_reg_s: std_logic_vector(1 downto 0);
    signal alu_op_s: std_logic_vector (4 downto 0);
    signal mem_write_s: std_logic;
    signal alu_src_s: std_logic;

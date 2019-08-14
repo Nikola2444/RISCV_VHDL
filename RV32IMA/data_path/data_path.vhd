@@ -21,7 +21,7 @@ entity data_path is
       
       branch_i: in std_logic;
       mem_read_i: in std_logic;
-      mem_to_reg_i: in std_logic;
+      mem_to_reg_i: in std_logic_vector(1 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
       --mem_write: in std_logic;-- data_path doenst need it
       alu_src_i: in std_logic;      
@@ -51,6 +51,9 @@ architecture Behavioral of data_path is
    signal alu_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
 
    signal bcc : std_logic; --branch condition complement
+
+   --pc_adder signal
+   signal pc_adder: std_logic_vector (31 downto 0);
    
 --********************************************************
 begin
@@ -74,17 +77,23 @@ begin
    
    --***********Combinational logic***************
    bcc <= instruction_i(12);
-   -- PC_reg update
-   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and (alu_zero_s xor bcc) = '0') else
-              std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
 
+   --PC_adder update
+   pc_adder <= std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
+   
+   -- PC_reg update
+
+   pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' or instruction_i(3 downto 2) = "11")) else   
+              pc_adder;
+   
    -- update of alu inputs
    b_i_s <= read_data2_s when alu_src_i = '0' else
             immediate_extended_s;
    a_i_s <= read_data1_s;
 
    -- Reg_bank write_data_o update
-   write_data_s <= extended_data_s when mem_to_reg_i = '1' else
+   write_data_s <= extended_data_s when mem_to_reg_i = "10" else
+                   pc_adder when mem_to_reg_i = "01" else
                    alu_result_s;
    
    --********************************************
