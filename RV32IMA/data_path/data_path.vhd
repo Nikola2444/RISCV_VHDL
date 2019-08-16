@@ -27,7 +27,8 @@ entity data_path is
       alu_src_b_i: in std_logic;
       alu_src_a_i: in std_logic;
 
-      reg_write_i: in std_logic
+      reg_write_i: in std_logic;
+      alu_a_zero_i: in std_logic
     -- ******************************************************
       );
    
@@ -49,7 +50,7 @@ architecture Behavioral of data_path is
 
    -- Alu signals   
    signal alu_zero_s, alu_of_o_s: std_logic;
-   signal b_i_s, a_i_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal b_s, a_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
 
    signal bcc : std_logic; --branch condition complement
@@ -96,10 +97,11 @@ begin
               pc_adder_s;
    
    -- update of alu inputs
-   b_i_s <= read_data2_s when alu_src_b_i = '0' else
-            immediate_extended_s;
-   a_i_s <= read_data1_s when alu_src_a_i = '0' else
-            pc_reg;
+   b_s <= immediate_extended_s when alu_src_b_i = '1' else
+          read_data2_s;
+   a_s <= (others=>'0') when alu_a_zero_i = '1' else
+           pc_reg when alu_src_a_i = '1' else
+           read_data1_s ;
 
    -- Reg_bank write_data_o update
    write_data_s <= pc_adder_s when mem_to_reg_i = "01" else
@@ -146,8 +148,8 @@ begin
       generic map (
          WIDTH => DATA_WIDTH)
       port map (
-         a_i    => a_i_s,
-         b_i    => b_i_s,
+         a_i    => a_s,
+         b_i    => b_s,
          op_i   => alu_op_i,
          res_o  => alu_result_s,
          zero_o => alu_zero_s,

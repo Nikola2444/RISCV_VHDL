@@ -2,10 +2,10 @@ li a2, 1
 li a3, 1
 beq a2, a3, skip
 li a6, 6
-skip:jal a1, jump
+skip:jal a7, jump
 beq a2,a4,end
 li a6, 6
 jump: li a4, 1 
-jalr a1
+jalr a7
 li a6, 6
-end: li a5,2
+end: lui a5,1

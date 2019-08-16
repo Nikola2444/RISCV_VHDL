@@ -13,6 +13,7 @@ entity ctrl_decoder is
       alu_src_b_o: out std_logic;
       alu_src_a_o: out std_logic;
       reg_write_o: out std_logic;
+      alu_a_zero_o: out std_logic;
       alu_2bit_op_o: out std_logic_vector(1 downto 0)
       );  
 end entity;
@@ -31,6 +32,7 @@ begin
       alu_src_a_o <= '0';
       reg_write_o <= '0';
       alu_2bit_op_o <= "00";
+      alu_a_zero_o <='0';
 
       case opcode_i(6 downto 2) is
          when "00000" => --LOAD, 5v ~ funct3
@@ -67,6 +69,11 @@ begin
             reg_write_o <= '1';
             alu_src_b_o <= '1';
             alu_src_a_o <= '1';
+         when "01101" => -- LUI
+            alu_2bit_op_o <= "00";
+            alu_a_zero_o <='1';
+            reg_write_o <= '1';
+            alu_src_b_o <= '1';
          when others =>
       end case;
    end process;
