@@ -8,7 +8,7 @@ entity control_path is
          -- from top
          instruction_i: in std_logic_vector (31 downto 0);
          -- to datapath
-         branch_o: out std_logic;
+         branch_o: out std_logic_vector(1 downto 0);
          mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
          mem_write_o: out std_logic;

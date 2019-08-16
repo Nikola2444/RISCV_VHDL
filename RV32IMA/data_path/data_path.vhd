@@ -19,7 +19,7 @@ entity data_path is
       read_ext_data_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
       -- ********* control signals **************************
       
-      branch_i: in std_logic;
+      branch_i: in std_logic_vector(1 downto 0);
       mem_read_i: in std_logic;
       mem_to_reg_i: in std_logic_vector(1 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
@@ -90,10 +90,9 @@ begin
 
    --this mux covers conditional and unconditional branches
    -- TODO: maybe insert more control signals to chose between jumps
-   pc_next <= branch_adder_s when (branch_i = '1' and ((alu_zero_s xor bcc) = '0' and instruction_i(3 downto 2) = "00")) else --conditional_branches
-              branch_adder_s when (branch_i = '1' and instruction_i(3 downto 2) = "11") else --jal_instruction
-
-              alu_result_s when (branch_i = '1' and instruction_i(3 downto 2) = "01") else ----jarl_instruction
+   pc_next <= branch_adder_s when (branch_i = "01" and ((alu_zero_s xor bcc) = '0' )) else --conditional_branches
+              branch_adder_s when (branch_i = "10") else --jal_instruction
+              alu_result_s when (branch_i = "11") else ----jarl_instruction
               pc_adder_s;
    
    -- update of alu inputs

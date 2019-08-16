@@ -1,5 +1,11 @@
-li a0, 10
-jalr a0, a1, 16 
-li a1, 10
-li a2, 10
-L1:li a3, 10
+addi x12 x0 1
+addi x13 x0 1
+beq x12 x13 8
+addi x16 x0 6
+jal x11 28
+beq x12 x14 20
+addi x16 x0 6
+addi x14 x0 1
+jalr x1 x11 0
+addi x16 x0 6
+addi x15 x0 2

@@ -48,7 +48,7 @@ begin
       end if;
 
       if(to_integer(unsigned(read_reg2_i))=0) then
-         read_data1_o <= std_logic_vector(to_unsigned(0,WIDTH));
+         read_data2_o <= std_logic_vector(to_unsigned(0,WIDTH));
       else
          read_data2_o <= reg_bank_s(to_integer(unsigned(read_reg2_i)));
       end if;

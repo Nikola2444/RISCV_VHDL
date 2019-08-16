@@ -6,7 +6,7 @@ entity ctrl_decoder is
    port ( -- from data_path
       opcode_i: in std_logic_vector (6 downto 0);
       -- to data_path
-      branch_o: out std_logic;
+      branch_o: out std_logic_vector(1 downto 0);
       mem_read_o: out std_logic;
       mem_to_reg_o: out std_logic_vector(1 downto 0);
       mem_write_o: out std_logic;
@@ -23,7 +23,7 @@ begin
    contol_dec:process(opcode_i)is
    begin
       --default
-      branch_o <= '0';
+      branch_o <= "00";
       mem_read_o <= '0';
       mem_to_reg_o <= "00";
       mem_write_o <= '0';
@@ -52,16 +52,16 @@ begin
             reg_write_o <= '1';
          when "11000" => --B type BEQ,BNE ~ funct3
             alu_2bit_op_o <= "01";
-            branch_o <= '1';
+            branch_o <= "01";
          when "11011" => -- JAL instruction
             reg_write_o <= '1';
             mem_to_reg_o <= "01";
-            branch_o <= '1';
+            branch_o <= "10";
          when "11001" => -- JALR instruction
             mem_to_reg_o <= "01";
             reg_write_o <= '1';
             alu_src_b_o <= '1';
-            branch_o <= '1';
+            branch_o <= "11";
          when "00101" => -- AUIPC instruction
             alu_2bit_op_o <= "00";
             reg_write_o <= '1';
