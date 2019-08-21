@@ -21,8 +21,6 @@ package datapath_signals_pkg is
    signal branch_adder_id_s: std_logic_vector (31 downto 0);
    signal instruction_id_s: std_logic_vector (31 downto 0);
    --register addresses
-   signal read_reg1_id_s: std_logic_vector (4 downto 0);
-   signal read_reg2_id_s: std_logic_vector (4 downto 0);
    signal write_reg_id_s: std_logic_vector (4 downto 0);
 
    --*********       EXECUTE       **************
@@ -35,8 +33,6 @@ package datapath_signals_pkg is
    signal b_ex_s, a_ex_s: std_logic_vector(31 downto 0);
    signal alu_result_ex_s: std_logic_vector(31 downto 0);
    --register addresses
-   signal read_reg1_ex_s: std_logic_vector (4 downto 0);
-   signal read_reg2_ex_s: std_logic_vector (4 downto 0);
    signal write_reg_ex_s: std_logic_vector (4 downto 0);
 
    --*********       MEMORY        **************

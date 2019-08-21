@@ -80,11 +80,13 @@ begin
             read_data1_ex_s <= (others => '0');
             read_data2_ex_s <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
+            write_reg_ex_s <= (others => '0');
          else
             pc_adder_ex_s <= pc_adder_id_s;
             read_data1_ex_s <= read_data1_id_s;
             read_data2_ex_s <= read_data2_id_s;
             immediate_extended_ex_s <= immediate_extended_id_s;
+            write_reg_ex_s <= write_reg_id_s;
          end if;
       end if;      
    end process;
@@ -97,10 +99,12 @@ begin
             alu_result_mem_s <= (others => '0');
             read_data2_mem_s  <= (others => '0');
             pc_adder_mem_s <= (others => '0');
+            write_reg_mem_s <= (others => '0');
          else
             alu_result_mem_s <= alu_result_ex_s;
             read_data2_mem_s  <= read_data2_ex_s;
             pc_adder_mem_s <= pc_adder_ex_s;
+            write_reg_mem_s <= write_reg_ex_s;
          end if;
       end if;      
    end process;
@@ -112,9 +116,11 @@ begin
          if (reset = '0')then
             alu_result_wb_s <= (others => '0');
             pc_adder_wb_s <= (others => '0');
+            write_reg_wb_s <= (others => '0');
          else
             alu_result_wb_s <= alu_result_mem_s;
             pc_adder_wb_s <= pc_adder_mem_s; 
+            write_reg_wb_s <= write_reg_mem_s;
          end if;
       end if;      
    end process;
