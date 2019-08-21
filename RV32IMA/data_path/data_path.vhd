@@ -99,7 +99,7 @@ begin
             pc_adder_mem_s <= (others => '0');
          else
             alu_result_mem_s <= alu_result_ex_s;
-            read_data2_mem_s  <= read_reg2_ex_s;
+            read_data2_mem_s  <= read_data2_ex_s;
             pc_adder_mem_s <= pc_adder_ex_s;
          end if;
       end if;      

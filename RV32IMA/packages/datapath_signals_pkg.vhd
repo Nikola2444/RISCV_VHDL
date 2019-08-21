@@ -44,7 +44,7 @@ package datapath_signals_pkg is
    signal pc_adder_mem_s: std_logic_vector (31 downto 0);
    signal alu_result_mem_s: std_logic_vector(31 downto 0);
    signal write_reg_mem_s: std_logic_vector (4 downto 0);
-   signal read_data2_mem_s: std_logic_vector (4 downto 0);
+   signal read_data2_mem_s: std_logic_vector (31 downto 0);
 
    --*********      WRITEBACK      **************
 
