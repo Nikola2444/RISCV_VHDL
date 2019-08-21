@@ -32,17 +32,17 @@ begin
    write_reg_id_s <= instruction_i(11 downto 7);
 
    --*********** ID/EX register ******************
-   pc_proc:process (clk) is
+   id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
             funct3_ex_s <= (others => '0');
             funct7_ex_s <= (others => '0');
-            alu_a_zero_ex_s  <= (others => '0');
-            alu_src_a_ex_s <= (others => '0');
-            alu_src_b_ex_s <= (others => '0');
+            alu_a_zero_ex_s  <= '0';
+            alu_src_a_ex_s <= '0';
+            alu_src_b_ex_s <= '0';
             mem_to_reg_ex_s <= (others => '0');
-            mem_read_ex_s <= (others => '0');
+            mem_read_ex_s <= '0';
             alu_2bit_op_ex_s <= (others => '0');
             read_reg1_ex_s <= (others => '0');
             read_reg2_ex_s <= (others => '0');
@@ -64,15 +64,15 @@ begin
    end process;
 
    --*********** EX/MEM register ******************
-   pc_proc:process (clk) is
+   ex_mem:process (clk) is
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
 
-            mem_write_mem_s <= (others => '0');
-            reg_write_mem_s <= (others => '0');
+            mem_write_mem_s <= '0';
+            reg_write_mem_s <= '0';
             mem_to_reg_mem_s<= (others => '0');
-            mem_read_mem_s <= (others => '0');
+            mem_read_mem_s <= '0';
             write_reg_mem_s <= (others => '0');
          else
             mem_write_mem_s <= mem_write_ex_s;
@@ -85,11 +85,11 @@ begin
    end process;
 
    --*********** MEM/WB register ******************
-   pc_proc:process (clk) is
+   mem_wb:process (clk) is
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
-            reg_write_wb_s <= (others => '0');
+            reg_write_wb_s <= '0';
             mem_to_reg_wb_s <= (others => '0');
             write_reg_wb_s <= (others => '0');
          else

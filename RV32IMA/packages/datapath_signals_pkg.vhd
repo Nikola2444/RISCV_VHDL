@@ -49,6 +49,7 @@ package datapath_signals_pkg is
    --*********      WRITEBACK      **************
 
    signal pc_adder_wb_s: std_logic_vector (31 downto 0);
+   signal alu_result_wb_s: std_logic_vector(31 downto 0);
    signal extended_data_wb_s: std_logic_vector (31 downto 0);
    signal write_data_wb_s: std_logic_vector (31 downto 0);
    signal write_reg_wb_s: std_logic_vector (4 downto 0);
