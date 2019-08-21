@@ -9,20 +9,20 @@ entity TOP_RISCV is
       clk: in std_logic;
       reset: in std_logic;
       -- ********* INSTRUCTION memory i/o *******************       
-      instruction_i: in std_logic_vector(31 downto 0);
-      pc_o: out std_logic_vector(31 downto 0);
+      instr_mem_read_i: in std_logic_vector(31 downto 0);
+      instr_mem_address_o: out std_logic_vector(31 downto 0);
       -- ********* DATA memory i/o **************************
-      mem_ext_write_o: out std_logic;  
-      ext_data_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      read_ext_data_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
-      write_ext_data_o: out std_logic_vector(DATA_WIDTH - 1 downto 0));
+      mem_write_o: out std_logic;  
+      data_mem_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
+      data_mem_read_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
+      data_mem_write_o: out std_logic_vector(DATA_WIDTH - 1 downto 0));
 
 
 end entity;
 
 architecture structural of TOP_RISCV is
    signal branch_s: std_logic_vector(1 downto 0);
-   signal mem_read_s: std_logic;
+   signal mem_read_s: std_logic; --TODO where should this signal go, should it exist?
    signal mem_to_reg_s: std_logic_vector(1 downto 0);
    signal alu_op_s: std_logic_vector (4 downto 0);
    signal mem_write_s: std_logic;
@@ -39,11 +39,11 @@ begin
       port map (
          clk                => clk,
          reset              => reset,
-         pc_o               => pc_o,
-         instruction_i      => instruction_i,
-         ext_data_address_o => ext_data_address_o,
-         write_ext_data_o   => write_ext_data_o,
-         read_ext_data_i    => read_ext_data_i,
+         instr_mem_address_o    => instr_address_o,
+         instr_mem_read_i      => instr_read_i,
+         data_mem_address_o => data_address_o,
+         data_mem_write_o   => data_write_o,
+         data_mem_read_i    => data_read_i,
          branch_i           => branch_s,
          alu_a_zero_i   => alu_a_zero_s,
          mem_read_i         => mem_read_s,
@@ -62,7 +62,7 @@ begin
          alu_a_zero_o   => alu_a_zero_s,
          mem_read_o    => mem_read_s,
          mem_to_reg_o  => mem_to_reg_s,
-         mem_write_o   => mem_ext_write_o,
+         mem_write_o   => mem_write_o,
          alu_src_b_o     => alu_src_b_s,
          alu_src_a_o     => alu_src_a_s,
          reg_write_o   => reg_write_s,

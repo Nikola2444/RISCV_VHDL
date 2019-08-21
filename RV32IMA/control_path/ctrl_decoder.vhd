@@ -25,7 +25,7 @@ begin
    begin
       --default
       branch_o <= "00";
-      mem_read_o <= '0';
+      mem_read_o <= '1';
       mem_to_reg_o <= "00";
       mem_write_o <= '0';
       alu_src_b_o <= '0';

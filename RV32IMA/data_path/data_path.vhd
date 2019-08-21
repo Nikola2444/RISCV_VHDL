@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.datapath_signals_pkg.all;
 
 
 entity data_path is
@@ -9,113 +10,164 @@ entity data_path is
       -- ********* Sync ports *****************************
       clk: in std_logic;
       reset: in std_logic;      
-      -- ********* INSTRUCTION memory i/o *******************
-      pc_o: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
-      instruction_i: in std_logic_vector(31 downto 0);
-      -- ********* DATA memory i/o **************************
 
-      ext_data_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      write_ext_data_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      read_ext_data_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
+      -- ********* INSTRUCTION memory i/o *******************
+      instr_mem_address_o: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
+      instr_mem_read_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
+
+      -- ********* DATA memory i/o **************************
+      data_mem_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
+      data_mem_write_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
+      data_mem_read_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
+
       -- ********* control signals **************************
-      
       branch_i: in std_logic_vector(1 downto 0);
       mem_read_i: in std_logic;
       mem_to_reg_i: in std_logic_vector(1 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
-      --mem_write: in std_logic;-- data_path doenst need it
-      alu_src_b_i: in std_logic;
       alu_src_a_i: in std_logic;
-
+      alu_src_b_i: in std_logic;
+      --alu_forward_a_i: in std_logic_vector (1 downto 0);
+      --alu_forward_b_i: in std_logic_vector (1 downto 0);
+      --if_id_reg_en_i: in std_logic;
+      --if_id_reg_flush_i: in std_logic;
       reg_write_i: in std_logic;
       alu_a_zero_i: in std_logic
-    -- ******************************************************
       );
    
 end entity;
 
 
 architecture Behavioral of data_path is
-   --**************REGISTERS*********************************
-   
-   signal pc_reg, pc_next: std_logic_vector (31 downto 0);
-   
-   --********************************************************
-
-
-   --**************SIGNALS*********************************
-   
-   signal read_data1_s, read_data2_s, write_data_s, extended_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);
-   signal immediate_extended_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-
-   -- Alu signals   
-   signal alu_zero_s, alu_of_o_s: std_logic;
-   signal b_s, a_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-   signal alu_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-
-   signal bcc : std_logic; --branch condition complement
-
-   --pc_adder_s signal
-   signal pc_adder_s: std_logic_vector (31 downto 0);
-   --branch_adder signal
-   signal branch_adder_s: std_logic_vector (31 downto 0);
---********************************************************
 begin
    
-
-   --***********Sequential logic******************
-   
+   --*********** Sequential logic ******************
+   --*********** Program Counter ******************
    pc_proc:process (clk) is
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
-            pc_reg <= (others => '0');
+            pc_reg_if <= (others => '0');
          else
-            pc_reg <= pc_next;
+            pc_reg_if <= pc_next_if;
          end if;
       end if;      
    end process;
 
-   --*********************************************
+   --*********** IF/ID register ******************
 
+   pc_proc:process (clk) is
+   begin
+      if (rising_edge(clk)) then
+         --if(if_id_reg_en_i)then
+            if (reset = '0')then -- or if_id_reg_flush_i='1'
+               pc_reg_id_s <= (others => '0');
+               pc_adder_id_s <= (others => '0');
+            else
+               pc_reg_id_s <= pc_reg_if_s;
+               pc_adder_id_s <= pc_adder_if_s;
+            end if;
+         --end if;
+      end if;      
+   end process;
    
+   --*********** ID/EX register ******************
+   pc_proc:process (clk) is
+   begin
+      if (rising_edge(clk)) then
+         if (reset = '0')then
+            pc_adder_ex_s <= (others => '0');
+            read_data1_ex_s <= (others => '0');
+            read_data2_ex_s <= (others => '0');
+            immediate_extended_ex_s <= (others => '0');
+         else
+            pc_adder_ex_s <= pc_adder_id_s;
+            read_data1_ex_s <= read_data1_id_s;
+            read_data2_ex_s <= read_data2_id_s;
+            immediate_extended_ex_s <= immediate_extended_id_s;
+         end if;
+      end if;      
+   end process;
+
+   --*********** EX/MEM register ******************
+   pc_proc:process (clk) is
+   begin
+      if (rising_edge(clk)) then
+         if (reset = '0')then
+            alu_result_mem_s <= (others => '0');
+            read_data2_mem_s  <= (others => '0');
+            pc_adder_mem_s <= (others => '0');
+         else
+            alu_result_mem_s <= alu_result_ex_s;
+            read_data2_mem_s  <= read_reg2_ex_s;
+            pc_adder_mem_s <= pc_adder_ex_s;
+         end if;
+      end if;      
+   end process;
+
+   --*********** MEM/WB register ******************
+   pc_proc:process (clk) is
+   begin
+      if (rising_edge(clk)) then
+         if (reset = '0')then
+            alu_result_wb_s <= (others => '0');
+            pc_adder_wb_s <= (others => '0');
+         else
+            alu_result_wb_s <= alu_result_mem_s;
+            pc_adder_wb_s <= pc_adder_mem_s; 
+         end if;
+      end if;      
+   end process;
+
    --***********Combinational logic***************
-   bcc <= instruction_i(12);
+   bcc_id_s <= instr_read_i(12);
 
    --pc_adder_s update
-   pc_adder_s <= std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
+   pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, DATA_WIDTH));
 
    --branch_adder update
-   branch_adder_s <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg));
-   -- PC_reg update
+   branch_adder_id_s <= std_logic_vector(unsigned(immediate_extended_id_s) + unsigned(pc_reg_id_s));
+
+   --check if branch condition is met
+   branch_condition_id_s <= '1' when ((signed(a_i) = signed(b_i)) and instr_read_i(14 downto 13) = "00") else
+                            '1' when ((signed(a_i) < signed(b_i)) and instr_read_i(14 downto 13) = "10") else
+                            '1' when ((signed(a_i) > signed(b_i)) and instr_read_i(14 downto 13) = "11") else
+                            '0';
+
 
    --this mux covers conditional and unconditional branches
    -- TODO: maybe insert more control signals to chose between jumps
-   pc_next <= branch_adder_s when (branch_i = "01" and ((alu_zero_s xor bcc) = '0' )) else --conditional_branches
-              branch_adder_s when (branch_i = "10") else --jal_instruction
-              alu_result_s when (branch_i = "11") else ----jarl_instruction
-              pc_adder_s;
+   pc_next_if_s <=  branch_adder_id_s when (branch_i = "01" and ((branch_condition_id_s xor bcc_id_s) = '1' )) else --conditional_branches
+                    branch_adder_id_s when (branch_i = "10") else --jal_instruction
+                    alu_result_ex_s when (branch_i = "11") else ----jarl_instruction TODO additional logic needed for stalling in this case
+                    pc_adder_id_s;
    
    -- update of alu inputs
-   b_s <= immediate_extended_s when alu_src_b_i = '1' else
-          read_data2_s;
-   a_s <= (others=>'0') when alu_a_zero_i = '1' else
-           pc_reg when alu_src_a_i = '1' else
-           read_data1_s ;
+   b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
+             read_data2_ex_s;
 
-   -- Reg_bank write_data_o update
-   write_data_s <= pc_adder_s when mem_to_reg_i = "01" else
-                   extended_data_s when mem_to_reg_i = "10"else
-                   alu_result_s;
-   --********************************************
+   a_ex_s <= (others=>'0') when alu_a_zero_i = '1' else
+             pc_reg_ex_s when alu_src_a_i = '1' else
+             read_data1_ex_s ;
 
-   with instruction_i(14 downto 12) select
-      extended_data_s <= (31 downto 8 => read_ext_data_i(7)) & read_ext_data_i(7 downto 0) when "000",
-      (31 downto 16 => read_ext_data_i(15)) & read_ext_data_i(15 downto 0) when "001",
-      std_logic_vector(to_unsigned(0,24)) & read_ext_data_i(7 downto 0) when "100",
-      std_logic_vector(to_unsigned(0,16)) & read_ext_data_i(15 downto 0) when "101",
-      read_ext_data_i when others;
+   -- Reg_bank write_data update
+   write_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
+                      extended_data_wb_s when mem_to_reg_i = "10"else
+                      alu_result_wb_s;
 
+
+   -- extend data based on type of load instruction
+   with instr_read_i(14 downto 12) select
+      extended_data_wb_s <=  (31 downto 8 => read_ext_data_i(7))   & data_mem_read_i(7 downto 0) when "000",
+                             (31 downto 16 => read_ext_data_i(15)) & data_mem_read_i(15 downto 0) when "001",
+                             std_logic_vector(to_unsigned(0,24))   & data_mem_read_i(7 downto 0) when "100",
+                             std_logic_vector(to_unsigned(0,16))   & data_mem_read_i(15 downto 0) when "101",
+                             read_ext_data_i when others;
+
+
+   read_reg1_id_s <= instr_read_i(19 downto 15);
+   read_reg2_id_s <= instr_read_i(24 downto 20);
+   write_reg_id_s <= instr_read_i(11 downto 7);
    --***********Register bank instance***********
    register_bank_1: entity work.register_bank
       generic map (
@@ -124,12 +176,12 @@ begin
          clk        => clk,
          reset      => reset,
          reg_write_i  => reg_write_i,
-         read_reg1_i  => instruction_i(19 downto 15),
-         read_reg2_i  => instruction_i(24 downto 20),
-         read_data1_o => read_data1_s,
-         read_data2_o => read_data2_s,
-         write_reg_i  => instruction_i(11 downto 7),
-         write_data_i => write_data_s);
+         read_reg1_i  => read_reg1_id_s,
+         read_reg2_i  => read_reg2_id_s,
+         read_data1_o => read_data1_id_s,
+         read_data2_o => read_data2_id_s,
+         write_reg_i  => write_reg_wb_s,
+         write_data_i => write_data_wb_s);
 
    --*********************************************
    
@@ -138,7 +190,7 @@ begin
    
    immediate_1: entity work.immediate
       port map (
-         instruction_i        => instruction_i,
+         instr_read_i        => instr_read_i,
          immediate_extended_o => immediate_extended_s);
    
    --********************************************
@@ -152,15 +204,18 @@ begin
          b_i    => b_s,
          op_i   => alu_op_i,
          res_o  => alu_result_s,
-         zero_o => alu_zero_s,
-         of_o   => alu_of_o_s);
+         zero_o => alu_zero_ex_s,
+         of_o   => alu_of_ex_s);
    --********************************************    
 
 
    --***********Outputs**************************
-   pc_o <= pc_reg;
-   ext_data_address_o <= alu_result_s;
-   write_ext_data_o <= read_data2_s;
+   -- Instruction memory
+   instr_mem_address_o <= pc_reg_if_s;
+
+   -- Data memory
+   data_mem_address_o <= alu_result_mem_s; 
+   data_mem_write_o <= read_data2_mem_s;
    
 end architecture;
 
