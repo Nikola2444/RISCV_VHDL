@@ -100,11 +100,13 @@ begin
             read_data2_mem_s  <= (others => '0');
             pc_adder_mem_s <= (others => '0');
             write_reg_mem_s <= (others => '0');
+            pc_reg_ex_s <= (others => '0');
          else
             alu_result_mem_s <= alu_result_ex_s;
             read_data2_mem_s  <= read_data2_ex_s;
             pc_adder_mem_s <= pc_adder_ex_s;
             write_reg_mem_s <= write_reg_ex_s;
+            pc_reg_ex_s <= pc_reg_id_s;
          end if;
       end if;      
    end process;

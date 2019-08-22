@@ -50,6 +50,7 @@ begin
             read_reg2_ex_s <= (others => '0');
             write_reg_ex_s <= (others => '0');
             reg_write_ex_s <= '0';
+            mem_write_ex_s <= '0';
          else
             funct7_ex_s <= funct7_id_s;
             funct3_ex_s <= funct3_id_s;
@@ -63,6 +64,7 @@ begin
             read_reg2_ex_s <= read_reg2_id_s;
             write_reg_ex_s <= write_reg_id_s;
             reg_write_ex_s <= reg_write_id_s;
+            mem_write_ex_s <= mem_write_id_s;
          end if;
       end if;      
    end process;
