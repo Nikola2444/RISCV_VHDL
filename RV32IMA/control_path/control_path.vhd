@@ -31,6 +31,8 @@ begin
    read_reg2_id_s <= instruction_i(24 downto 20);
    write_reg_id_s <= instruction_i(11 downto 7);
 
+   funct7_id_s <= instruction_i(31 downto 25);
+   funct3_id_s <= instruction_i(14 downto 12);
    --*********** ID/EX register ******************
    id_ex:process (clk) is
    begin
@@ -47,6 +49,7 @@ begin
             read_reg1_ex_s <= (others => '0');
             read_reg2_ex_s <= (others => '0');
             write_reg_ex_s <= (others => '0');
+            reg_write_ex_s <= '0';
          else
             funct7_ex_s <= funct7_id_s;
             funct3_ex_s <= funct3_id_s;
@@ -59,6 +62,7 @@ begin
             read_reg1_ex_s <= read_reg1_id_s;
             read_reg2_ex_s <= read_reg2_id_s;
             write_reg_ex_s <= write_reg_id_s;
+            reg_write_ex_s <= reg_write_id_s;
          end if;
       end if;      
    end process;

@@ -6,20 +6,20 @@ use ieee.numeric_std.all;
 entity forwarding_unit is
    port (
       -- ex_mem inputs
-      ex_mem_reg_write: in std_logic;
-      ex_mem_reg_rd: in std_logic_vector(4 downto 0);
+      reg_write_mem_i: in std_logic;
+      rd_reg_mem_i: in std_logic_vector(4 downto 0);
       
       -- mem_wb inputs
-      mem_wb_reg_write: in std_logic;
-      mem_wb_reg_rd: in std_logic_vector(4 downto 0);
+      write_reg_wb_i: in std_logic;
+      rd_reg_wb_i: in std_logic_vector(4 downto 0);
 
       -- id_ex inputs
-      id_ex_reg_rs1: in std_logic_vector(4 downto 0);
-      id_ex_reg_rs2: in std_logic_vector(4 downto 0);
+      rs1_reg_ex_i: in std_logic_vector(4 downto 0);
+      rs2_reg_ex_i: in std_logic_vector(4 downto 0);
 
       --if_id inputs
-      if_id_reg_rs1: in std_logic_vector(4 downto 0);
-      if_id_reg_rs2: in std_logic_vector(4 downto 0);
+      rs1_reg_id_i: in std_logic_vector(4 downto 0);
+      rs2_reg_id_i: in std_logic_vector(4 downto 0);
       --forward control outputs
       forward_a: out std_logic_vector (1 downto 0);
       forward_b: out std_logic_vector(1 downto 0);
@@ -38,24 +38,24 @@ begin
    --process that checks whether forwarding for instructions in EX stage is needed or not.
    -- forwarding from MEM stage has advantage over forwading information from WB
    -- stage, because information contained there is more fresh than in WB.
-   forward_proc:process(ex_mem_reg_write, ex_mem_reg_rd, mem_wb_reg_write, mem_wb_reg_rd,
-                        id_ex_reg_rs1, id_ex_reg_rs2)is
+   forward_proc:process(reg_write_mem_i, rd_reg_mem_i, write_reg_wb_i, rd_reg_wb_i,
+                        rs1_reg_ex_i, rs2_reg_ex_i)is
    begin
       forward_a <= "00";
       forward_b <= "00";
       -- forwarding from WB stage
-      if (mem_wb_reg_write = '1' and mem_wb_reg_rd /= zero_c)then
-         if (mem_wb_reg_rd = id_ex_reg_rs1)then
+      if (write_reg_wb_i = '1' and rd_reg_wb_i /= zero_c)then
+         if (rd_reg_wb_i = rs1_reg_ex_i)then
             forward_a <= "01";
-         elsif(mem_wb_reg_rd = id_ex_reg_rs2)then
+         elsif(rd_reg_wb_i = rs2_reg_ex_i)then
             forward_b <= "01";            
          end if;   
       end if;
       -- forwarding from MEM stage
-      if (ex_mem_reg_write = '1' and ex_mem_reg_rd /= zero_c)then
-         if (ex_mem_reg_rd = id_ex_reg_rs1)then
+      if (reg_write_mem_i = '1' and rd_reg_mem_i /= zero_c)then
+         if (rd_reg_mem_i = rs1_reg_ex_i)then
             forward_a <= "10";
-         elsif (ex_mem_reg_rd = id_ex_reg_rs2)then
+         elsif (rd_reg_mem_i = rs2_reg_ex_i)then
             forward_b <= "10";
          end if;
       end if;      
@@ -66,24 +66,24 @@ begin
    --ID stage or not.
    -- forwarding from MEM stage has advantage over forwading information from WB
    -- stage, because information contained there is more fresh than in WB.
-   forward_branch_proc:process(ex_mem_reg_write, ex_mem_reg_rd, mem_wb_reg_write, mem_wb_reg_rd,
-                               if_id_reg_rs1, if_id_reg_rs2)is
+   forward_branch_proc:process(reg_write_mem_i, rd_reg_mem_i, write_reg_wb_i, rd_reg_wb_i,
+                               rs1_reg_id_i, rs2_reg_id_i)is
    begin
       forward_branch_b <= "00";
       forward_branch_a <= "00";
       -- forwarding from WB stage
-      if (mem_wb_reg_write = '1' and mem_wb_reg_rd /= zero_c)then
-         if (mem_wb_reg_rd = if_id_reg_rs1)then
+      if (write_reg_wb_i = '1' and rd_reg_wb_i /= zero_c)then
+         if (rd_reg_wb_i = rs1_reg_id_i)then
             forward_branch_a <= "01";
-         elsif(mem_wb_reg_rd = if_id_reg_rs2)then
+         elsif(rd_reg_wb_i = rs2_reg_id_i)then
             forward_branch_b <= "01";
          end if;   
       end if;
       -- forwarding from MEM stage
-      if (ex_mem_reg_write = '1' and ex_mem_reg_rd /= zero_c)then
-         if (ex_mem_reg_rd = if_id_reg_rs1)then
+      if (reg_write_mem_i = '1' and rd_reg_mem_i /= zero_c)then
+         if (rd_reg_mem_i = rs1_reg_id_i)then
             forward_branch_a <= "10";
-         elsif (ex_mem_reg_rd = if_id_reg_rs2)then
+         elsif (rd_reg_mem_i = rs2_reg_id_i)then
             forward_branch_b <= "10";
          end if;
       end if;      

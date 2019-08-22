@@ -7,12 +7,12 @@ entity hazard_unit is
       clk: in std_logic;
       reset : in std_logic;
       
-      id_ex_reg_write_i: in std_logic;
-      id_ex_mem_read_i:in std_logic;
-      id_ex_reg_rd_i: in std_logic_vector(4 downto 0);
+      write_reg_id_i: in std_logic;
+      mem_read_ex_i:in std_logic;
+      rd_reg_ex_i: in std_logic_vector(4 downto 0);
 
-      if_id_reg_rs1_i: in std_logic_vector(4 downto 0);
-      if_id_reg_rs2_i: in std_logic_vector(4 downto 0);
+      rs1_reg_id_i: in std_logic_vector(4 downto 0);
+      rs2_reg_id_i: in std_logic_vector(4 downto 0);
 
       -- inputs needed to deal with branch data hazards
       branch_id_i: in std_logic_vector(1 downto 0);
@@ -30,6 +30,7 @@ architecture behavioral of hazard_unit is
    signal state_reg, state_next: stall_enum;
    signal control_group_s:std_logic_vector(2 downto 0):=(others =>'0');
 begin
+   
    process (clk)is
    begin
       if (rising_edge(clk))then
@@ -41,8 +42,8 @@ begin
       end if;
    end process;
    
-   process (id_ex_mem_read_i, id_ex_reg_rd_i, id_ex_reg_write_i,
-            if_id_reg_rs1_i, if_id_reg_rs2_i, branch_id_i, state_reg, state_next)is
+   process (mem_read_ex_i, rd_reg_ex_i, write_reg_id_i,
+            rs1_reg_id_i, rs2_reg_id_i, branch_id_i, state_reg, state_next)is
    begin
       control_group_s <= (others =>'0');
       state_next <= state_reg;
@@ -51,25 +52,25 @@ begin
          when stall_1_clk=>
             --non load instruction in EX, but in ID is a branch instruction. 1
             --clk stall maybe needed
-            if(id_ex_reg_write_i = '1' and id_ex_mem_read_i = '0')then
-               if (id_ex_reg_rd_i = if_id_reg_rs1_i and (branch_id_i = "01" or branch_id_i = "11"))then
+            if(write_reg_id_i = '1' and mem_read_ex_i = '0')then
+               if (rd_reg_ex_i = rs1_reg_id_i and (branch_id_i = "01" or branch_id_i = "11"))then
                   control_group_s <= (others =>'1');
-               elsif (id_ex_reg_rd_i = if_id_reg_rs2_i and branch_id_i = "01")then
+               elsif (rd_reg_ex_i = rs2_reg_id_i and branch_id_i = "01")then
                   control_group_s <= (others =>'1');
                end if;
                state_next <= stall_1_clk;
             end if;
             --load instruction in EX and branch instruction in ID. 2 clk stall
             --maybe needed
-            if(id_ex_mem_read_i = '1' and branch_id_i /= "10")then
+            if(mem_read_ex_i = '1' and branch_id_i /= "10")then
                control_group_s <= (others =>'1');
                state_next <= stall_2_clk;
             end if;
 
             --load in EX, but in ID is a non branch instruction. 1
             --clk stall maybe needed
-            if (id_ex_mem_read_i = '1' and branch_id_i = "00")then               
-               if((id_ex_reg_rd_i = if_id_reg_rs1_i) or (id_ex_reg_rd_i = if_id_reg_rs2_i))then
+            if (mem_read_ex_i = '1' and branch_id_i = "00")then               
+               if((rd_reg_ex_i = rs1_reg_id_i) or (rd_reg_ex_i = rs2_reg_id_i))then
                   control_group_s <= (others =>'1');
                end if;
                state_next <= stall_1_clk;

@@ -146,7 +146,7 @@ begin
    pc_next_if_s <=  branch_adder_id_s when (branch_i = "01" and ((branch_condition_id_s xor bcc_id_s) = '1' )) else --conditional_branches
                     branch_adder_id_s when (branch_i = "10") else --jal_instruction
                     alu_result_ex_s when (branch_i = "11") else ----jarl_instruction TODO additional logic needed for stalling in this case
-                    pc_adder_id_s;
+                    pc_adder_if_s;
    
    -- update of alu inputs
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else

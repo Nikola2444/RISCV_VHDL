@@ -18,6 +18,7 @@ architecture Behavioral of TOP_RISCV_tb is
    signal reset: std_logic;       
    --Instruction_mem_signals
    signal wea_instr_s,web_instr_s: std_logic;
+   signal rea_instr_s,reb_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
    signal dia_instr_s,dib_instr_s:std_logic_vector(31 downto 0);
    signal doa_instr_s,dob_instr_s:std_logic_vector(31 downto 0);
@@ -46,7 +47,7 @@ begin
       generic map(WADDR => 10)
       port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
-                en_b_i => '1',
+                en_b_i => reb_instr_s,
                 we_a_i => wea_instr_s,
                 we_b_i => web_instr_s,
                 addr_a_i => addra_instr_s,
@@ -94,7 +95,8 @@ begin
       variable i: integer:= 0;
    begin
       reset <= '0';
-      wea_instr_s <= '1';      
+      wea_instr_s <= '1';
+      reb_instr_s <= '0';
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
          addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
@@ -105,6 +107,7 @@ begin
       
       wea_instr_s <= '0';
       reset <= '1' after 20 ns;
+      reb_instr_s <= '1';
       wait;
    end process;
    --****************************************************
