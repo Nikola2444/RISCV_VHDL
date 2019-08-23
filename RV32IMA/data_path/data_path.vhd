@@ -27,11 +27,13 @@ entity data_path is
       alu_op_i: in std_logic_vector (4 downto 0);      
       alu_src_a_i: in std_logic;
       alu_src_b_i: in std_logic;
-      --alu_forward_a_i: in std_logic_vector (1 downto 0);
-      --alu_forward_b_i: in std_logic_vector (1 downto 0);
+      alu_forward_a_i: in std_logic_vector (1 downto 0);
+      alu_forward_b_i: in std_logic_vector (1 downto 0);
+      branch_forward_a_i: in std_logic_vector (1 downto 0); 
+      branch_forward_b_i: in std_logic_vector(1 downto 0);
       --if_id_reg_en_i: in std_logic;
       --if_id_reg_flush_i: in std_logic;
-      reg_write_i: in std_logic;
+      reg_write_i: in std_logic;     
       alu_a_zero_i: in std_logic
       );
    
@@ -135,11 +137,20 @@ begin
 
    --branch_adder update
    branch_adder_id_s <= std_logic_vector(unsigned(immediate_extended_id_s) + unsigned(pc_reg_id_s));
-
+   
+   --branch condition inputs update
+   branch_condition_a_ex_s <= write_data_wb_s when branch_forward_a_i = "01" else
+                           alu_result_mem_s when branch_forward_a_i = "10" else
+                           read_data1_id_s;
+   branch_condition_b_ex_s <= write_data_wb_s when branch_forward_b_i = "01" else
+                           alu_result_mem_s when branch_forward_b_i = "10" else
+                           read_data2_id_s;
+                           
+                           
    --check if branch condition is met
-   branch_condition_id_s <= '1' when ((signed(read_data1_id_s) = signed(read_data2_id_s)) and instr_mem_read_i(14 downto 13) = "00") else
-                            '1' when ((signed(read_data1_id_s) < signed(read_data2_id_s)) and instr_mem_read_i(14 downto 13) = "10") else
-                            '1' when ((signed(read_data1_id_s) > signed(read_data2_id_s)) and instr_mem_read_i(14 downto 13) = "11") else
+   branch_condition_id_s <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
+                            '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
+                            '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
                             '0';
 
 
@@ -149,14 +160,22 @@ begin
                     branch_adder_id_s when (branch_i = "10") else --jal_instruction
                     alu_result_ex_s when (branch_i = "11") else ----jarl_instruction TODO additional logic needed for stalling in this case
                     pc_adder_if_s;
-   
+
+   --forwarding muxes
+   alu_forward_a_ex_s <= write_data_wb_s when alu_forward_a_i = "01" else
+                     alu_result_mem_s when alu_forward_a_i = "10" else
+                     read_data1_ex_s;
+   alu_forward_b_ex_s <= write_data_wb_s when alu_forward_b_i = "01" else
+                     alu_result_mem_s when alu_forward_b_i = "10" else
+                     read_data2_ex_s;
    -- update of alu inputs
+   
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
-             read_data2_ex_s;
+             alu_forward_b_ex_s;
 
    a_ex_s <= (others=>'0') when alu_a_zero_i = '1' else
              pc_reg_ex_s when alu_src_a_i = '1' else
-             read_data1_ex_s ;
+             alu_forward_a_ex_s;
 
    -- Reg_bank write_data update
    write_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else

@@ -16,6 +16,9 @@ package datapath_signals_pkg is
    signal pc_adder_id_s: std_logic_vector (31 downto 0);
    signal pc_reg_id_s: std_logic_vector (31 downto 0);
    signal read_data1_id_s, read_data2_id_s, immediate_extended_id_s: std_logic_vector (31 downto 0);
+   --branch condidtion inputs
+   signal branch_condition_a_ex_s, branch_condition_b_ex_s:std_logic_vector(31 downto 0);   
+   
    signal branch_condition_id_s,bcc_id_s : std_logic; --branch condition complement
    --branch_adder signal
    signal branch_adder_id_s: std_logic_vector (31 downto 0);
@@ -30,7 +33,8 @@ package datapath_signals_pkg is
    signal pc_adder_ex_s: std_logic_vector (31 downto 0);
    signal pc_reg_ex_s: std_logic_vector (31 downto 0);
    signal read_data1_ex_s, read_data2_ex_s, immediate_extended_ex_s: std_logic_vector (31 downto 0);
-   -- Alu signals   
+   -- Alu signals
+   signal alu_forward_a_ex_s, alu_forward_b_ex_s: std_logic_vector(31 downto 0);
    signal alu_zero_ex_s, alu_of_ex_s: std_logic;
    signal b_ex_s, a_ex_s: std_logic_vector(31 downto 0);
    signal alu_result_ex_s: std_logic_vector(31 downto 0);

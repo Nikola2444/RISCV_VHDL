@@ -30,6 +30,12 @@ architecture structural of TOP_RISCV is
    signal alu_src_a_s: std_logic;
    signal alu_a_zero_s: std_logic;
    signal reg_write_s: std_logic;
+
+
+   signal alu_forward_a_s    : std_logic_vector (1 downto 0);
+   signal alu_forward_b_s    : std_logic_vector (1 downto 0);
+   signal branch_forward_a_s : std_logic_vector (1 downto 0);
+   signal branch_forward_b_s : std_logic_vector(1 downto 0);
 begin
    -- Data_path will be instantiated here
    --************************************
@@ -51,7 +57,11 @@ begin
          alu_op_i           => alu_op_s,
          alu_src_b_i          => alu_src_b_s,
          alu_src_a_i          => alu_src_a_s,
-         reg_write_i        => reg_write_s);
+         reg_write_i        => reg_write_s,
+         alu_forward_a_i => alu_forward_a_s,
+         alu_forward_b_i => alu_forward_b_s,
+         branch_forward_a_i => branch_forward_a_s,
+         branch_forward_b_i => branch_forward_b_s);
    -- Control_path will be instantiated here
    control_path_1: entity work.control_path
       port map (
@@ -66,7 +76,11 @@ begin
          alu_src_b_o     => alu_src_b_s,
          alu_src_a_o     => alu_src_a_s,
          reg_write_o   => reg_write_s,
-         alu_op_o      => alu_op_s);
+         alu_op_o      => alu_op_s,
+         alu_forward_a_o => alu_forward_a_s,
+         alu_forward_b_o => alu_forward_b_s,
+         branch_forward_a_o => branch_forward_a_s,
+         branch_forward_b_o => branch_forward_b_s);
 
    
 

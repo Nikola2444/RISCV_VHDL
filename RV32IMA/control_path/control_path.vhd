@@ -8,7 +8,7 @@ entity control_path is
          reset: in std_logic;
          -- from top
          instruction_i: in std_logic_vector (31 downto 0);
-         -- to datapath
+         --to datapath
          branch_o: out std_logic_vector(1 downto 0);
          mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
@@ -16,8 +16,15 @@ entity control_path is
          alu_src_b_o: out std_logic;
          alu_src_a_o: out std_logic;
          reg_write_o: out std_logic;
-         alu_a_zero_o: out std_logic;
-         alu_op_o: out std_logic_vector(4 downto 0)
+         alu_a_zero_o: out std_logic;        
+         alu_op_o: out std_logic_vector(4 downto 0);
+
+         alu_forward_a_o: out std_logic_vector (1 downto 0);
+         alu_forward_b_o: out std_logic_vector (1 downto 0);
+         branch_forward_a_o: out std_logic_vector (1 downto 0); -- mux a 
+         branch_forward_b_o: out std_logic_vector(1 downto 0)-- mux b
+         --if_id_reg_en_i: in std_logic;
+         --if_id_reg_flush_i: in std_logic;
          );  
 end entity;
 
@@ -126,6 +133,21 @@ begin
          funct7_i => funct7_ex_s,
          alu_op_o => alu_op_o);
 
+   forwarding_unit_1: entity work.forwarding_unit
+      port map (
+         reg_write_mem_i    => reg_write_mem_s,
+         write_reg_mem_i    => write_reg_mem_s,
+         reg_write_wb_i     => reg_write_wb_s,
+         write_reg_wb_i     => write_reg_wb_s,
+         read_reg1_ex_i     => read_reg1_ex_s,
+         read_reg2_ex_i     => read_reg2_ex_s,
+         read_reg1_id_i     => read_reg1_id_s,
+         read_reg2_id_i     => read_reg2_id_s,
+         alu_forward_a_o    => alu_forward_a_o,
+         alu_forward_b_o    => alu_forward_b_o,
+         branch_forward_a_o => branch_forward_a_o,
+         branch_forward_b_o => branch_forward_b_o);
+   
    mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
    mem_write_o <= mem_write_mem_s;
