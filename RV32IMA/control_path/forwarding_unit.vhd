@@ -37,7 +37,7 @@ begin
    
    --process that checks whether forwarding for instructions in EX stage is needed or not.
    -- forwarding from MEM stage has advantage over forwading information from WB
-   -- stage, because information contained there is more fresh than in WB.
+   -- stage, because information contained there is more recent than in WB.
    forward_proc:process(reg_write_mem_i, write_reg_mem_i, reg_write_wb_i, write_reg_wb_i,
                         read_reg1_ex_i, read_reg2_ex_i)is
    begin
@@ -65,7 +65,7 @@ begin
    --process that checks whether forwarding is needed for branch instructions in
    --ID stage or not.
    -- forwarding from MEM stage has advantage over forwading information from WB
-   -- stage, because information contained there is more fresh than in WB.
+   -- stage, because information contained there is more recent than in WB.
    forward_branch_proc:process(reg_write_mem_i, write_reg_mem_i, reg_write_wb_i, write_reg_wb_i,
                                read_reg1_id_i, read_reg2_id_i)is
    begin
