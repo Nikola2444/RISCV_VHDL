@@ -12,6 +12,8 @@ package controlpath_signals_pkg is
    signal alu_2bit_op_id_s: std_logic_vector(1 downto 0);
    signal alu_a_zero_id_s : std_logic;
 
+   signal branch_id_s: std_logic_vector(1 downto 0);
+   
    signal alu_src_a_id_s : std_logic;
    signal alu_src_b_id_s : std_logic;
 
