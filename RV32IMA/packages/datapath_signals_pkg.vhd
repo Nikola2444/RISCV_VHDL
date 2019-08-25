@@ -13,12 +13,12 @@ package datapath_signals_pkg is
 
    --*********  INSTRUCTION DECODE **************
 
+   
    signal pc_adder_id_s: std_logic_vector (31 downto 0);
    signal pc_reg_id_s: std_logic_vector (31 downto 0);
    signal read_data1_id_s, read_data2_id_s, immediate_extended_id_s: std_logic_vector (31 downto 0);
    --branch condidtion inputs
    signal branch_condition_a_ex_s, branch_condition_b_ex_s:std_logic_vector(31 downto 0);   
-   
    signal branch_condition_id_s,bcc_id_s : std_logic; --branch condition complement
    --branch_adder signal
    signal branch_adder_id_s: std_logic_vector (31 downto 0);
@@ -27,7 +27,8 @@ package datapath_signals_pkg is
    signal read_reg1_id_s: std_logic_vector (4 downto 0);
    signal read_reg2_id_s: std_logic_vector (4 downto 0);
    signal write_reg_id_s: std_logic_vector (4 downto 0);
-
+   --if id reg flush
+   signal if_id_reg_flush_s:std_logic;
    --*********       EXECUTE       **************
 
    signal pc_adder_ex_s: std_logic_vector (31 downto 0);

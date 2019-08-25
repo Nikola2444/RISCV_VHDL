@@ -18,7 +18,7 @@ entity control_path is
          reg_write_o: out std_logic;
          alu_a_zero_o: out std_logic;        
          alu_op_o: out std_logic_vector(4 downto 0);
-
+         --forwarding interface
          alu_forward_a_o: out std_logic_vector (1 downto 0);
          alu_forward_b_o: out std_logic_vector (1 downto 0);
          branch_forward_a_o: out std_logic_vector (1 downto 0); -- mux a 
@@ -175,6 +175,6 @@ begin
    alu_src_a_o <= alu_src_a_ex_s;
    alu_a_zero_o <= alu_a_zero_ex_s;
    reg_write_o <= reg_write_wb_s;
-
+   branch_o <= branch_id_s;
 end architecture;
 

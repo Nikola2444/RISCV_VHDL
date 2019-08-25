@@ -31,10 +31,13 @@ entity data_path is
       alu_forward_b_i: in std_logic_vector (1 downto 0);
       branch_forward_a_i: in std_logic_vector (1 downto 0); 
       branch_forward_b_i: in std_logic_vector(1 downto 0);
-      --if_id_reg_en_i: in std_logic;
-      --if_id_reg_flush_i: in std_logic;
+      --if_id_reg_en_i: in std_logic;      
       reg_write_i: in std_logic;     
-      alu_a_zero_i: in std_logic
+      alu_a_zero_i: in std_logic;
+      instruction_mem_flush_o: out std_logic
+      --pc_write_i: out std_logic;--controls program counter      
+      --control_stall_i: out std_logic; -- controls mux that sets all the      
+      --if_id_reg_en_i: in std_logic
       );
    
 end entity;
@@ -62,7 +65,7 @@ begin
    begin
       if (rising_edge(clk)) then
          --if(if_id_reg_en_i)then
-            if (reset = '0')then -- or if_id_reg_flush_i='1'
+            if (reset = '0' or if_id_reg_flush_s = '1')then
                pc_reg_id_s <= (others => '0');
                pc_adder_id_s <= (others => '0');
             else
@@ -153,14 +156,27 @@ begin
                             '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
                             '0';
 
-
+   
    --this mux covers conditional and unconditional branches
    -- TODO: maybe insert more control signals to chose between jumps
-   pc_next_if_s <=  branch_adder_id_s when (branch_i = "01" and ((branch_condition_id_s xor bcc_id_s) = '1' )) else --conditional_branches
-                    branch_adder_id_s when (branch_i = "10") else --jal_instruction
-                    alu_result_ex_s when (branch_i = "11") else ----jarl_instruction TODO additional logic needed for stalling in this case
-                    pc_adder_if_s;
-
+   if_branch:process(branch_adder_id_s, branch_i, branch_condition_id_s, bcc_id_s,
+                     alu_result_ex_s, pc_adder_if_s,pc_adder_if_s)
+   begin
+      if (branch_i = "01" and ((branch_condition_id_s xor bcc_id_s) = '1'))then
+         if_id_reg_flush_s <= '1';
+         pc_next_if_s <= branch_adder_id_s;
+      elsif(branch_i = "10")then
+         if_id_reg_flush_s <= '1';
+         pc_next_if_s <= branch_adder_id_s;
+      elsif(branch_i = "11") then
+         if_id_reg_flush_s <= '1';
+         pc_next_if_s <= alu_result_ex_s;
+      else
+         if_id_reg_flush_s <= '0';
+         pc_next_if_s <= pc_adder_if_s;
+      end if;
+   end process;
+      
    --forwarding muxes
    alu_forward_a_ex_s <= write_data_wb_s when alu_forward_a_i = "01" else
                      alu_result_mem_s when alu_forward_a_i = "10" else
@@ -238,8 +254,8 @@ begin
 
    --***********Outputs**************************
    -- Instruction memory
+   instruction_mem_flush_o <= if_id_reg_flush_s;
    instr_mem_address_o <= pc_reg_if_s;
-
    -- Data memory
    data_mem_address_o <= alu_result_mem_s; 
    data_mem_write_o <= read_data2_mem_s;

@@ -15,6 +15,7 @@ entity ctrl_decoder is
       reg_write_o: out std_logic;
       alu_a_zero_o: out std_logic;
       alu_2bit_op_o: out std_logic_vector(1 downto 0)
+      
       );  
 end entity;
 
@@ -33,7 +34,7 @@ begin
       reg_write_o <= '0';
       alu_2bit_op_o <= "00";
       alu_a_zero_o <='0';
-
+      
       case opcode_i(6 downto 2) is
          when "00000" => --LOAD, 5v ~ funct3
             alu_2bit_op_o <= "00";
@@ -54,16 +55,16 @@ begin
             reg_write_o <= '1';
          when "11000" => --B type BEQ,BNE ~ funct3
             alu_2bit_op_o <= "01";
-            branch_o <= "01";
+            branch_o <= "01";            
          when "11011" => -- JAL instruction
             reg_write_o <= '1';
             mem_to_reg_o <= "01";
-            branch_o <= "10";
+            branch_o <= "10";      
          when "11001" => -- JALR instruction
             mem_to_reg_o <= "01";
             reg_write_o <= '1';
             alu_src_b_o <= '1';
-            branch_o <= "11";
+            branch_o <= "11";            
          when "00101" => -- AUIPC instruction
             alu_2bit_op_o <= "00";
             reg_write_o <= '1';

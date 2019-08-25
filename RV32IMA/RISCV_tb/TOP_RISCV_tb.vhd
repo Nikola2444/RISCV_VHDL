@@ -17,6 +17,7 @@ architecture Behavioral of TOP_RISCV_tb is
    signal clk: std_logic:='0';
    signal reset: std_logic;       
    --Instruction_mem_signals
+   signal instruction_mem_flush_b_s: std_logic;
    signal wea_instr_s,web_instr_s: std_logic;
    signal rea_instr_s,reb_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
@@ -48,6 +49,8 @@ begin
       port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
                 en_b_i => reb_instr_s,
+                reset_a_i => '0',
+                reset_b_i => instruction_mem_flush_b_s,
                 we_a_i => wea_instr_s,
                 we_b_i => web_instr_s,
                 addr_a_i => addra_instr_s,
@@ -64,6 +67,8 @@ begin
       port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
                 en_b_i => '1',
+                reset_a_i => '0',
+                reset_b_i => '0',
                 we_a_i => wea_data_s,
                 we_b_i => web_data_s,
                 addr_a_i => addra_data_s,
@@ -82,7 +87,8 @@ begin
          clk                => clk,
          reset              => reset,
          instr_mem_read_i       => dob_instr_s,
-         instr_mem_address_o    => addrb_instr_extended_s,         
+         instr_mem_address_o    => addrb_instr_extended_s,
+         instruction_mem_flush_o => instruction_mem_flush_b_s,
          mem_write_o    => wea_data_s,
          data_mem_address_o => addra_data_extended_s,
          data_mem_read_i    => doa_data_s,
