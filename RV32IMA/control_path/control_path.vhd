@@ -18,13 +18,16 @@ entity control_path is
          reg_write_o: out std_logic;
          alu_a_zero_o: out std_logic;        
          alu_op_o: out std_logic_vector(4 downto 0);
-
+         --forwarding interface
          alu_forward_a_o: out std_logic_vector (1 downto 0);
          alu_forward_b_o: out std_logic_vector (1 downto 0);
-         branch_forward_a_o: out std_logic_vector (1 downto 0); -- mux a 
-         branch_forward_b_o: out std_logic_vector(1 downto 0)-- mux b
-         --if_id_reg_en_i: in std_logic;
-         --if_id_reg_flush_i: in std_logic;
+         branch_forward_a_o: out std_logic_vector (1 downto 0); 
+         branch_forward_b_o: out std_logic_vector(1 downto 0)
+         -- hazard unit interface
+         --pc_write_o: out std_logic;--controls program counter
+         --if_id_reg_en_o: out std_logic;--controls istruction fetch 
+         --control_stall_o: out std_logic -- controls mux that sets all the
+                                        -- control signal to zero         
          );  
 end entity;
 
@@ -116,7 +119,7 @@ begin
    ctrl_dec: entity work.ctrl_decoder(behavioral)
       port map(
          opcode_i => instruction_i(6 downto 0),
-         branch_o => branch_o,
+         branch_o => branch_id_s,
          mem_read_o => mem_read_id_s,
          mem_to_reg_o => mem_to_reg_id_s,
          mem_write_o => mem_write_id_s,
@@ -147,6 +150,20 @@ begin
          alu_forward_b_o    => alu_forward_b_o,
          branch_forward_a_o => branch_forward_a_o,
          branch_forward_b_o => branch_forward_b_o);
+
+   -- hazard_unit_1: entity work.hazard_unit
+   --    port map (
+   --       clk             => clk,
+   --       reset           => reset,
+   --       reg_write_id_i  => reg_write_id_s,
+   --       read_reg1_id_i  => read_reg1_id_s,
+   --       read_reg2_id_i  => read_reg2_id_s,
+   --       branch_id_i     => branch_id_s,
+   --       mem_read_ex_i   => mem_read_ex_s,
+   --       write_reg_ex_i  => write_reg_ex_s,
+   --       pc_write_o      => pc_write_o,
+   --       if_id_reg_en_o  => if_id_reg_en_o,
+   --       control_stall_o => control_stall_o);
    
    mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
@@ -155,6 +172,6 @@ begin
    alu_src_a_o <= alu_src_a_ex_s;
    alu_a_zero_o <= alu_a_zero_ex_s;
    reg_write_o <= reg_write_wb_s;
-
+   branch_o <= branch_id_s;
 end architecture;
 

@@ -6,7 +6,7 @@ package controlpath_signals_pkg is
 
 
    --*********  INSTRUCTION DECODE **************
-
+   signal branch_id_s : std_logic_vector(1 downto 0);
    signal funct3_id_s : std_logic_vector(2 downto 0);
    signal funct7_id_s : std_logic_vector(6 downto 0);
    signal alu_2bit_op_id_s: std_logic_vector(1 downto 0);
