@@ -22,7 +22,6 @@ entity data_path is
       data_mem_read_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
 
       -- ********* control signals **************************
-      branch_i: in std_logic_vector(1 downto 0);
       mem_read_i: in std_logic;
       mem_to_reg_i: in std_logic_vector(1 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
@@ -32,12 +31,17 @@ entity data_path is
       alu_forward_b_i: in std_logic_vector (1 downto 0);
       branch_forward_a_i: in std_logic_vector (1 downto 0); 
       branch_forward_b_i: in std_logic_vector(1 downto 0);
-      --if_id_write_i: in std_logic;      
+      branch_condition_o: out std_logic;     
+
+      pc_next_sel_i: in std_logic_vector(1 downto 0);
+
       reg_write_i: in std_logic;     
       alu_a_zero_i: in std_logic;
-      instruction_mem_flush_o: out std_logic;
-      pc_write_i: out std_logic;--controls program counter      
-      
+
+      if_id_flush_i: in std_logic;
+      id_ex_flush_i: in std_logic;
+
+      pc_write_i: in std_logic;--controls program counter      
       if_id_write_i: in std_logic
       );
    
@@ -55,7 +59,7 @@ begin
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
          else
-            if (if_id_write_i = '0') then
+            if (pc_write_i = '0') then
                pc_reg_if_s <= pc_next_if_s;
             end if;
          end if;
@@ -68,7 +72,7 @@ begin
    begin
       if (rising_edge(clk)) then
          --if(if_id_write_i)then
-            if (reset = '0' or if_id_reg_flush_s = '1')then
+            if (reset = '0' or if_id_flush_i = '1')then
                pc_reg_id_s <= (others => '0');
                pc_adder_id_s <= (others => '0');
             else
@@ -85,7 +89,7 @@ begin
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0')then
+         if (reset = '0' or id_ex_flush_i = '1')then
             pc_adder_ex_s <= (others => '0');
             read_data1_ex_s <= (others => '0');
             read_data2_ex_s <= (others => '0');
@@ -138,7 +142,6 @@ begin
    end process;
 
    --***********Combinational logic***************
-   bcc_id_s <= instr_mem_read_i(12);
 
    --pc_adder_s update
    pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, DATA_WIDTH));
@@ -156,31 +159,18 @@ begin
                            
                            
    --check if branch condition is met
-   branch_condition_id_s <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
+   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
                             '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
                             '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
                             '0';
 
    
-   --this mux covers conditional and unconditional branches
-   -- TODO: maybe insert more control signals to chose between jumps
-   if_branch:process(branch_adder_id_s, branch_i, branch_condition_id_s, bcc_id_s,
-                     alu_result_ex_s, pc_adder_if_s,pc_adder_if_s)
-   begin
-      if (branch_i = "01" and ((branch_condition_id_s xor bcc_id_s) = '1'))then
-         if_id_reg_flush_s <= '1';
-         pc_next_if_s <= branch_adder_id_s;
-      elsif(branch_i = "10")then
-         if_id_reg_flush_s <= '1';
-         pc_next_if_s <= branch_adder_id_s;
-      elsif(branch_i = "11") then
-         if_id_reg_flush_s <= '1';
-         pc_next_if_s <= alu_result_ex_s;
-      else
-         if_id_reg_flush_s <= '0';
-         pc_next_if_s <= pc_adder_if_s;
-      end if;
-   end process;
+   --pc_next mux
+   with pc_next_sel_i select
+      pc_next_if_s <= pc_adder_if_s when "00",
+                      alu_result_ex_s when "11",
+                      branch_adder_id_s when others;
+
       
    --forwarding muxes
    alu_forward_a_ex_s <= write_data_wb_s when alu_forward_a_i = "01" else
@@ -259,7 +249,6 @@ begin
 
    --***********Outputs**************************
    -- Instruction memory
-   instruction_mem_flush_o <= if_id_reg_flush_s;
    instr_mem_address_o <= pc_reg_if_s;
    -- Data memory
    data_mem_address_o <= alu_result_mem_s; 

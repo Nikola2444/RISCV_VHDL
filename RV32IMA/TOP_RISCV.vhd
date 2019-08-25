@@ -32,12 +32,15 @@ architecture structural of TOP_RISCV is
    signal alu_src_a_s: std_logic;
    signal alu_a_zero_s: std_logic;
    signal reg_write_s: std_logic;
-
+   signal if_id_flush_s: std_logic;
+   signal id_ex_flush_s: std_logic;
 
    signal alu_forward_a_s    : std_logic_vector (1 downto 0);
    signal alu_forward_b_s    : std_logic_vector (1 downto 0);
    signal branch_forward_a_s : std_logic_vector (1 downto 0);
    signal branch_forward_b_s : std_logic_vector(1 downto 0);
+   signal branch_condition_s : std_logic;
+   signal pc_next_sel_s      : std_logic_vector(1 downto 0);
 
    signal pc_write_s:  std_logic;--controls program counter
    signal if_id_write_s:  std_logic;--controls istruction fetch    
@@ -57,7 +60,6 @@ begin
          data_mem_address_o => data_mem_address_o,
          data_mem_write_o   => data_mem_write_o,
          data_mem_read_i    => data_mem_read_i,
-         branch_i           => branch_s,
          alu_a_zero_i   => alu_a_zero_s,
          mem_read_i         => mem_read_s,
          mem_to_reg_i       => mem_to_reg_s,
@@ -69,17 +71,22 @@ begin
          alu_forward_b_i => alu_forward_b_s,
          branch_forward_a_i => branch_forward_a_s,
          branch_forward_b_i => branch_forward_b_s,
-         instruction_mem_flush_o => instruction_mem_flush_o,
+         branch_condition_o => branch_condition_s,
+         pc_next_sel_i => pc_next_sel_s,
          pc_write_i => pc_write_s,
-         if_id_write_i => if_id_write_s
-         );
+         if_id_write_i => if_id_write_s,
+         if_id_flush_i => if_id_flush_s,
+         id_ex_flush_i => id_ex_flush_s
+         ); 
+      
+      instruction_mem_flush_o <= if_id_flush_s;
+
    -- Control_path will be instantiated here
    control_path_1: entity work.control_path
       port map (
          clk           => clk,
          reset         => reset,
          instruction_i => instr_mem_read_i,
-         branch_o      => branch_s,
          alu_a_zero_o   => alu_a_zero_s,
          mem_read_o    => mem_read_s,
          mem_to_reg_o  => mem_to_reg_s,
@@ -92,6 +99,10 @@ begin
          alu_forward_b_o => alu_forward_b_s,
          branch_forward_a_o => branch_forward_a_s,
          branch_forward_b_o => branch_forward_b_s,
+         branch_condition_i => branch_condition_s,
+         pc_next_sel_o => pc_next_sel_s,
+         if_id_flush_o => if_id_flush_s,
+         id_ex_flush_o => id_ex_flush_s,
          pc_write_o => pc_write_s,
          if_id_write_o => if_id_write_s
          );

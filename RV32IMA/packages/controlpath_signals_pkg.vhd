@@ -3,7 +3,8 @@ use ieee.std_logic_1164.all;
 
 package controlpath_signals_pkg is
 
-
+   signal if_id_flush_s : std_logic;   
+   signal id_ex_flush_s : std_logic;   
 
    --*********  INSTRUCTION DECODE **************
    signal branch_id_s : std_logic_vector(1 downto 0);
@@ -25,9 +26,10 @@ package controlpath_signals_pkg is
    signal read_reg1_id_s: std_logic_vector (4 downto 0);
    signal read_reg2_id_s: std_logic_vector (4 downto 0);
    signal write_reg_id_s: std_logic_vector (4 downto 0);
-
+   signal bcc_id_s : std_logic;
    --*********       EXECUTE       **************
 
+   signal branch_ex_s : std_logic_vector(1 downto 0);
    signal funct3_ex_s : std_logic_vector(2 downto 0);
    signal funct7_ex_s : std_logic_vector(6 downto 0);
    signal alu_2bit_op_ex_s: std_logic_vector(1 downto 0);

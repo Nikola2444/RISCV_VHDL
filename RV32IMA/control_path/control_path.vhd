@@ -9,7 +9,6 @@ entity control_path is
          -- from top
          instruction_i: in std_logic_vector (31 downto 0);
          --to datapath
-         branch_o: out std_logic_vector(1 downto 0);
          mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
          mem_write_o: out std_logic;
@@ -22,8 +21,14 @@ entity control_path is
          alu_forward_a_o: out std_logic_vector (1 downto 0);
          alu_forward_b_o: out std_logic_vector (1 downto 0);
          branch_forward_a_o: out std_logic_vector (1 downto 0); -- mux a 
-         branch_forward_b_o: out std_logic_vector(1 downto 0);-- mux b
-         
+         branch_forward_b_o: out std_logic_vector(1 downto 0); -- mux b
+
+         branch_condition_i: in std_logic;
+
+         pc_next_sel_o: out std_logic_vector(1 downto 0);
+         if_id_flush_o: out std_logic;
+         id_ex_flush_o: out std_logic;
+
          pc_write_o : out std_logic;
          if_id_write_o : out std_logic
          );  
@@ -33,7 +38,30 @@ end entity;
 architecture behavioral of control_path is
 begin
 
-   branch_o <= branch_id_s;
+   bcc_id_s <= instruction_i(12);
+
+   --this mux covers conditional and unconditional branches
+   if_branch:process(branch_id_s,branch_condition_i,bcc_id_s)
+   begin
+      if_id_flush_s <= '0';
+      id_ex_flush_s <= '0';
+      pc_next_sel_o <= "00";
+
+      if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
+         if_id_flush_s <= '1';
+         pc_next_sel_o <= "01";
+      elsif(branch_id_s = "10")then
+         if_id_flush_s <= '1';
+         pc_next_sel_o <= "10";
+      elsif(branch_ex_s = "11") then
+         if_id_flush_s <= '1';
+         id_ex_flush_s <= '1';
+         pc_next_sel_o <= "11";
+      end if;
+   end process;
+   if_id_flush_o <= if_id_flush_s;
+   id_ex_flush_o <= id_ex_flush_s;
+
    
    read_reg1_id_s <= instruction_i(19 downto 15);
    read_reg2_id_s <= instruction_i(24 downto 20);
@@ -45,7 +73,8 @@ begin
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0' or control_stall_s='1')then
+         if (reset = '0' or control_stall_s='1' or id_ex_flush_s='1')then
+            branch_ex_s <= (others => '0');
             funct3_ex_s <= (others => '0');
             funct7_ex_s <= (others => '0');
             alu_a_zero_ex_s  <= '0';
@@ -60,6 +89,7 @@ begin
             reg_write_ex_s <= '0';
             mem_write_ex_s <= '0';
          else
+            branch_ex_s <= branch_id_s;
             funct7_ex_s <= funct7_id_s;
             funct3_ex_s <= funct3_id_s;
             alu_a_zero_ex_s  <= alu_a_zero_id_s;
@@ -175,6 +205,5 @@ begin
    alu_src_a_o <= alu_src_a_ex_s;
    alu_a_zero_o <= alu_a_zero_ex_s;
    reg_write_o <= reg_write_wb_s;
-   branch_o <= branch_id_s;
 end architecture;
 
