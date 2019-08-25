@@ -2,7 +2,6 @@ li a0, 10
 li a1, 10
 nop
 beq a0,a1 L1
-nop
 add a2, a0,a1
 add a2, a1,a2
 L1:add a2,a1,a2

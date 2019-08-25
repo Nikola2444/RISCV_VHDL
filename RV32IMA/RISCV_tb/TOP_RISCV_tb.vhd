@@ -18,6 +18,7 @@ architecture Behavioral of TOP_RISCV_tb is
    signal reset: std_logic;       
    --Instruction_mem_signals
    signal instruction_mem_flush_b_s: std_logic;
+   signal instruction_mem_stall_b_s: std_logic;
    signal wea_instr_s,web_instr_s: std_logic;
    signal rea_instr_s,reb_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
@@ -48,7 +49,7 @@ begin
       generic map(WADDR => 10)
       port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
-                en_b_i => reb_instr_s,
+                en_b_i => not(instruction_mem_stall_b_s),
                 reset_a_i => '0',
                 reset_b_i => instruction_mem_flush_b_s,
                 we_a_i => wea_instr_s,
@@ -89,6 +90,7 @@ begin
          instr_mem_read_i       => dob_instr_s,
          instr_mem_address_o    => addrb_instr_extended_s,
          instruction_mem_flush_o => instruction_mem_flush_b_s,
+         instruction_mem_stall_o => instruction_mem_stall_b_s,
          mem_write_o    => wea_data_s,
          data_mem_address_o => addra_data_extended_s,
          data_mem_read_i    => doa_data_s,
@@ -102,7 +104,7 @@ begin
    begin
       reset <= '0';
       wea_instr_s <= '1';
-      reb_instr_s <= '0';
+      
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
          addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
@@ -113,7 +115,7 @@ begin
       
       wea_instr_s <= '0';
       reset <= '1' after 20 ns;
-      reb_instr_s <= '1';
+      
       wait;
    end process;
    --****************************************************

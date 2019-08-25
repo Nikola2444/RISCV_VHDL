@@ -12,6 +12,7 @@ entity TOP_RISCV is
       instr_mem_read_i: in std_logic_vector(31 downto 0);
       instr_mem_address_o: out std_logic_vector(31 downto 0);
       instruction_mem_flush_o:out std_logic;
+      instruction_mem_stall_o: out std_logic;
       -- ********* DATA memory i/o **************************
       mem_write_o: out std_logic;  
       data_mem_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -39,8 +40,7 @@ architecture structural of TOP_RISCV is
    signal branch_forward_b_s : std_logic_vector(1 downto 0);
 
    signal pc_write_s:  std_logic;--controls program counter
-   signal if_id_reg_en_s:  std_logic;--controls istruction fetch 
-   signal control_stall_s:  std_logic; -- controls mux that sets all the
+   signal if_id_write_s:  std_logic;--controls istruction fetch    
          
    
 begin
@@ -69,10 +69,9 @@ begin
          alu_forward_b_i => alu_forward_b_s,
          branch_forward_a_i => branch_forward_a_s,
          branch_forward_b_i => branch_forward_b_s,
-         instruction_mem_flush_o => instruction_mem_flush_o
-         --pc_write_i => pc_write_s,
-         --if_id_reg_en_i => if_id_reg_en_s,         
-       --control_stall_i => control_stall_s
+         instruction_mem_flush_o => instruction_mem_flush_o,
+         pc_write_i => pc_write_s,
+         if_id_write_i => if_id_write_s
          );
    -- Control_path will be instantiated here
    control_path_1: entity work.control_path
@@ -92,15 +91,14 @@ begin
          alu_forward_a_o => alu_forward_a_s,
          alu_forward_b_o => alu_forward_b_s,
          branch_forward_a_o => branch_forward_a_s,
-         branch_forward_b_o => branch_forward_b_s
-         --pc_write_o => pc_write_s,
-         --if_id_reg_en_o => if_id_reg_en_s,
-       --control_stall_o => control_stall_s
+         branch_forward_b_o => branch_forward_b_s,
+         pc_write_o => pc_write_s,
+         if_id_write_o => if_id_write_s
          );
    
 
    
 
 --************************************
-   
+   instruction_mem_stall_o <= if_id_write_s;
 end architecture;

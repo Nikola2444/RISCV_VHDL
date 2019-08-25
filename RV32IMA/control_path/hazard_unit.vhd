@@ -9,11 +9,11 @@ entity hazard_unit is
       branch_id_i: in std_logic_vector(1 downto 0);
 
       --mem_read_ex_i:in std_logic;
-      reg_write_ex_i: in std_logic_vector(4 downto 0);
-      write_reg_ex_i: in std_logic;
+      write_reg_ex_i: in std_logic_vector(4 downto 0);
+      reg_write_ex_i: in std_logic;
 
       --mem_read_mem_i:in std_logic;
-      reg_write_mem_i: in std_logic_vector(4 downto 0);
+      write_reg_mem_i: in std_logic_vector(4 downto 0);
       mem_to_reg_mem_i: in std_logic_vector(1 downto 0); --10 for load
 
       --control outputs
@@ -29,19 +29,19 @@ architecture behavioral of hazard_unit is
 begin
    
    
-   process (read_reg1_id_i, read_reg2_id_i, branch_id_i, reg_write_ex_i, write_reg_ex_i, reg_write_mem_i, mem_to_reg_mem_i) is
+   process (read_reg1_id_i, read_reg2_id_i, branch_id_i, write_reg_ex_i, reg_write_ex_i, write_reg_mem_i, mem_to_reg_mem_i) is
    begin
             stall_s <= '0';
             if(branch_id_i = "01")then --branch in id phase
-               if((read_reg1_id_i = reg_write_ex_i or read_reg2_id_i = reg_write_ex_i) and write_reg_ex_i = '1')then -- load or R-type in execution stage
+               if((read_reg1_id_i = write_reg_ex_i or read_reg2_id_i = write_reg_ex_i) and reg_write_ex_i = '1')then -- load or R-type in execution stage
                   stall_s <='1';
-               elsif((read_reg1_id_i = reg_write_mem_i or read_reg2_id_i = reg_write_mem_i) and mem_to_reg_mem_i = "10")then -- load in memory stage
+               elsif((read_reg1_id_i = write_reg_mem_i or read_reg2_id_i = write_reg_mem_i) and mem_to_reg_mem_i = "10")then -- load in memory stage
                   stall_s <='1';
                end if;
             elsif(branch_id_i = "11")then --jalr in id phase
-               if((read_reg1_id_i = reg_write_ex_i) and write_reg_ex_i = '1')then -- load or R-type in execution stage
+               if((read_reg1_id_i = write_reg_ex_i) and reg_write_ex_i = '1')then -- load or R-type in execution stage
                   stall_s <='1';
-               elsif((read_reg1_id_i = reg_write_mem_i) and mem_to_reg_mem_i = "10")then -- load in memory stage
+               elsif((read_reg1_id_i = write_reg_mem_i) and mem_to_reg_mem_i = "10")then -- load in memory stage
                   stall_s <='1';
                end if;
             end if;

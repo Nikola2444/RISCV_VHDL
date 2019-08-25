@@ -1,3 +1,4 @@
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -31,13 +32,13 @@ entity data_path is
       alu_forward_b_i: in std_logic_vector (1 downto 0);
       branch_forward_a_i: in std_logic_vector (1 downto 0); 
       branch_forward_b_i: in std_logic_vector(1 downto 0);
-      --if_id_reg_en_i: in std_logic;      
+      --if_id_write_i: in std_logic;      
       reg_write_i: in std_logic;     
       alu_a_zero_i: in std_logic;
-      instruction_mem_flush_o: out std_logic
-      --pc_write_i: out std_logic;--controls program counter      
-      --control_stall_i: out std_logic; -- controls mux that sets all the      
-      --if_id_reg_en_i: in std_logic
+      instruction_mem_flush_o: out std_logic;
+      pc_write_i: out std_logic;--controls program counter      
+      
+      if_id_write_i: in std_logic
       );
    
 end entity;
@@ -54,7 +55,9 @@ begin
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
          else
-            pc_reg_if_s <= pc_next_if_s;
+            if (if_id_write_i = '0') then
+               pc_reg_if_s <= pc_next_if_s;
+            end if;
          end if;
       end if;      
    end process;
@@ -64,13 +67,15 @@ begin
    if_id:process (clk) is
    begin
       if (rising_edge(clk)) then
-         --if(if_id_reg_en_i)then
+         --if(if_id_write_i)then
             if (reset = '0' or if_id_reg_flush_s = '1')then
                pc_reg_id_s <= (others => '0');
                pc_adder_id_s <= (others => '0');
             else
-               pc_reg_id_s <= pc_reg_if_s;
-               pc_adder_id_s <= pc_adder_if_s;
+               if (if_id_write_i = '0') then
+                  pc_reg_id_s <= pc_reg_if_s;
+                  pc_adder_id_s <= pc_adder_if_s;
+               end if;
             end if;
          --end if;
       end if;      
