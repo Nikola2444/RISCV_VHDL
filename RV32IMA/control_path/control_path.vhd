@@ -25,10 +25,7 @@ entity control_path is
          branch_forward_b_o: out std_logic_vector(1 downto 0);-- mux b
          
          pc_write_o : out std_logic;
-         if_id_write_o : out std_logic;
-         control_stall_o : out std_logic
-         --if_id_reg_en_i: in std_logic;
-         --if_id_reg_flush_i: in std_logic;
+         if_id_write_o : out std_logic
          );  
 end entity;
 
@@ -48,7 +45,7 @@ begin
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0')then
+         if (reset = '0' or control_stall_s='1')then
             funct3_ex_s <= (others => '0');
             funct7_ex_s <= (others => '0');
             alu_a_zero_ex_s  <= '0';
@@ -78,6 +75,8 @@ begin
          end if;
       end if;      
    end process;
+
+
 
    --*********** EX/MEM register ******************
    ex_mem:process (clk) is
@@ -167,7 +166,7 @@ begin
       --control outputs
       pc_write_o => pc_write_o,
       if_id_write_o => if_id_write_o,
-      control_stall_o => control_stall_o);
+      control_stall_o => control_stall_s);
    
    mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
