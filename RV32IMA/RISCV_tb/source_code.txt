@@ -1,7 +1,6 @@
-li a0, 10
-li a1, 10
-nop
-beq a0,a1 L1
-add a2, a0,a1
-add a2, a1,a2
-L1:add a2,a1,a2
+li, a0, 10
+li, a1, 10
+jalr a2, x0, 20 
+add a3, a0,a1
+add a4, a0,a1
+add a5, a0,a1

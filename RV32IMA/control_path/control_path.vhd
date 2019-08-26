@@ -187,6 +187,7 @@ begin
       read_reg2_id_i => read_reg2_id_s,
       branch_id_i => branch_id_s,
 
+      mem_read_ex_i => mem_read_ex_s,
       reg_write_ex_i => reg_write_ex_s,
       write_reg_ex_i => write_reg_ex_s,
 
