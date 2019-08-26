@@ -187,12 +187,13 @@ begin
       read_reg2_id_i => read_reg2_id_s,
       branch_id_i => branch_id_s,
 
-      mem_read_ex_i => mem_read_ex_s,
-      reg_write_ex_i => reg_write_ex_s,
       write_reg_ex_i => write_reg_ex_s,
+      mem_to_reg_ex_i => mem_to_reg_ex_s,
+      reg_write_ex_i => reg_write_ex_s,
 
       write_reg_mem_i => write_reg_mem_s,
       mem_to_reg_mem_i => mem_to_reg_mem_s,
+      reg_write_mem_i => reg_write_mem_s,
 
       --control outputs
       pc_write_o => pc_write_o,
