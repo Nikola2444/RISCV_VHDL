@@ -23,9 +23,9 @@ package controlpath_signals_pkg is
    signal mem_to_reg_id_s : std_logic_vector(1 downto 0);
    signal mem_read_id_s : std_logic;
    --register addresses
-   signal read_reg1_id_s: std_logic_vector (4 downto 0);
-   signal read_reg2_id_s: std_logic_vector (4 downto 0);
-   signal write_reg_id_s: std_logic_vector (4 downto 0);
+   signal rs1_address_id_s: std_logic_vector (4 downto 0);
+   signal rs2_address_id_s: std_logic_vector (4 downto 0);
+   signal rd_address_id_s: std_logic_vector (4 downto 0);
    signal bcc_id_s : std_logic;
    --*********       EXECUTE       **************
 
@@ -44,9 +44,9 @@ package controlpath_signals_pkg is
    signal mem_read_ex_s : std_logic;
 
 
-   signal read_reg1_ex_s: std_logic_vector (4 downto 0);
-   signal read_reg2_ex_s: std_logic_vector (4 downto 0);
-   signal write_reg_ex_s: std_logic_vector (4 downto 0);
+   signal rs1_address_ex_s: std_logic_vector (4 downto 0);
+   signal rs2_address_ex_s: std_logic_vector (4 downto 0);
+   signal rd_address_ex_s: std_logic_vector (4 downto 0);
 
    --*********       MEMORY        **************
 
@@ -55,13 +55,13 @@ package controlpath_signals_pkg is
    signal mem_to_reg_mem_s : std_logic_vector(1 downto 0);
    signal mem_read_mem_s : std_logic;
 
-   signal write_reg_mem_s: std_logic_vector (4 downto 0);
+   signal rd_address_mem_s: std_logic_vector (4 downto 0);
 
    --*********      WRITEBACK      **************
 
    signal reg_write_wb_s : std_logic;
    signal mem_to_reg_wb_s : std_logic_vector(1 downto 0);
-   signal write_reg_wb_s: std_logic_vector (4 downto 0);
+   signal rd_address_wb_s: std_logic_vector (4 downto 0);
 
 
 

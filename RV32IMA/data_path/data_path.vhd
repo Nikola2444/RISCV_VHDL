@@ -1,4 +1,3 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -91,16 +90,16 @@ begin
       if (rising_edge(clk)) then
          if (reset = '0' or id_ex_flush_i = '1')then
             pc_adder_ex_s <= (others => '0');
-            read_data1_ex_s <= (others => '0');
-            read_data2_ex_s <= (others => '0');
+            rs1_data_ex_s <= (others => '0');
+            rs2_data_ex_s <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
-            write_reg_ex_s <= (others => '0');
+            rd_address_ex_s <= (others => '0');
          else
             pc_adder_ex_s <= pc_adder_id_s;
-            read_data1_ex_s <= read_data1_id_s;
-            read_data2_ex_s <= read_data2_id_s;
+            rs1_data_ex_s <= rs1_data_id_s;
+            rs2_data_ex_s <= rs2_data_id_s;
             immediate_extended_ex_s <= immediate_extended_id_s;
-            write_reg_ex_s <= write_reg_id_s;
+            rd_address_ex_s <= rd_address_id_s;
          end if;
       end if;      
    end process;
@@ -111,15 +110,15 @@ begin
       if (rising_edge(clk)) then
          if (reset = '0')then
             alu_result_mem_s <= (others => '0');
-            read_data2_mem_s  <= (others => '0');
+            rs2_data_mem_s  <= (others => '0');
             pc_adder_mem_s <= (others => '0');
-            write_reg_mem_s <= (others => '0');
+            rd_address_mem_s <= (others => '0');
             pc_reg_ex_s <= (others => '0');
          else
             alu_result_mem_s <= alu_result_ex_s;
-            read_data2_mem_s  <= alu_forward_b_ex_s;
+            rs2_data_mem_s  <= alu_forward_b_ex_s;
             pc_adder_mem_s <= pc_adder_ex_s;
-            write_reg_mem_s <= write_reg_ex_s;
+            rd_address_mem_s <= rd_address_ex_s;
             pc_reg_ex_s <= pc_reg_id_s;
          end if;
       end if;      
@@ -132,11 +131,11 @@ begin
          if (reset = '0')then
             alu_result_wb_s <= (others => '0');
             pc_adder_wb_s <= (others => '0');
-            write_reg_wb_s <= (others => '0');
+            rd_address_wb_s <= (others => '0');
          else
             alu_result_wb_s <= alu_result_mem_s;
             pc_adder_wb_s <= pc_adder_mem_s; 
-            write_reg_wb_s <= write_reg_mem_s;
+            rd_address_wb_s <= rd_address_mem_s;
          end if;
       end if;      
    end process;
@@ -150,12 +149,12 @@ begin
    branch_adder_id_s <= std_logic_vector(unsigned(immediate_extended_id_s) + unsigned(pc_reg_id_s));
    
    --branch condition inputs update
-   branch_condition_a_ex_s <= write_data_wb_s when branch_forward_a_i = "01" else
+   branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
                            alu_result_mem_s when branch_forward_a_i = "10" else
-                           read_data1_id_s;
-   branch_condition_b_ex_s <= write_data_wb_s when branch_forward_b_i = "01" else
+                           rs1_data_id_s;
+   branch_condition_b_ex_s <= rd_data_wb_s when branch_forward_b_i = "01" else
                            alu_result_mem_s when branch_forward_b_i = "10" else
-                           read_data2_id_s;
+                           rs2_data_id_s;
                            
                            
    --check if branch condition is met
@@ -173,12 +172,12 @@ begin
 
       
    --forwarding muxes
-   alu_forward_a_ex_s <= write_data_wb_s when alu_forward_a_i = "01" else
+   alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else
                      alu_result_mem_s when alu_forward_a_i = "10" else
-                     read_data1_ex_s;
-   alu_forward_b_ex_s <= write_data_wb_s when alu_forward_b_i = "01" else
+                     rs1_data_ex_s;
+   alu_forward_b_ex_s <= rd_data_wb_s when alu_forward_b_i = "01" else
                      alu_result_mem_s when alu_forward_b_i = "10" else
-                     read_data2_ex_s;
+                     rs2_data_ex_s;
    -- update of alu inputs
    
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
@@ -188,8 +187,8 @@ begin
              pc_reg_ex_s when alu_src_a_i = '1' else
              alu_forward_a_ex_s;
 
-   -- Reg_bank write_data update
-   write_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
+   -- Reg_bank rd_data update
+   rd_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
                       extended_data_wb_s when mem_to_reg_i = "10"else
                       alu_result_wb_s;
 
@@ -203,9 +202,9 @@ begin
                              data_mem_read_i when others;
 
 
-   read_reg1_id_s <= instr_mem_read_i(19 downto 15);
-   read_reg2_id_s <= instr_mem_read_i(24 downto 20);
-   write_reg_id_s <= instr_mem_read_i(11 downto 7);
+   rs1_address_id_s <= instr_mem_read_i(19 downto 15);
+   rs2_address_id_s <= instr_mem_read_i(24 downto 20);
+   rd_address_id_s <= instr_mem_read_i(11 downto 7);
    --***********Register bank instance***********
    register_bank_1: entity work.register_bank
       generic map (
@@ -214,12 +213,12 @@ begin
          clk        => clk,
          reset      => reset,
          reg_write_i  => reg_write_i,
-         read_reg1_i  => read_reg1_id_s,
-         read_reg2_i  => read_reg2_id_s,
-         read_data1_o => read_data1_id_s,
-         read_data2_o => read_data2_id_s,
-         write_reg_i  => write_reg_wb_s,
-         write_data_i => write_data_wb_s);
+         rs1_address_i  => rs1_address_id_s,
+         rs2_address_i  => rs2_address_id_s,
+         rs1_data_o => rs1_data_id_s,
+         rs2_data_o => rs2_data_id_s,
+         rd_address_i  => rd_address_wb_s,
+         rd_data_i => rd_data_wb_s);
 
    --*********************************************
    
@@ -252,7 +251,7 @@ begin
    instr_mem_address_o <= pc_reg_if_s;
    -- Data memory
    data_mem_address_o <= alu_result_mem_s; 
-   data_mem_write_o <= read_data2_mem_s;
+   data_mem_write_o <= rs2_data_mem_s;
    
 end architecture;
 

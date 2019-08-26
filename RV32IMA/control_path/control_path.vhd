@@ -39,7 +39,6 @@ architecture behavioral of control_path is
 begin
 
    bcc_id_s <= instruction_i(12);
-
    --this mux covers conditional and unconditional branches
    if_branch:process(branch_id_s,branch_condition_i,bcc_id_s)
    begin
@@ -63,9 +62,9 @@ begin
    id_ex_flush_o <= id_ex_flush_s;
 
    
-   read_reg1_id_s <= instruction_i(19 downto 15);
-   read_reg2_id_s <= instruction_i(24 downto 20);
-   write_reg_id_s <= instruction_i(11 downto 7);
+   rs1_address_id_s <= instruction_i(19 downto 15);
+   rs2_address_id_s <= instruction_i(24 downto 20);
+   rd_address_id_s <= instruction_i(11 downto 7);
 
    funct7_id_s <= instruction_i(31 downto 25);
    funct3_id_s <= instruction_i(14 downto 12);
@@ -83,9 +82,9 @@ begin
             mem_to_reg_ex_s <= (others => '0');
             mem_read_ex_s <= '0';
             alu_2bit_op_ex_s <= (others => '0');
-            read_reg1_ex_s <= (others => '0');
-            read_reg2_ex_s <= (others => '0');
-            write_reg_ex_s <= (others => '0');
+            rs1_address_ex_s <= (others => '0');
+            rs2_address_ex_s <= (others => '0');
+            rd_address_ex_s <= (others => '0');
             reg_write_ex_s <= '0';
             mem_write_ex_s <= '0';
          else
@@ -98,8 +97,8 @@ begin
             mem_to_reg_ex_s <= mem_to_reg_id_s;
             mem_read_ex_s <= mem_read_id_s;
             alu_2bit_op_ex_s <= alu_2bit_op_id_s;
-            read_reg1_ex_s <= read_reg1_id_s; read_reg2_ex_s <= read_reg2_id_s;
-            write_reg_ex_s <= write_reg_id_s;
+            rs1_address_ex_s <= rs1_address_id_s; rs2_address_ex_s <= rs2_address_id_s;
+            rd_address_ex_s <= rd_address_id_s;
             reg_write_ex_s <= reg_write_id_s;
             mem_write_ex_s <= mem_write_id_s;
          end if;
@@ -118,13 +117,13 @@ begin
             reg_write_mem_s <= '0';
             mem_to_reg_mem_s<= (others => '0');
             mem_read_mem_s <= '0';
-            write_reg_mem_s <= (others => '0');
+            rd_address_mem_s <= (others => '0');
          else
             mem_write_mem_s <= mem_write_ex_s;
             reg_write_mem_s <= reg_write_ex_s;
             mem_to_reg_mem_s <= mem_to_reg_ex_s;
             mem_read_mem_s <= mem_read_ex_s;
-            write_reg_mem_s <= write_reg_ex_s;
+            rd_address_mem_s <= rd_address_ex_s;
          end if;
       end if;      
    end process;
@@ -136,11 +135,11 @@ begin
          if (reset = '0')then
             reg_write_wb_s <= '0';
             mem_to_reg_wb_s <= (others => '0');
-            write_reg_wb_s <= (others => '0');
+            rd_address_wb_s <= (others => '0');
          else
             reg_write_wb_s <= reg_write_mem_s;
             mem_to_reg_wb_s <= mem_to_reg_mem_s;
-            write_reg_wb_s <= write_reg_mem_s;
+            rd_address_wb_s <= rd_address_mem_s;
          end if;
       end if;      
    end process;
@@ -168,13 +167,13 @@ begin
    forwarding_unit_1: entity work.forwarding_unit(behavioral)
       port map (
          reg_write_mem_i    => reg_write_mem_s,
-         write_reg_mem_i    => write_reg_mem_s,
+         rd_address_mem_i    => rd_address_mem_s,
          reg_write_wb_i     => reg_write_wb_s,
-         write_reg_wb_i     => write_reg_wb_s,
-         read_reg1_ex_i     => read_reg1_ex_s,
-         read_reg2_ex_i     => read_reg2_ex_s,
-         read_reg1_id_i     => read_reg1_id_s,
-         read_reg2_id_i     => read_reg2_id_s,
+         rd_address_wb_i     => rd_address_wb_s,
+         rs1_address_ex_i     => rs1_address_ex_s,
+         rs2_address_ex_i     => rs2_address_ex_s,
+         rs1_address_id_i     => rs1_address_id_s,
+         rs2_address_id_i     => rs2_address_id_s,
          alu_forward_a_o    => alu_forward_a_o,
          alu_forward_b_o    => alu_forward_b_o,
          branch_forward_a_o => branch_forward_a_o,
@@ -183,15 +182,15 @@ begin
    hazard_unit_1: entity work.hazard_unit(behavioral)
       port map (
       
-      read_reg1_id_i => read_reg1_id_s,
-      read_reg2_id_i => read_reg2_id_s,
+      rs1_address_id_i => rs1_address_id_s,
+      rs2_address_id_i => rs2_address_id_s,
       branch_id_i => branch_id_s,
 
-      write_reg_ex_i => write_reg_ex_s,
+      rd_address_ex_i => rd_address_ex_s,
       mem_to_reg_ex_i => mem_to_reg_ex_s,
       reg_write_ex_i => reg_write_ex_s,
 
-      write_reg_mem_i => write_reg_mem_s,
+      rd_address_mem_i => rd_address_mem_s,
       mem_to_reg_mem_i => mem_to_reg_mem_s,
       reg_write_mem_i => reg_write_mem_s,
 
