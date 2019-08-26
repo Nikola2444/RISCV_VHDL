@@ -49,7 +49,7 @@ begin
       generic map(WADDR => 10)
       port map (clk=> clk,
                 en_a_i => '1',    -- memory always enabled
-                en_b_i => not(instruction_mem_stall_b_s),
+                en_b_i => instruction_mem_stall_b_s,
                 reset_a_i => '0',
                 reset_b_i => instruction_mem_flush_b_s,
                 we_a_i => wea_instr_s,

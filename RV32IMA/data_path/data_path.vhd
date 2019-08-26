@@ -57,10 +57,8 @@ begin
       if (rising_edge(clk)) then
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
-         else
-            if (pc_write_i = '0') then
-               pc_reg_if_s <= pc_next_if_s;
-            end if;
+         elsif (pc_write_i = '1') then
+            pc_reg_if_s <= pc_next_if_s;
          end if;
       end if;      
    end process;
@@ -71,16 +69,14 @@ begin
    begin
       if (rising_edge(clk)) then
          --if(if_id_write_i)then
-            if (reset = '0' or if_id_flush_i = '1')then
-               pc_reg_id_s <= (others => '0');
-               pc_adder_id_s <= (others => '0');
-            else
-               if (if_id_write_i = '0') then
-                  pc_reg_id_s <= pc_reg_if_s;
-                  pc_adder_id_s <= pc_adder_if_s;
-               end if;
-            end if;
-         --end if;
+         if (reset = '0' or if_id_flush_i = '1')then
+            pc_reg_id_s <= (others => '0');
+            pc_adder_id_s <= (others => '0');
+         elsif (if_id_write_i = '1') then
+            pc_reg_id_s <= pc_reg_if_s;
+            pc_adder_id_s <= pc_adder_if_s;            
+         end if;
+      --end if;
       end if;      
    end process;
    
@@ -150,34 +146,34 @@ begin
    
    --branch condition inputs update
    branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
-                           alu_result_mem_s when branch_forward_a_i = "10" else
-                           rs1_data_id_s;
+                              alu_result_mem_s when branch_forward_a_i = "10" else
+                              rs1_data_id_s;
    branch_condition_b_ex_s <= rd_data_wb_s when branch_forward_b_i = "01" else
-                           alu_result_mem_s when branch_forward_b_i = "10" else
-                           rs2_data_id_s;
-                           
-                           
+                              alu_result_mem_s when branch_forward_b_i = "10" else
+                              rs2_data_id_s;
+   
+   
    --check if branch condition is met
    branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
-                            '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
-                            '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
-                            '0';
+                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
+                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
+                         '0';
 
    
    --pc_next mux
    with pc_next_sel_i select
       pc_next_if_s <= pc_adder_if_s when "00",
-                      alu_result_ex_s when "11",
-                      branch_adder_id_s when others;
+      alu_result_ex_s when "11",
+      branch_adder_id_s when others;
 
-      
+   
    --forwarding muxes
    alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else
-                     alu_result_mem_s when alu_forward_a_i = "10" else
-                     rs1_data_ex_s;
+                         alu_result_mem_s when alu_forward_a_i = "10" else
+                         rs1_data_ex_s;
    alu_forward_b_ex_s <= rd_data_wb_s when alu_forward_b_i = "01" else
-                     alu_result_mem_s when alu_forward_b_i = "10" else
-                     rs2_data_ex_s;
+                         alu_result_mem_s when alu_forward_b_i = "10" else
+                         rs2_data_ex_s;
    -- update of alu inputs
    
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
@@ -189,17 +185,17 @@ begin
 
    -- Reg_bank rd_data update
    rd_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
-                      extended_data_wb_s when mem_to_reg_i = "10"else
-                      alu_result_wb_s;
+                   extended_data_wb_s when mem_to_reg_i = "10"else
+                   alu_result_wb_s;
 
 
    -- extend data based on type of load instruction
    with instr_mem_read_i(14 downto 12) select
       extended_data_wb_s <=  (31 downto 8 => data_mem_read_i(7))   & data_mem_read_i(7 downto 0) when "000",
-                             (31 downto 16 => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
-                             std_logic_vector(to_unsigned(0,24))   & data_mem_read_i(7 downto 0) when "100",
-                             std_logic_vector(to_unsigned(0,16))   & data_mem_read_i(15 downto 0) when "101",
-                             data_mem_read_i when others;
+      (31 downto 16 => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
+      std_logic_vector(to_unsigned(0,24))   & data_mem_read_i(7 downto 0) when "100",
+      std_logic_vector(to_unsigned(0,16))   & data_mem_read_i(15 downto 0) when "101",
+      data_mem_read_i when others;
 
 
    rs1_address_id_s <= instr_mem_read_i(19 downto 15);

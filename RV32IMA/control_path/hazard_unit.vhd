@@ -51,8 +51,8 @@ begin
       end if;
    end process;
 
-   pc_write_o <= stall_s;
-   if_id_write_o <= stall_s;
+   pc_write_o <= not(stall_s);
+   if_id_write_o <= not(stall_s);
    control_stall_o <= stall_s;
    
 end architecture;
