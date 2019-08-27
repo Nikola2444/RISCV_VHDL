@@ -68,15 +68,15 @@ begin
    if_id:process (clk) is
    begin
       if (rising_edge(clk)) then
-         --if(if_id_write_i)then
-         if (reset = '0' or if_id_flush_i = '1')then
-            pc_reg_id_s <= (others => '0');
-            pc_adder_id_s <= (others => '0');
-         elsif (if_id_write_i = '1') then
-            pc_reg_id_s <= pc_reg_if_s;
-            pc_adder_id_s <= pc_adder_if_s;            
+         if(if_id_write_i='1')then
+            if (reset = '0' or if_id_flush_i = '1')then
+               pc_reg_id_s <= (others => '0');
+               pc_adder_id_s <= (others => '0');
+            else
+               pc_reg_id_s <= pc_reg_if_s;
+               pc_adder_id_s <= pc_adder_if_s;            
+            end if;
          end if;
-      --end if;
       end if;      
    end process;
    
