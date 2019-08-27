@@ -40,22 +40,32 @@ begin
 
    bcc_id_s <= instruction_i(12);
    --this mux covers conditional and unconditional branches
-   if_branch:process(branch_id_s,branch_condition_i,bcc_id_s)
+   pc_next_if_s:process(branch_id_s,branch_condition_i,bcc_id_s)
+   begin
+      pc_next_sel_o <= "00";
+      if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
+         pc_next_sel_o <= "01";
+      elsif(branch_id_s = "10")then
+         pc_next_sel_o <= "10";
+      elsif(branch_ex_s = "11") then
+         pc_next_sel_o <= "11";
+      end if;
+   end process;
+
+   -- this is logic for driving signals that flush registers
+   toilet:process(branch_id_s,branch_condition_i,bcc_id_s)
    begin
       if_id_flush_s <= '0';
       id_ex_flush_s <= '0';
-      pc_next_sel_o <= "00";
-
-      if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
-         if_id_flush_s <= '1';
-         pc_next_sel_o <= "01";
-      elsif(branch_id_s = "10")then
-         if_id_flush_s <= '1';
-         pc_next_sel_o <= "10";
-      elsif(branch_ex_s = "11") then
-         if_id_flush_s <= '1';
-         id_ex_flush_s <= '1';
-         pc_next_sel_o <= "11";
+      if(if_id_write_s = '1')then --not stall
+         if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
+            if_id_flush_s <= '1';
+         elsif(branch_id_s = "10")then
+            if_id_flush_s <= '1';
+         elsif(branch_ex_s = "11") then
+            if_id_flush_s <= '1';
+            id_ex_flush_s <= '1';
+         end if;
       end if;
    end process;
    if_id_flush_o <= if_id_flush_s;
@@ -196,9 +206,10 @@ begin
 
       --control outputs
       pc_write_o => pc_write_o,
-      if_id_write_o => if_id_write_o,
+      if_id_write_o => if_id_write_s,
       control_stall_o => control_stall_s);
-   
+
+   if_id_write_o <= if_id_write_s;
    mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
    mem_write_o <= mem_write_mem_s;

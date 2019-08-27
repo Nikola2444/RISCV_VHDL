@@ -12,7 +12,7 @@ entity TOP_RISCV is
       instr_mem_read_i: in std_logic_vector(31 downto 0);
       instr_mem_address_o: out std_logic_vector(31 downto 0);
       instruction_mem_flush_o:out std_logic;
-      instruction_mem_stall_o: out std_logic;
+      instruction_mem_en_o: out std_logic;
       -- ********* DATA memory i/o **************************
       mem_write_o: out std_logic;  
       data_mem_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -111,5 +111,5 @@ begin
    
 
 --************************************
-   instruction_mem_stall_o <= if_id_write_s;
+   instruction_mem_en_o <= if_id_write_s;
 end architecture;

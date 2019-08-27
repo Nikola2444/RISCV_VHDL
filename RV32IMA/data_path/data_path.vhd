@@ -142,7 +142,7 @@ begin
    pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, DATA_WIDTH));
 
    --branch_adder update
-   branch_adder_id_s <= std_logic_vector(unsigned(immediate_extended_id_s) + unsigned(pc_reg_id_s));
+   branch_adder_id_s <= std_logic_vector(signed(immediate_extended_id_s) + signed(pc_reg_id_s));
    
    --branch condition inputs update
    branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
