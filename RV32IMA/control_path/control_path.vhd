@@ -40,32 +40,24 @@ begin
 
    bcc_id_s <= instruction_i(12);
    --this mux covers conditional and unconditional branches
-   pc_next_if_s:process(branch_id_s,branch_condition_i,bcc_id_s)
-   begin
-      pc_next_sel_o <= "00";
-      if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
-         pc_next_sel_o <= "01";
-      elsif(branch_id_s = "10")then
-         pc_next_sel_o <= "10";
-      elsif(branch_ex_s = "11") then
-         pc_next_sel_o <= "11";
-      end if;
-   end process;
-
-   -- this is logic for driving signals that flush registers
-   toilet:process(branch_id_s,branch_condition_i,bcc_id_s)
+   pc_next_if_s:process(branch_id_s,branch_ex_s,branch_condition_i,bcc_id_s)
    begin
       if_id_flush_s <= '0';
       id_ex_flush_s <= '0';
-         if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
-            if_id_flush_s <= '1';
-         elsif(branch_id_s = "10")then
-            if_id_flush_s <= '1';
-         elsif(branch_ex_s = "11") then
-            if_id_flush_s <= '1';
-            id_ex_flush_s <= '1';
-         end if;
+      pc_next_sel_o <= "00";
+      if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
+         pc_next_sel_o <= "01";
+         if_id_flush_s <= '1';
+      elsif(branch_id_s = "10")then
+         pc_next_sel_o <= "10";
+         if_id_flush_s <= '1';
+      elsif(branch_ex_s = "11") then
+         pc_next_sel_o <= "11";
+         if_id_flush_s <= '1';
+         id_ex_flush_s <= '1';
+      end if;
    end process;
+
    if_id_flush_o <= if_id_flush_s;
    id_ex_flush_o <= id_ex_flush_s;
 
