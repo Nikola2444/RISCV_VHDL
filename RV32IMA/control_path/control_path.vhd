@@ -49,10 +49,12 @@ begin
       if (branch_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
          pc_next_sel_o <= "01";
          if_id_flush_s <= '1';
-      elsif(branch_id_s = "10")then
+      end if;
+      if(branch_id_s = "10")then
          pc_next_sel_o <= "10";
          if_id_flush_s <= '1';
-      elsif(branch_ex_s = "11") then
+      end if;
+      if(branch_ex_s = "11") then
          pc_next_sel_o <= "11";
          if_id_flush_s <= '1';
          id_ex_flush_s <= '1';
