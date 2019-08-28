@@ -9,9 +9,10 @@ entity control_path is
          -- from top
          instruction_i: in std_logic_vector (31 downto 0);
          --to datapath
-         mem_read_o: out std_logic;
+         --mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
          mem_write_o: out std_logic;
+         load_type_o: out std_logic_vector(2 downto 0); 
          alu_src_b_o: out std_logic;
          alu_src_a_o: out std_logic;
          reg_write_o: out std_logic;
@@ -61,6 +62,7 @@ begin
    if_id_flush_o <= if_id_flush_s;
    id_ex_flush_o <= id_ex_flush_s;
 
+   load_type_o <= funct3_wb_s;
    
    rs1_address_id_s <= instruction_i(19 downto 15);
    rs2_address_id_s <= instruction_i(24 downto 20);
@@ -80,7 +82,7 @@ begin
             alu_src_a_ex_s <= '0';
             alu_src_b_ex_s <= '0';
             mem_to_reg_ex_s <= (others => '0');
-            mem_read_ex_s <= '0';
+            --mem_read_ex_s <= '0';
             alu_2bit_op_ex_s <= (others => '0');
             rs1_address_ex_s <= (others => '0');
             rs2_address_ex_s <= (others => '0');
@@ -95,7 +97,7 @@ begin
             alu_src_a_ex_s <=  alu_src_a_id_s;
             alu_src_b_ex_s <= alu_src_b_id_s;
             mem_to_reg_ex_s <= mem_to_reg_id_s;
-            mem_read_ex_s <= mem_read_id_s;
+            --mem_read_ex_s <= mem_read_id_s;
             alu_2bit_op_ex_s <= alu_2bit_op_id_s;
             rs1_address_ex_s <= rs1_address_id_s; rs2_address_ex_s <= rs2_address_id_s;
             rd_address_ex_s <= rd_address_id_s;
@@ -112,17 +114,18 @@ begin
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
-
+            funct3_mem_s <= (others => '0');
             mem_write_mem_s <= '0';
             reg_write_mem_s <= '0';
             mem_to_reg_mem_s<= (others => '0');
-            mem_read_mem_s <= '0';
+            --mem_read_mem_s <= '0';
             rd_address_mem_s <= (others => '0');
          else
+            funct3_mem_s <= funct3_ex_s;
             mem_write_mem_s <= mem_write_ex_s;
             reg_write_mem_s <= reg_write_ex_s;
             mem_to_reg_mem_s <= mem_to_reg_ex_s;
-            mem_read_mem_s <= mem_read_ex_s;
+            --mem_read_mem_s <= mem_read_ex_s;
             rd_address_mem_s <= rd_address_ex_s;
          end if;
       end if;      
@@ -133,10 +136,12 @@ begin
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
+            funct3_wb_s <= (others => '0');
             reg_write_wb_s <= '0';
             mem_to_reg_wb_s <= (others => '0');
             rd_address_wb_s <= (others => '0');
          else
+            funct3_wb_s <= funct3_mem_s;
             reg_write_wb_s <= reg_write_mem_s;
             mem_to_reg_wb_s <= mem_to_reg_mem_s;
             rd_address_wb_s <= rd_address_mem_s;
@@ -148,7 +153,7 @@ begin
       port map(
          opcode_i => instruction_i(6 downto 0),
          branch_o => branch_id_s,
-         mem_read_o => mem_read_id_s,
+         --mem_read_o => mem_read_id_s,
          mem_to_reg_o => mem_to_reg_id_s,
          mem_write_o => mem_write_id_s,
          alu_src_b_o => alu_src_b_id_s,
@@ -200,7 +205,7 @@ begin
       control_stall_o => control_stall_s);
 
    if_id_write_o <= if_id_write_s;
-   mem_read_o <= mem_read_mem_s;
+   --mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
    mem_write_o <= mem_write_mem_s;
    alu_src_b_o <= alu_src_b_ex_s;

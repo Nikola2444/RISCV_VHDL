@@ -7,7 +7,7 @@ entity ctrl_decoder is
       opcode_i: in std_logic_vector (6 downto 0);
       -- to data_path
       branch_o: out std_logic_vector(1 downto 0);
-      mem_read_o: out std_logic;
+      --mem_read_o: out std_logic;
       mem_to_reg_o: out std_logic_vector(1 downto 0);
       mem_write_o: out std_logic;
       alu_src_b_o: out std_logic;
@@ -26,7 +26,7 @@ begin
    begin
       --default
       branch_o <= "00";
-      mem_read_o <= '0';
+      --mem_read_o <= '0';
       mem_to_reg_o <= "00";
       mem_write_o <= '0';
       alu_src_b_o <= '0';
@@ -38,7 +38,7 @@ begin
       case opcode_i is
          when "0000011" => --LOAD, 5v ~ funct3
             alu_2bit_op_o <= "00";
-            mem_read_o <= '1';
+            --mem_read_o <= '1';
             mem_to_reg_o <= "10";
             alu_src_b_o <= '1';
             reg_write_o <= '1';

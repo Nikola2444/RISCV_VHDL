@@ -21,8 +21,9 @@ entity data_path is
       data_mem_read_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
 
       -- ********* control signals **************************
-      mem_read_i: in std_logic;
+      --mem_read_i: in std_logic;
       mem_to_reg_i: in std_logic_vector(1 downto 0);
+      load_type_i :in std_logic_vector(2 downto 0);
       alu_op_i: in std_logic_vector (4 downto 0);      
       alu_src_a_i: in std_logic;
       alu_src_b_i: in std_logic;
@@ -190,7 +191,7 @@ begin
 
 
    -- extend data based on type of load instruction
-   with instr_mem_read_i(14 downto 12) select
+   with load_type_i select --TODO Greska
       extended_data_wb_s <=  (31 downto 8 => data_mem_read_i(7))   & data_mem_read_i(7 downto 0) when "000",
       (31 downto 16 => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
       std_logic_vector(to_unsigned(0,24))   & data_mem_read_i(7 downto 0) when "100",
