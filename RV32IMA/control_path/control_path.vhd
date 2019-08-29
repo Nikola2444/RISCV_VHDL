@@ -11,7 +11,7 @@ entity control_path is
          --to datapath
          --mem_read_o: out std_logic;
          mem_to_reg_o: out std_logic_vector(1 downto 0);
-         mem_write_o: out std_logic;
+         mem_write_o: out std_logic_vector(3 downto 0);
          load_type_o: out std_logic_vector(2 downto 0); 
          alu_src_b_o: out std_logic;
          alu_src_a_o: out std_logic;
@@ -60,9 +60,10 @@ begin
          id_ex_flush_s <= '1';
       end if;
    end process;
-
+   
    if_id_flush_o <= if_id_flush_s;
    id_ex_flush_o <= id_ex_flush_s;
+   
 
    load_type_o <= funct3_wb_s;
    
@@ -72,6 +73,8 @@ begin
 
    funct7_id_s <= instruction_i(31 downto 25);
    funct3_id_s <= instruction_i(14 downto 12);
+
+   
    --*********** ID/EX register ******************
    id_ex:process (clk) is
    begin
@@ -209,10 +212,14 @@ begin
    if_id_write_o <= if_id_write_s;
    --mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
-   mem_write_o <= mem_write_mem_s;
+
    alu_src_b_o <= alu_src_b_ex_s;
    alu_src_a_o <= alu_src_a_ex_s;
    alu_a_zero_o <= alu_a_zero_ex_s;
    reg_write_o <= reg_write_wb_s;
+   mem_write_o <= "0001" when mem_write_mem_s = '1' and funct3_mem_s = "000" else
+                  "0011" when mem_write_mem_s = '1' and funct3_mem_s = "001" else
+                  "1111" when mem_write_mem_s = '1' and funct3_mem_s = "010" else
+                  "0000";
 end architecture;
 

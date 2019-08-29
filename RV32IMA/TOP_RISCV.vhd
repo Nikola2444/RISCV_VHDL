@@ -14,7 +14,7 @@ entity TOP_RISCV is
       instruction_mem_flush_o:out std_logic;
       instruction_mem_en_o: out std_logic;
       -- ********* DATA memory i/o **************************
-      mem_write_o: out std_logic;  
+      mem_write_o: out std_logic_vector(3 downto 0);  
       data_mem_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
       data_mem_read_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
       data_mem_write_o: out std_logic_vector(DATA_WIDTH - 1 downto 0));
@@ -27,7 +27,6 @@ architecture structural of TOP_RISCV is
    signal load_type_s: std_logic_vector(2 downto 0);
    signal mem_to_reg_s: std_logic_vector(1 downto 0);
    signal alu_op_s: std_logic_vector (4 downto 0);
-   signal mem_write_s: std_logic;
    signal alu_src_b_s: std_logic;
    signal alu_src_a_s: std_logic;
    signal alu_a_zero_s: std_logic;

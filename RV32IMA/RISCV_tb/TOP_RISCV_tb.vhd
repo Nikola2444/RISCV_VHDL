@@ -19,13 +19,13 @@ architecture Behavioral of TOP_RISCV_tb is
    --Instruction_mem_signals
    signal instruction_mem_flush_b_s: std_logic;
    signal instruction_mem_en_b_s: std_logic;
-   signal wea_instr_s,web_instr_s: std_logic;
+   signal wea_instr_s,web_instr_s: std_logic_vector(3 downto 0);
    signal rea_instr_s,reb_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
    signal dia_instr_s,dib_instr_s:std_logic_vector(31 downto 0);
    signal doa_instr_s,dob_instr_s:std_logic_vector(31 downto 0);
    --Data_mem_signals
-   signal wea_data_s,web_data_s:std_logic;
+   signal wea_data_s,web_data_s:std_logic_vector(3 downto 0);
    signal addra_data_s,addrb_data_s: std_logic_vector(9 downto 0);
    signal dia_data_s,dib_data_s:std_logic_vector(31 downto 0);
    signal doa_data_s,dob_data_s:std_logic_vector(31 downto 0);
@@ -39,7 +39,7 @@ begin
 
    addrb_instr_s <= addrb_instr_extended_s(9 downto 0);
    addra_data_s  <= addra_data_extended_s(9 downto 0);
-   web_instr_s <= '0';
+   web_instr_s <= (others => '0');
    dib_instr_s <= (others => '0');
 
    -- Instruction Memory
@@ -103,7 +103,7 @@ begin
       variable i: integer:= 0;
    begin
       reset <= '0';
-      wea_instr_s <= '1';
+      wea_instr_s <= (others => '1');
       
       while (not endfile(RISCV_instructions))loop         
          readline(RISCV_instructions, row);
@@ -113,7 +113,7 @@ begin
          wait until rising_edge(clk);
       end loop;
       
-      wea_instr_s <= '0';
+      wea_instr_s <= (others => '0');
       reset <= '1' after 20 ns;
       
       wait;
