@@ -31,7 +31,7 @@ begin
    funct3 <= instruction_i(14 downto 12);
    
    
-   process (opcode) is
+   process (opcode, funct3) is
    begin
       case opcode(6 downto 2) is
          when "01100" =>
