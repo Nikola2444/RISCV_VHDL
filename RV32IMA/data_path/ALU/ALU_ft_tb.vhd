@@ -31,6 +31,18 @@ port map(
 		zero_o=>zero_o,
 		of_o=>of_o);
 
+
+
+reset <= '0', '1' after 50 ns;
+
+
+clk_drriver:
+process
+begin
+    clk <= '0', '1' after 50 ns;
+    wait for 100 ns;
+end process;
+
 -- Arithmetic Logic Unit (ALU)
 -- OP:
 -- 00000 -> bitwise and

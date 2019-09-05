@@ -50,7 +50,7 @@ package body ft_pkg is
       variable vector_upper : std_logic_vector(vector'length-vector'length/2-1 downto 0) := (others =>'0');
       variable vector_lower : std_logic_vector(vector'length/2-1 downto 0) := (others =>'0');
    begin
-         if(vector'length <= 1) then
+         if(vector'length = 1) then
          
             return std_logic_vector(to_unsigned(to_integer(unsigned(vector)),RETURN_W));
             

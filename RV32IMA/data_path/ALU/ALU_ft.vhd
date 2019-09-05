@@ -27,8 +27,8 @@ ARCHITECTURE behavioral OF ALU_ft IS
    signal alu_sw_array_s : array32_t (0 to NUM_MODULES-1);
    signal voter_res_s: std_logic_vector(31 downto 0);
    signal alu_valid_reg,alu_valid_s: std_logic_vector(0 to NUM_MODULES-1);
-   signal zero_s: std_logic_vector(NUM_MODULES downto 0);
-   signal of_s: std_logic_vector(NUM_MODULES downto 0);
+   signal zero_s: std_logic_vector(0 to NUM_MODULES-1);
+   signal of_s: std_logic_vector(0 to NUM_MODULES-1);
 
 
 BEGIN
@@ -98,7 +98,13 @@ BEGIN
    port map(
       voter_res_i => alu_sw_array_s,
       valid_reg_i => alu_valid_reg,
-      voter_res_o => voter_res_s);
+      of_i => of_s,
+      zero_i => zero_s,
+      voter_res_o => voter_res_s,
+      of_o => of_o,
+      zero_o => zero_o);    
+      -- forward most probable result to output
+      res_o <= voter_res_s;
 
 
 END behavioral;

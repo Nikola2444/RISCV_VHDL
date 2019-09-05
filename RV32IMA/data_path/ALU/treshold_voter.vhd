@@ -12,8 +12,12 @@ ENTITY treshold_voter IS
       );
    PORT(
       voter_res_i   :  IN   array32_t(0 to NUM_MODULES-1);
+      of_i          :  IN   STD_LOGIC_VECTOR(NUM_MODULES-1 downto 0);
+      zero_i        :  IN   STD_LOGIC_VECTOR(NUM_MODULES-1 downto 0);
       valid_reg_i   :  IN   STD_LOGIC_VECTOR(NUM_MODULES-1 downto 0);
-      voter_res_o   :  OUT  STD_LOGIC_VECTOR(31 downto 0));
+      voter_res_o   :  OUT  STD_LOGIC_VECTOR(31 downto 0);
+      of_o          :  OUT  STD_LOGIC;
+      zero_o        :  OUT  STD_LOGIC);
 END treshold_voter;
 
 
@@ -31,8 +35,7 @@ BEGIN
    -- TRESHOLD
    -- this command calls function "number_of_ones", and based on it finds appropriate treshold for voter
    -- treshold = number of working units / 2 (division by two = shift right by one)
-   sum_s <= count_ones_recursive(valid_reg_i);
-   treshold_s <= '0' & sum_s (TRESHOLD_W-1 downto 1);
+   treshold_s <= std_logic_vector(shift_right(unsigned(count_ones_recursive(valid_reg_i)),1));
 
    -- swap: converts alu_sw array to format more suitable for count_ones function
    swap:
@@ -56,6 +59,25 @@ BEGIN
             voter_res_o(i) <= '0';
          end if;
       end loop;
+   end process;
+   
+   -- find_flags: generates overflow and zero flags from multiple inputs as the most common one
+   find_flags:
+   process (of_i, zero_i, treshold_s) is
+   begin
+      
+         if(count_ones_recursive(of_i) > treshold_s)then
+            of_o <= '1';
+         else
+            of_o <= '0';
+         end if;
+         
+         if(count_ones_recursive(zero_i) > treshold_s)then
+            zero_o <= '1';
+         else
+            zero_o <= '0';
+         end if;
+     
    end process;
 
 
