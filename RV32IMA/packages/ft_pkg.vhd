@@ -45,26 +45,31 @@ package body ft_pkg is
 
    function count_ones_recursive (vector : std_logic_vector) return std_logic_vector is
       constant RETURN_W : integer := (integer(ceil(log2(real(vector'length)))) + integer(1));
-      variable count : std_logic_vector(RETURN_W-1 downto 0);
-      variable res_upper,res_lower : unsigned(RETURN_W-1 downto 0);
-      variable vector_upper : std_logic_vector(vector'length-vector'length/2-1 downto 0);
-      variable vector_lower : std_logic_vector(vector'length/2-1 downto 0);
+      variable count : std_logic_vector(RETURN_W-1 downto 0) := (others =>'0');
+      variable res_upper,res_lower : unsigned(RETURN_W-1 downto 0) := (others =>'0');
+      variable vector_upper : std_logic_vector(vector'length-vector'length/2-1 downto 0) := (others =>'0');
+      variable vector_lower : std_logic_vector(vector'length/2-1 downto 0) := (others =>'0');
    begin
-         if(vector'length = 1) then
+         if(vector'length <= 1) then
+         
             return std_logic_vector(to_unsigned(to_integer(unsigned(vector)),RETURN_W));
-         end if;
-         
-         vector_upper := vector(vector'length-1 downto vector'length/2);
-         vector_lower := vector(vector'length/2-1 downto 0);
-         
-         
-         
-         res_upper := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_upper))), res_upper'length);
-         res_lower := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_lower))), res_lower'length);
-         
-         count := std_logic_vector(res_upper + res_lower);
+            
+         else
+            --report "vector_length: " & integer'image(vector'length);
 
-         return count;
+            vector_upper := vector((vector'length-1) downto (vector'length/2));
+            vector_lower := vector((vector'length/2-1) downto 0);
+         
+         
+         
+            res_upper := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_upper))), res_upper'length);
+            res_lower := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_lower))), res_lower'length);
+         
+            count := std_logic_vector(res_upper + res_lower);
+
+            return count;
+         end if;
+              
    end count_ones_recursive;
 
 end package body ft_pkg;
