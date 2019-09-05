@@ -31,7 +31,7 @@ entity forwarding_unit is
 end entity;
 
 architecture Behavioral of forwarding_unit is
-   constant zero_c: std_logic_vector (31 downto 0) := std_logic_vector(to_unsigned(0, 32));
+   constant zero_c: std_logic_vector (4 downto 0) := std_logic_vector(to_unsigned(0, 5));
 begin
 
    

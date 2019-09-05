@@ -29,7 +29,7 @@ architecture behavioral of hazard_unit is
 begin
    
    
-   process (rs1_address_id_i, rs2_address_id_i, branch_id_i, rd_address_ex_i, reg_write_ex_i, rd_address_mem_i, mem_to_reg_mem_i) is
+   process (rs1_address_id_i, rs2_address_id_i, branch_id_i, rd_address_ex_i, reg_write_ex_i, rd_address_mem_i, mem_to_reg_ex_i, mem_to_reg_mem_i) is
    begin
       stall_s <= '0';
       if (branch_id_i = "00") then
