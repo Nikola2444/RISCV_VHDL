@@ -13,7 +13,7 @@ package ft_pkg is
    -- serial -> function is implemented as a simple loop, good readability bad performance
    function count_ones_serial    (vector : std_logic_vector) return std_logic_vector;
    -- recursive -> function is implemented as a binary tree in hope of better timing result
-   function count_ones_recursive (vector : std_logic_vector; RETURN_W : natural) return std_logic_vector;
+   function count_ones_recursive (vector : std_logic_vector) return std_logic_vector;
 
 end package ft_pkg;
 
@@ -43,21 +43,25 @@ package body ft_pkg is
    end count_ones_serial;
 
 
-   function count_ones_recursive (vector : std_logic_vector; RETURN_W: natural) return std_logic_vector is
-      --constant RETURN_W : integer := (integer(ceil(log2(real(vector'length)))) + integer(1));
+   function count_ones_recursive (vector : std_logic_vector) return std_logic_vector is
+      constant RETURN_W : integer := (integer(ceil(log2(real(vector'length)))) + integer(1));
       variable count : std_logic_vector(RETURN_W-1 downto 0);
       variable res_upper,res_lower : unsigned(RETURN_W-1 downto 0);
-      variable vector_upper, vector_lower : std_logic_vector(vector'length/2-1 downto 0);
+      variable vector_upper : std_logic_vector(vector'length-vector'length/2-1 downto 0);
+      variable vector_lower : std_logic_vector(vector'length/2-1 downto 0);
    begin
-         if(vector'length = 1)then
+         if(vector'length = 1) then
             return std_logic_vector(to_unsigned(to_integer(unsigned(vector)),RETURN_W));
          end if;
          
          vector_upper := vector(vector'length-1 downto vector'length/2);
          vector_lower := vector(vector'length/2-1 downto 0);
          
-         res_upper := unsigned(count_ones_recursive(vector_upper,RETURN_W));
-         res_lower := unsigned(count_ones_recursive(vector_lower,RETURN_W));
+         
+         
+         res_upper := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_upper))), res_upper'length);
+         res_lower := to_unsigned(to_integer(unsigned(count_ones_recursive(vector_lower))), res_lower'length);
+         
          count := std_logic_vector(res_upper + res_lower);
 
          return count;
