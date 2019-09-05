@@ -47,13 +47,17 @@ package body ft_pkg is
       --constant RETURN_W : integer := (integer(ceil(log2(real(vector'length)))) + integer(1));
       variable count : std_logic_vector(RETURN_W-1 downto 0);
       variable res_upper,res_lower : unsigned(RETURN_W-1 downto 0);
+      variable vector_upper, vector_lower : std_logic_vector(vector'length/2-1 downto 0);
    begin
          if(vector'length = 1)then
             return std_logic_vector(to_unsigned(to_integer(unsigned(vector)),RETURN_W));
          end if;
-
-         res_upper := unsigned(count_ones_recursive(vector(vector'length downto vector'length/2),RETURN_W));
-         res_lower := unsigned(count_ones_recursive(vector(vector'length/2-1 downto 0),RETURN_W));
+         
+         vector_upper := vector(vector'length-1 downto vector'length/2);
+         vector_lower := vector(vector'length/2-1 downto 0);
+         
+         res_upper := unsigned(count_ones_recursive(vector_upper,RETURN_W));
+         res_lower := unsigned(count_ones_recursive(vector_lower,RETURN_W));
          count := std_logic_vector(res_upper + res_lower);
 
          return count;
