@@ -1,0 +1,104 @@
+sequence concatanation
+
+	 r ##1 s
+
+	 means there is a match for s that immediatly follows match of r
+	 starting immediatly from the next cycle
+
+
+	 a ##1 b
+
+	 -a and b are boolean expressions. Sequence a ##1 b has a match iff a
+	 is true in clock tick i and b is true in clock tick i+1.
+	 -Tight satisfaction of sequence a ##1 b depends neither on the value	
+	 of b in clock tick i nor on the value of a in clock tick i + 1. Although this looks
+	 obvious, this is a source of confusion for many people who erroneously believe that
+	 for this sequence match b must become true for the first time in clock tick i C1.
+
+
+	 Example 6.11. We want to state that the value of sig toggles every cycle: 0101. . . or
+	 1010. . . . The following assertion
+	 
+	 a1: assert property (@(posedge clk) sig ##1 !sig);
+
+	 -does not check this condition. Similar to Example 6.10, it means that sig is true in
+	 each clock tick, and also that sig is false starting from clock tick 1. Therefore,
+	 this assertion is contradictory: it requires that starting from clock tick 1 sig
+	 be simultaneously true and false. Example 7.26 explains how to implement this
+	 assertion correctly.
+
+6.3.3 Sequence Fusion
+
+         Example 6.12. What is the meaning of fusion of two Boolean sequences a and b?
+	 -Solution: a ##0 b can have a match iff both a and b are true simultaneously.
+	 Therefore, a ##0 b is semantically equivalent to a && b. Note, however, that
+	 a ##0 b anda && bare not syntactically interchangeable. a ##0 b is a sequence,
+	 so it cannot be used as an operand in a Boolean expression. For example,
+	 a && b || c(where c is a Boolean expression) is legal, whereas (a ##0 b) || c
+	 is syntactically illegal.
+
+	       
+	      
+	 y(n) = -y(n - 2) + 2y(n - 1) + u(n)
+	 y(n - 2) - 2y(n - 1)+ y(n) = u(n)
+
+Initial Delay:
+	Skip n > 0 cycles before matching sequence s.
+	The value of a should be always true starting from clock tick 2
+	solution:
+		a1: assert property (@(posedge clk) ##2 a);
+		    	   or
+		a2: assert property (@(posedge clk) nexttime[2] a);
+
+
+Sufix implication
+
+a4_illegal: assert property (@(posedge clk) sent nexttime 1 |-> done)
+
+	-is illegal since the antecedent of a suffix implication is a sequence, not a property,
+	and using property operator nexttime is forbidden in sequences.
+	For example, property write ##1 done |=> read
+
+	-means that if done follows write then read must be asserted in the next clock
+	tick after done. If there is no done after write the property passes. Property
+	write |=> done ##1 read means a different thing: each write must be followed
+	by a series of done and read. If there is no done after write the property fails.
+Nested Implication
+       example: If start is asserted two clock ticks before send, then acknowledgment
+       ack should arrive in three clock ticks after send was asserted.
+       
+       a1: assert property (@(posedge clk)
+       	   start |-> ##2 send |-> ##3 ack);
+
+
+6.5 Consecutive Repetition
+
+    s[*n]
+    example: “Reset rst must be asserted
+    during first two cycles” may be more elegantly expressed using sequences:
+
+    initial a1: assert property (@(posedge clk) rst[*2]); ut
+
+6.7.1 Repetition Range
+
+      Instead of a fixed number of repetitions one can specify a repetition range: finite
+      s[*m:n] and infinite s[*n:$].m and n should be elaboration time integral constants,
+      m <= n, and $ stands for an “infinite number”.
+
+      s[*2:4]? Intuitively, it means that sequence s is repeated from
+      2 to 4 times. More formally, s[*2:4] has a match iff either s[*2] has a
+      match, or s[*3], or s[*4] has a match. That is, s[*2:4] is equivalent to
+      s[*2] or s[*3] or s[*4].
+
+6.7.1.2 Infinite Repetition Range
+
+	pogledaj ako ti bude trebalo
+
+
+6.8 Sequences Admitting Empty Match
+    	Sequence a ##1 b[*0:2] ##1 c matches traces ac, abc, and
+	abbc. Note that in the trace ac there is no gap between a and c: b[*0] does not
+	have any duration in time!
+
+
+6.9 Sequence Concatenation and Delay Revisited
