@@ -47,7 +47,8 @@ begin
       if (reg_write_wb_i = '1' and rd_address_wb_i /= zero_c)then
          if (rd_address_wb_i = rs1_address_ex_i)then
             alu_forward_a_o <= "01";
-         elsif(rd_address_wb_i = rs2_address_ex_i)then
+         end if;
+         if(rd_address_wb_i = rs2_address_ex_i)then
             alu_forward_b_o <= "01";            
          end if;   
       end if;
@@ -55,7 +56,8 @@ begin
       if (reg_write_mem_i = '1' and rd_address_mem_i /= zero_c)then
          if (rd_address_mem_i = rs1_address_ex_i)then
             alu_forward_a_o <= "10";
-         elsif (rd_address_mem_i = rs2_address_ex_i)then
+         end if;
+         if (rd_address_mem_i = rs2_address_ex_i)then
             alu_forward_b_o <= "10";
          end if;
       end if;      
@@ -75,7 +77,8 @@ begin
       if (reg_write_wb_i = '1' and rd_address_wb_i /= zero_c)then
          if (rd_address_wb_i = rs1_address_id_i)then
             branch_forward_a_o <= "01";
-         elsif(rd_address_wb_i = rs2_address_id_i)then
+         end if;
+         if(rd_address_wb_i = rs2_address_id_i)then 
             branch_forward_b_o <= "01";
          end if;   
       end if;
@@ -83,7 +86,8 @@ begin
       if (reg_write_mem_i = '1' and rd_address_mem_i /= zero_c)then
          if (rd_address_mem_i = rs1_address_id_i)then
             branch_forward_a_o <= "10";
-         elsif (rd_address_mem_i = rs2_address_id_i)then
+         end if;
+         if (rd_address_mem_i = rs2_address_id_i)then
             branch_forward_b_o <= "10";
          end if;
       end if;      

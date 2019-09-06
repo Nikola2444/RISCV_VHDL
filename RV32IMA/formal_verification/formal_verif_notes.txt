@@ -1,0 +1,45 @@
+- Let: nesto slicno makrou samo bolje. pogledaj 167  stranu u system verilog power of assertions
+- nexttime property suggests that a property is true in next cycle
+  	   nextime p for one clk or nexttime[3] p for more clk
+	   example:
+		initial a1: assert property(@(posedge clk) nexttime[9] !rst);
+
+	   pogledaj chapter 10, kako da koristis nexttime kada clock ne oktucava do kraja, vec se 
+	   simulacija zavrsi.
+
+-nexttime always p: According to the definition of nexttime property, always p should hold
+	  in clock tick 1. Therefore, property p should hold in every clock tick starting from
+	  clock tick 1.
+
+- always nextime p: According to the definition of always property, nexttime p should hold
+in every clock tick. Therefore, property p should hold in every clock tick starting
+from clock tick 1.
+
+s_eventually: example 
+	      	
+		initial a1: assert property (@(posedge clk) s_eventually !rst);
+		
+		-According to the definition of s_eventually this property means that
+		there exists some clock tick where always p is true.
+
+
+		a2: assert property (@(posedge clk) s_eventually always !rst);
+
+		-assertion a2 checks that rst at some moment becomes and remains
+		low, whereas assertion a1 only checks that rst becomes low.
+
+		always s_eventually p
+
+		holds if p is true infinitely many times, in other words, p is true infinitely often.
+
+-until: example
+		p until q
+
+		-it follows that property p until q is true iff the property p is true in every clock
+		 tick until (but not including) the first clock tick where q is true. See Fig. 5.5. If q
+		 never happens p should be true forever.
+		-Note that p until q does not mean that p cannot be true starting from the clock
+		tick when q becomes true. It only means that p does not have to be true after q
+		becomes true for the first time.
+
+		There is also an overlapping version of until called until_with		

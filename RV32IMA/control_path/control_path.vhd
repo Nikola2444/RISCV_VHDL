@@ -173,7 +173,26 @@ begin
          funct3_i => funct3_ex_s,
          funct7_i => funct7_ex_s,
          alu_op_o => alu_op_o);
-
+   --**********************FU CHECKER************************
+   forwarding_unit_checker:entity work.forwarding_unit_checker
+      port map (
+         clk => clk,
+         reset => reset,
+         reg_write_mem_i    => reg_write_mem_s,
+         rd_address_mem_i    => rd_address_mem_s,
+         reg_write_wb_i     => reg_write_wb_s,
+         rd_address_wb_i     => rd_address_wb_s,
+         rs1_address_ex_i     => rs1_address_ex_s,
+         rs2_address_ex_i     => rs2_address_ex_s,
+         rs1_address_id_i     => rs1_address_id_s,
+         rs2_address_id_i     => rs2_address_id_s,
+         alu_forward_a_o    => alu_forward_a_s,
+         alu_forward_b_o    => alu_forward_b_s,
+         branch_forward_a_o => branch_forward_a_o,
+         branch_forward_b_o => branch_forward_b_o);
+   --******************************************************
+     
+   
    forwarding_unit_1: entity work.forwarding_unit(behavioral)
       port map (
          reg_write_mem_i    => reg_write_mem_s,
@@ -184,8 +203,8 @@ begin
          rs2_address_ex_i     => rs2_address_ex_s,
          rs1_address_id_i     => rs1_address_id_s,
          rs2_address_id_i     => rs2_address_id_s,
-         alu_forward_a_o    => alu_forward_a_o,
-         alu_forward_b_o    => alu_forward_b_o,
+         alu_forward_a_o    => alu_forward_a_s,
+         alu_forward_b_o    => alu_forward_b_s,
          branch_forward_a_o => branch_forward_a_o,
          branch_forward_b_o => branch_forward_b_o);
 
@@ -213,6 +232,9 @@ begin
    --mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
 
+
+   alu_forward_a_o <= alu_forward_a_s;
+   alu_forward_b_o <= alu_forward_b_s;
    alu_src_b_o <= alu_src_b_ex_s;
    alu_src_a_o <= alu_src_a_ex_s;
    alu_a_zero_o <= alu_a_zero_ex_s;
