@@ -5,6 +5,7 @@ set_elaborate_single_run_mode off
 
 # Checkers
 analyze -sv09 {checkers/forwarding_unit_checker.sv}
+analyze -sv09 {checkers/stall_checker.sv}
 # packages
 analyze -vhdl2k {../packages/alu_ops_pkg.vhd}
 analyze -vhdl2k {../packages/datapath_signals_pkg.vhd}
@@ -31,7 +32,7 @@ analyze -vhdl2k {../data_path/data_path.vhd}
 analyze -vhdl2k {../TOP_RISCV.vhd}
 
 elaborate -vhdl -top {TOP_RISCV}
-clock clk -factor 1 -phase 1 
+clock clk -factor 1 -phase 1 -both_edges
 #reset -none
 
 reset -expression {reset}

@@ -42,7 +42,9 @@ architecture structural of TOP_RISCV is
    signal pc_next_sel_s      : std_logic_vector(1 downto 0);
 
    signal pc_write_s:  std_logic;--controls program counter
-   signal if_id_write_s:  std_logic;--controls istruction fetch    
+   signal if_id_write_s:  std_logic;--controls istruction fetch
+                                    --
+   
          
    
 begin
@@ -106,9 +108,9 @@ begin
          if_id_write_o => if_id_write_s
          );
    
-
    
 
 --************************************
+   
    instruction_mem_en_o <= if_id_write_s;
 end architecture;
