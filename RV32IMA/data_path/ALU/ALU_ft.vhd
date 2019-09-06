@@ -24,9 +24,10 @@ ARCHITECTURE behavioral OF ALU_ft IS
    
    
    signal alu_res_array_s : array32_t (0 to NUM_MODULES-1);
+   signal alu_ain_array_s,alu_bin_array_s : array32_t (0 to NUM_MODULES-1); -- these signals are redundant, but its easier to demonstrate having them
    signal alu_sw_array_s : array32_t (0 to NUM_MODULES-1);
    signal voter_res_s: std_logic_vector(31 downto 0);
-   signal alu_valid_reg,alu_valid_s: std_logic_vector(0 to NUM_MODULES-1);
+   signal alu_valid_reg,alu_valid_s: std_logic_vector(0 to NUM_MODULES-1) := (others=>'1');
    signal zero_s: std_logic_vector(0 to NUM_MODULES-1);
    signal of_s: std_logic_vector(0 to NUM_MODULES-1);
 
@@ -39,8 +40,8 @@ BEGIN
    for i in 0 to NUM_MODULES-1 generate
       alu_inst: entity work.ALU(behavioral)
       generic map (WIDTH => 32)
-      port map (a_i => a_i,
-                b_i => b_i,
+      port map (a_i => alu_ain_array_s(i),
+                b_i => alu_bin_array_s(i),
                 op_i => op_i,
                 res_o => alu_res_array_s(i),
                 zero_o => zero_s(i),
@@ -56,8 +57,10 @@ BEGIN
    process (alu_res_array_s,alu_valid_reg,voter_res_s)is
    begin
       for i in 0 to NUM_MODULES-1 loop
+         alu_ain_array_s(i) <= a_i;
+         alu_bin_array_s(i) <= b_i;
 
-         if (alu_valid_reg(i) = '0')then
+         if (alu_valid_reg(i) = '1')then
             alu_sw_array_s(i) <= alu_res_array_s(i);
          else
             alu_sw_array_s(i) <= (others => '0');

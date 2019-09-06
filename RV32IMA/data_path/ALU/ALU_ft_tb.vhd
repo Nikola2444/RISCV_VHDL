@@ -33,7 +33,7 @@ port map(
 
 
 
-reset <= '0', '1' after 50 ns;
+reset <= '0', '1' after 100 ns;
 
 
 clk_drriver:
