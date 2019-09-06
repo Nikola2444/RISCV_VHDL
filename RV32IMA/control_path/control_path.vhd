@@ -243,5 +243,19 @@ begin
                   "0011" when mem_write_mem_s = '1' and funct3_mem_s = "001" else
                   "1111" when mem_write_mem_s = '1' and funct3_mem_s = "010" else
                   "0000";
+
+
+   -- FORMAL_STALL_CHECKER_MODULE
+
+   stall_checker_inst: entity work.stall_checker
+     port map (clk => clk,
+               rs1 => instruction_i(19 downto 15),
+               rs2 => instruction_i(24 downto 20),
+               opcode => instruction_i(6 downto 0),
+               reset => reset,
+               stall => control_stall_s,
+               flush =>if_id_flush_s
+               );
+   
 end architecture;
 
