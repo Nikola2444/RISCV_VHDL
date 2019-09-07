@@ -33,7 +33,7 @@ begin
    begin
       stall_s <= '0';
       if (branch_id_i = "00") then
-         if((rs1_address_id_i = rd_address_ex_i) and mem_to_reg_ex_i = "10" and reg_write_ex_i = '1')then -- load in execution stage
+        if((rs1_address_id_i = rd_address_ex_i) and mem_to_reg_ex_i = "10" and reg_write_ex_i = '1')then -- load in execution stage
             stall_s <='1';
          end if;
       elsif(branch_id_i = "01")then --branch in id phase

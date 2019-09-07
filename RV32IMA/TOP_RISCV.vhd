@@ -43,9 +43,13 @@ architecture structural of TOP_RISCV is
 
    signal pc_write_s:  std_logic;--controls program counter
    signal if_id_write_s:  std_logic;--controls istruction fetch
-                                    --
+
    
-         
+   --Logic needed for formal verif
+  signal instruction_ex_s: std_logic_vector(31 downto 0);
+  signal instruction_mem_s: std_logic_vector(31 downto 0);
+  signal pc_next_s:std_logic_vector(31 downto 0);
+ signal past_pc_next:std_logic_vector(31 downto 0);
    
 begin
    -- Data_path will be instantiated here
@@ -56,7 +60,7 @@ begin
       port map (
          clk                => clk,
          reset              => reset,
-         instr_mem_address_o    => instr_mem_address_o,
+         instr_mem_address_o    => pc_next_s,
          instr_mem_read_i      => instr_mem_read_i,
          data_mem_address_o => data_mem_address_o,
          data_mem_write_o   => data_mem_write_o,
@@ -113,4 +117,30 @@ begin
 --************************************
    
    instruction_mem_en_o <= if_id_write_s;
+      fv_proc: process(clk)is
+     begin
+       if (rising_edge(clk))then
+         if (reset = '0')then            
+            instruction_mem_s <= (others => '0');           
+            instruction_ex_s <= (others => '0');
+            past_pc_next <= (others => '0');
+         else           
+            instruction_mem_s <= instruction_ex_s;
+            instruction_ex_s <= instr_mem_read_i;
+            past_pc_next <= pc_next_s;
+         end if;
+       end if;
+     end process;
+   
+   pc_checker_inst: entity work.pc_checker
+     port map (clk => clk,
+               reset => reset,
+               pc_next => pc_next_s,
+               pc_next_past => past_pc_next,
+               opcode_ex => instruction_ex_s(6 downto 0),
+               instruction_id => instr_mem_read_i,
+               opcode_mem => instruction_mem_s(6 downto 0),
+               opcode_id => instr_mem_read_i(6 downto 0));
+
+  instr_mem_address_o <= pc_next_s;
 end architecture;

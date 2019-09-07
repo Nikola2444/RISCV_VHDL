@@ -110,8 +110,8 @@ begin
             rs2_data_mem_s  <= (others => '0');
             pc_adder_mem_s <= (others => '0');
             rd_address_mem_s <= (others => '0');
-            pc_reg_ex_s <= (others => '0');
-         else
+            pc_reg_ex_s <= (others => '0');           
+         else           
             alu_result_mem_s <= alu_result_ex_s;
             rs2_data_mem_s  <= alu_forward_b_ex_s;
             pc_adder_mem_s <= pc_adder_ex_s;
@@ -249,7 +249,11 @@ begin
    -- Data memory
    data_mem_address_o <= alu_result_mem_s; 
    data_mem_write_o <= rs2_data_mem_s;
-   
+
+
+   --*****FORMAL_VERIFICATION_LOGIC
+
+
 end architecture;
 
 

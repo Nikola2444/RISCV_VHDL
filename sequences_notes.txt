@@ -38,9 +38,7 @@ sequence concatanation
 	 is syntactically illegal.
 
 	       
-	      
-	 y(n) = -y(n - 2) + 2y(n - 1) + u(n)
-	 y(n - 2) - 2y(n - 1)+ y(n) = u(n)
+
 
 Initial Delay:
 	Skip n > 0 cycles before matching sequence s.

@@ -7,7 +7,8 @@ package controlpath_signals_pkg is
    --Signals needed for formal verification
    signal alu_forward_a_s: std_logic_vector(1 downto 0);
    signal alu_forward_b_s: std_logic_vector(1 downto 0);
-  
+
+
    -- register control signals for stalling and flushing
    signal if_id_write_s : std_logic;   
    signal if_id_flush_s : std_logic;   
