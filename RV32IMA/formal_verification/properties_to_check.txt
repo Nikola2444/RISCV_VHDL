@@ -1,12 +1,12 @@
--Check if forwarding unit forward correclty in case of rd_mem = rd_wb = rs1. radi
--Check if stall is maximum 2 clk long.
--Check if R-type instruction in ex phase causes only one clk stall
--Check if pc always increments by four, when instructions are not of branch type. Ne znam zasto ne radi
-##1 always (past(pc) == PC-4)
+-Check if forwarding unit forward correclty in case of rd_mem = rd_wb = rs1. DONE
+-Check if stall is maximum 2 clk long. DONE
+-Check if R-type instruction in ex phase causes only one clk stall. DONE
+-Check if pc always increments by four, when instructions are not of branch type. DONE
 
--Check if there is a flush when JAL, JALR instructions appear
--Check if JAL is is ID and JALR is in EXE, will JAL be flushed
--Check if branch condition is asserted when R-type instruction is in ID phase
--check if there is an error if two branch instruction come one after another
--Figure out how to check if processors halts
--check if more than one clk flush can appear
+
+-Check if there is a flush when JAL, JALR instructions appear. TODO
+-Check if JAL is is ID and JALR is in EXE, will JAL be flushed. TODO
+-Check if branch condition is asserted when R-type instruction is in ID phase. TODO 
+-check if there is an error if two branch instruction come one after another. TODO
+-Figure out how to check if processors halts. TODO
+-check if more than one clk flush can appear. TODO

@@ -35,7 +35,7 @@ module stall_checker
    assign load2_clk_stall = (branch_id_s == 2'b01) && (rs1 == rs2) && rd_ex_s == rs1 && funct3 == 3'b000 && (prev_opcode) == 7'b0000011;
    
    //check if 2 clk stall will happen when beq is in id and load in exe
-   beq_after_load_stall: assert property(load2_clk_stall |-> not(stall ##1 !stall));
+   beq_after_load_stall: assert property(load2_clk_stall |-> stall[*2] and (not(stall ##1 !stall)));
    // maximum 2 clk stall
    max_2_clk_stall_check:assert property (not(stall[*3]));
 
