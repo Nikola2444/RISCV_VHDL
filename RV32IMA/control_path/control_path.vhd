@@ -234,34 +234,34 @@ begin
 
    -- FORMAL_STALL_CHECKER_MODULE
 
-   --stall_checker_inst: entity work.stall_checker
-   --  port map (clk => clk,
-   --            rs1 => instruction_i(19 downto 15),
-   --            rs2 => instruction_i(24 downto 20),
-   --            opcode => instruction_i(6 downto 0),
-   --            reset => reset,
-   --            stall => control_stall_s,
-   --            flush_id =>if_id_flush_s,
-   --            flush_ex =>id_ex_flush_s,
-   --            branch_id_s => branch_id_s
-   --            );
+   stall_checker_inst: entity work.stall_checker
+     port map (clk => clk,
+               reset => reset,
+               rs1 => instruction_i(19 downto 15),
+               rs2 => instruction_i(24 downto 20),
+               opcode => instruction_i(6 downto 0),               
+               stall => control_stall_s,               
+               branch_id_s => branch_id_s,
+               rd_ex_s => rd_address_ex_s,
+               funct3 => funct3_id_s
+               );
    ----**********************FU CHECKER************************
-   --forwarding_unit_checker:entity work.forwarding_unit_checker
-   --  port map (
-   --    clk => clk,
-   --    reset => reset,
-   --    reg_write_mem_i    => reg_write_mem_s,
-   --    rd_address_mem_i    => rd_address_mem_s,
-   --    reg_write_wb_i     => reg_write_wb_s,
-   --    rd_address_wb_i     => rd_address_wb_s,
-   --    rs1_address_ex_i     => rs1_address_ex_s,
-   --    rs2_address_ex_i     => rs2_address_ex_s,
-   --    rs1_address_id_i     => rs1_address_id_s,
-   --    rs2_address_id_i     => rs2_address_id_s,
-   --    alu_forward_a_o    => alu_forward_a_s,
-   --    alu_forward_b_o    => alu_forward_b_s,
-   --    branch_forward_a_o => branch_forward_a_o,
-   --    branch_forward_b_o => branch_forward_b_o);
+   forwarding_unit_checker:entity work.forwarding_unit_checker
+     port map (
+       clk => clk,
+       reset => reset,
+       reg_write_mem_i    => reg_write_mem_s,
+       rd_address_mem_i    => rd_address_mem_s,
+       reg_write_wb_i     => reg_write_wb_s,
+       rd_address_wb_i     => rd_address_wb_s,
+       rs1_address_ex_i     => rs1_address_ex_s,
+       rs2_address_ex_i     => rs2_address_ex_s,
+       rs1_address_id_i     => rs1_address_id_s,
+       rs2_address_id_i     => rs2_address_id_s,
+       alu_forward_a_o    => alu_forward_a_s,
+       alu_forward_b_o    => alu_forward_b_s,
+       branch_forward_a_o => branch_forward_a_o,
+       branch_forward_b_o => branch_forward_b_o);
    ----******************************************************
 
 end architecture;

@@ -1,7 +1,7 @@
--Check if forwarding unit forward correclty in case of rd_mem = rd_wb = rs1. 
+-Check if forwarding unit forward correclty in case of rd_mem = rd_wb = rs1. radi
 -Check if stall is maximum 2 clk long.
 -Check if R-type instruction in ex phase causes only one clk stall
--Check if pc always increments by four, when instructions are not of branch type.
+-Check if pc always increments by four, when instructions are not of branch type. Ne znam zasto ne radi
 ##1 always (past(pc) == PC-4)
 
 -Check if there is a flush when JAL, JALR instructions appear
