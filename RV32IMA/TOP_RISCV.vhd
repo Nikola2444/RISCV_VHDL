@@ -121,7 +121,8 @@ begin
   pc_checker_inst: entity work.pc_checker
     port map (clk => clk,
               reset => reset,
-              pc_reg => pc_reg_s,      
+              pc_reg => pc_reg_s,
+              if_id_write_s => if_id_write_s,
               opcode_id => instr_mem_read_i(6 downto 0));
 
 

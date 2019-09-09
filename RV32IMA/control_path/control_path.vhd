@@ -93,9 +93,7 @@ begin
             rs2_address_ex_s <= (others => '0');
             rd_address_ex_s <= (others => '0');
             reg_write_ex_s <= '0';
-            mem_write_ex_s <= '0';
-            -- FORMAL VERIG LOGIC
-
+            mem_write_ex_s <= '0';   
          else
             branch_ex_s <= branch_id_s;
             funct7_ex_s <= funct7_id_s;
@@ -110,9 +108,6 @@ begin
             rd_address_ex_s <= rd_address_id_s;
             reg_write_ex_s <= reg_write_id_s;
             mem_write_ex_s <= mem_write_id_s;
-            -- FORMAL VERIG LOGIC
-
-
          end if;
       end if;      
    end process;
@@ -231,19 +226,17 @@ begin
                   "1111" when mem_write_mem_s = '1' and funct3_mem_s = "010" else
                   "0000";
 
-
+-- *****************LOGIC_NEEDED_FORMAL_VERIFICATION**************************
+   
    -- FORMAL_STALL_CHECKER_MODULE
-
    stall_checker_inst: entity work.stall_checker
      port map (clk => clk,
                reset => reset,
-               rs1 => instruction_i(19 downto 15),
-               rs2 => instruction_i(24 downto 20),
+               rs1_id => instruction_i(19 downto 15),
+               rs2_id => instruction_i(24 downto 20),
                opcode => instruction_i(6 downto 0),               
                stall => control_stall_s,               
-               branch_id_s => branch_id_s,
-               rd_ex_s => rd_address_ex_s,
-               funct3 => funct3_id_s
+               rd_ex_s => rd_address_ex_s
                );
    ----**********************FU CHECKER************************
    forwarding_unit_checker:entity work.forwarding_unit_checker
@@ -264,20 +257,5 @@ begin
        branch_forward_b_o => branch_forward_b_o);
    ----******************************************************
 
+   
 end architecture;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -4,9 +4,12 @@
 -Check if pc always increments by four, when instructions are not of branch type. DONE
 
 
+
+-Check if JAL is in ID and JALR is in EXE, will JAL be flushed. in process DONE
+
+
 -Check if there is a flush when JAL, JALR instructions appear. TODO
--Check if JAL is is ID and JALR is in EXE, will JAL be flushed. TODO
 -Check if branch condition is asserted when R-type instruction is in ID phase. TODO 
 -check if there is an error if two branch instruction come one after another. TODO
 -Figure out how to check if processors halts. TODO
--check if more than one clk flush can appear. TODO
+

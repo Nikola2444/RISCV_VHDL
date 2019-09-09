@@ -251,9 +251,22 @@ begin
    data_mem_write_o <= rs2_data_mem_s;
 
 
-   --*****FORMAL_VERIFICATION_LOGIC
+   --*****FORMAL_VERIFICATION_LOGIC*************************
 
 
+   --**********************BRANCH_CHECKER*******************
+
+   branch_checker_inst: entity work.branch_checker
+     port map (clk => clk,
+               reset => reset,
+               opcode => instr_mem_read_i(6 downto 0),
+               immediate_extended_ex_s => immediate_extended_ex_s,
+               pc_reg_if_s => pc_reg_if_s,
+               pc_reg_ex_s => pc_reg_ex_s,
+               pc_next_sel_i => pc_next_sel_i
+               );
+
+   
 end architecture;
 
 
