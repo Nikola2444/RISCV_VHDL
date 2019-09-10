@@ -102,7 +102,7 @@ begin
       variable row: line;
       variable i: integer:= 0;
    begin
-      reset <= '0';
+      --reset <= '0';
       wea_instr_s <= (others => '1');
       
       while (not endfile(RISCV_instructions))loop         
@@ -114,12 +114,12 @@ begin
       end loop;
       
       wea_instr_s <= (others => '0');
-      reset <= '1' after 20 ns;
+      --reset <= '1' after 20 ns;
       
       wait;
    end process;
    --****************************************************
-
+   reset <= '0', '1' after 200ns;
    
    clk_proc: process
    begin

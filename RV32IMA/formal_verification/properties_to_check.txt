@@ -13,3 +13,9 @@
 -check if there is an error if two branch instruction come one after another. TODO
 -Figure out how to check if processors halts. TODO
 
+
+-Check mem_to_reg after 3 clk when certain instructions appear in ID phase
+-check mem_to_reg when
+-check if forwarding is done right, meaning see if the result at alu inputs are the same as the result in the next stage. The same thing needs to be done for branch_condition generator.
+
+
