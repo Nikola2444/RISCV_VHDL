@@ -13,6 +13,7 @@ ENTITY ALU_ft IS
       b_i  :  IN   STD_LOGIC_VECTOR(31 DOWNTO 0);
       op_i  :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); 
       res_o   :  OUT  STD_LOGIC_VECTOR(31 DOWNTO 0); 
+      stall_o   :  OUT  STD_LOGIC;
       zero_o   :  OUT  STD_LOGIC;
       of_o   :  OUT  STD_LOGIC);
 END ALU_ft;
@@ -24,13 +25,14 @@ ARCHITECTURE behavioral OF ALU_ft IS
    
    
    signal alu_res_array_s : array32_t (0 to NUM_MODULES-1);
-   signal alu_ain_array_s,alu_bin_array_s : array32_t (0 to NUM_MODULES-1); -- these signals are redundant, but its easier to demonstrate having them
    signal alu_sw_array_s : array32_t (0 to NUM_MODULES-1);
    signal voter_res_s: std_logic_vector(31 downto 0);
-   signal alu_valid_reg,alu_valid_s: std_logic_vector(0 to NUM_MODULES-1) := (others=>'1');
+   signal alu_valid_reg,alu_valid_next,alu_valid_s, alu_disable_s: std_logic_vector(0 to NUM_MODULES-1) := (others=>'1');
    signal zero_s: std_logic_vector(0 to NUM_MODULES-1);
    signal of_s: std_logic_vector(0 to NUM_MODULES-1);
 
+   type state_t is (idle,stalled);
+   signal state_reg,state_next : state_t := idle;
 
 BEGIN
 
@@ -40,8 +42,8 @@ BEGIN
    for i in 0 to NUM_MODULES-1 generate
       alu_inst: entity work.ALU(behavioral)
       generic map (WIDTH => 32)
-      port map (a_i => alu_ain_array_s(i),
-                b_i => alu_bin_array_s(i),
+      port map (a_i => a_i,
+                b_i => b_i,
                 op_i => op_i,
                 res_o => alu_res_array_s(i),
                 zero_o => zero_s(i),
@@ -57,9 +59,6 @@ BEGIN
    process (alu_res_array_s,alu_valid_reg,voter_res_s)is
    begin
       for i in 0 to NUM_MODULES-1 loop
-         alu_ain_array_s(i) <= a_i;
-         alu_bin_array_s(i) <= b_i;
-
          if (alu_valid_reg(i) = '1')then
             alu_sw_array_s(i) <= alu_res_array_s(i);
          else
@@ -73,8 +72,42 @@ BEGIN
          end if;
 
       end loop;
+   end process;
 
-      
+   -- FSM That controlls reg state
+   fsm_reg:
+   process (clk,reset) is
+   begin
+      if(rising_edge(clk))then
+         if(reset='0')then
+            state_reg <= idle;
+         else
+            state_reg <= state_next;
+         end if;
+      end if;
+   end process;
+
+   alu_disable_s <= (alu_valid_s nor (not alu_valid_reg));
+
+   fsm_comb:
+   process (alu_disable_s, state_reg) is
+   begin
+      stall_o <= '0';
+      alu_valid_next <= (others => '1');
+      state_next <= idle;
+      case state_reg is
+         when idle => 
+            if (alu_disable_s /= std_logic_vector(to_unsigned(0,NUM_MODULES))) then
+               state_next <= stalled;
+               stall_o <= '1';
+            end if;
+         when stalled =>
+            state_next <= idle;
+            if (alu_disable_s /= std_logic_vector(to_unsigned(0,NUM_MODULES))) then
+               alu_valid_next <= alu_valid_s;
+            end if;
+         when others =>
+      end case;
    end process;
 
 
@@ -89,7 +122,7 @@ BEGIN
          if(reset='0')then
             alu_valid_reg <= (others=>'1');
          else
-            alu_valid_reg <= alu_valid_reg and alu_valid_s;
+            alu_valid_reg <= alu_valid_reg and alu_valid_next;
          end if;
       end if;
    end process;
@@ -106,6 +139,7 @@ BEGIN
       voter_res_o => voter_res_s,
       of_o => of_o,
       zero_o => zero_o);    
+
       -- forward most probable result to output
       res_o <= voter_res_s;
 

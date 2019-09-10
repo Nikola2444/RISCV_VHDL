@@ -40,9 +40,12 @@ entity data_path is
 
       if_id_flush_i: in std_logic;
       id_ex_flush_i: in std_logic;
+      id_ex_write_i: in std_logic;
 
       pc_write_i: in std_logic;--controls program counter      
-      if_id_write_i: in std_logic
+      if_id_write_i: in std_logic;
+      
+      ft_stall_o: out std_logic
       );
    
 end entity;
@@ -91,7 +94,7 @@ begin
             rs2_data_ex_s <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
             rd_address_ex_s <= (others => '0');
-         else
+         elsif(id_ex_write_i='1')then
             pc_adder_ex_s <= pc_adder_id_s;
             rs1_data_ex_s <= rs1_data_id_s;
             rs2_data_ex_s <= rs2_data_id_s;
@@ -230,10 +233,14 @@ begin
    --********************************************
 
    --***********ALU unit instance****************
-   ALU_1: entity work.ALU
+   ALU_1: entity work.ALU_ft
       generic map (
-         WIDTH => DATA_WIDTH)
+      --WIDTH => DATA_WIDTH)
+         NUM_MODULES => 4)
       port map (
+         clk    => clk,
+         reset  => reset,
+         stall_o => ft_stall_o,
          a_i    => a_ex_s,
          b_i    => b_ex_s,
          op_i   => alu_op_i,

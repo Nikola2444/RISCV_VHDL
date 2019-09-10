@@ -5,6 +5,7 @@ package controlpath_signals_pkg is
 
    -- register control signals for stalling and flushing
    signal if_id_write_s : std_logic;   
+   signal id_ex_write_s : std_logic;   
    signal if_id_flush_s : std_logic;   
    signal id_ex_flush_s : std_logic;   
 

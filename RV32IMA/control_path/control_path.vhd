@@ -31,7 +31,10 @@ entity control_path is
          id_ex_flush_o: out std_logic;
 
          pc_write_o : out std_logic;
-         if_id_write_o : out std_logic
+         if_id_write_o : out std_logic;
+         id_ex_write_o : out std_logic;
+
+         ft_stall_i: in std_logic
          );  
 end entity;
 
@@ -94,7 +97,7 @@ begin
             rd_address_ex_s <= (others => '0');
             reg_write_ex_s <= '0';
             mem_write_ex_s <= '0';
-         else
+         elsif(id_ex_write_s='1')then
             branch_ex_s <= branch_id_s;
             funct7_ex_s <= funct7_id_s;
             funct3_ex_s <= funct3_id_s;
@@ -108,6 +111,7 @@ begin
             rd_address_ex_s <= rd_address_id_s;
             reg_write_ex_s <= reg_write_id_s;
             mem_write_ex_s <= mem_write_id_s;
+
          end if;
       end if;      
    end process;
@@ -191,6 +195,7 @@ begin
 
    hazard_unit_1: entity work.hazard_unit(behavioral)
       port map (
+      ft_stall_i => ft_stall_i,
       
       rs1_address_id_i => rs1_address_id_s,
       rs2_address_id_i => rs2_address_id_s,
@@ -207,11 +212,13 @@ begin
       --control outputs
       pc_write_o => pc_write_o,
       if_id_write_o => if_id_write_s,
+      id_ex_write_o => id_ex_write_s,
       control_stall_o => control_stall_s);
 
    if_id_write_o <= if_id_write_s;
    --mem_read_o <= mem_read_mem_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
+   id_ex_write_o <= id_ex_write_s;
 
    alu_src_b_o <= alu_src_b_ex_s;
    alu_src_a_o <= alu_src_a_ex_s;

@@ -33,6 +33,9 @@ architecture structural of TOP_RISCV is
    signal reg_write_s: std_logic;
    signal if_id_flush_s: std_logic;
    signal id_ex_flush_s: std_logic;
+   signal id_ex_write_s: std_logic;
+
+   signal ft_stall_s: std_logic;
 
    signal alu_forward_a_s    : std_logic_vector (1 downto 0);
    signal alu_forward_b_s    : std_logic_vector (1 downto 0);
@@ -54,6 +57,7 @@ begin
       port map (
          clk                => clk,
          reset              => reset,
+         ft_stall_o        => ft_stall_s,        
          instr_mem_address_o    => instr_mem_address_o,
          instr_mem_read_i      => instr_mem_read_i,
          data_mem_address_o => data_mem_address_o,
@@ -75,7 +79,8 @@ begin
          pc_write_i => pc_write_s,
          if_id_write_i => if_id_write_s,
          if_id_flush_i => if_id_flush_s,
-         id_ex_flush_i => id_ex_flush_s
+         id_ex_flush_i => id_ex_flush_s,
+         id_ex_write_i => id_ex_write_s
          ); 
       
       instruction_mem_flush_o <= if_id_flush_s;
@@ -85,6 +90,7 @@ begin
       port map (
          clk           => clk,
          reset         => reset,
+         ft_stall_i => ft_stall_s,
          instruction_i => instr_mem_read_i,
          alu_a_zero_o   => alu_a_zero_s,
          mem_to_reg_o  => mem_to_reg_s,
@@ -102,6 +108,7 @@ begin
          pc_next_sel_o => pc_next_sel_s,
          if_id_flush_o => if_id_flush_s,
          id_ex_flush_o => id_ex_flush_s,
+         id_ex_write_o => id_ex_write_s,
          pc_write_o => pc_write_s,
          if_id_write_o => if_id_write_s
          );
