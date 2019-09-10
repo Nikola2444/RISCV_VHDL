@@ -17,5 +17,8 @@
 -Check mem_to_reg after 3 clk when certain instructions appear in ID phase
 -check mem_to_reg when
 -check if forwarding is done right, meaning see if the result at alu inputs are the same as the result in the next stage. The same thing needs to be done for branch_condition generator.
+-Assert that a sequence BEQ, R, R, will not change the state of registers because R instruction will be flushed.
 
+
+--Check if All instructions that need to flush flush.
 
