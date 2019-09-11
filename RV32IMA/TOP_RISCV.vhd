@@ -125,5 +125,4 @@ begin
               if_id_write_s => if_id_write_s,
               opcode_id => instr_mem_read_i(6 downto 0));
 
-
 end architecture;

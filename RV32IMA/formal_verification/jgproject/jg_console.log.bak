@@ -1,0 +1,120 @@
+2019-09-10 16:11:48.756973 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.765482 (4297) main____ INFO    JasperGold version info
+2019-09-10 16:11:48.765494 (4297) main____ INFO      tool      : JasperGold 2018.06
+2019-09-10 16:11:48.765504 (4297) main____ INFO      version   : 2018.06p002 64 bits
+2019-09-10 16:11:48.765512 (4297) main____ INFO      build date: 2018.08.27 18:04:53 PDT
+2019-09-10 16:11:48.765518 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.765522 (4297) main____ INFO    Runtime info:
+2019-09-10 16:11:48.765527 (4297) main____ INFO      platform  : Linux 3.10.0-693.el7.x86_64 x86_64
+2019-09-10 16:11:48.765535 (4297) main____ INFO      hostname  : ws0.lab317.kel.net
+2019-09-10 16:11:48.765540 (4297) main____ INFO      pid       : 4297
+2019-09-10 16:11:48.765545 (4297) main____ INFO      arguments : '-style' 'windows' 'do.tcl'
+2019-09-10 16:11:48.765549 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.765553 (4297) main____ INFO    System resource limits info:
+2019-09-10 16:11:48.765558 (4297) main____ INFO      virtual memory: unlimited
+2019-09-10 16:11:48.765563 (4297) main____ INFO      cpu time      : unlimited
+2019-09-10 16:11:48.765573 (4297) main____ INFO      stack size    : 8388608 B
+2019-09-10 16:11:48.765581 (4297) main____ INFO      core file size: 0 B
+2019-09-10 16:11:48.765589 (4297) main____ INFO      open files    : 1024
+2019-09-10 16:11:48.765595 (4297) main____ INFO      file size     : unlimited
+2019-09-10 16:11:48.765599 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.765603 (4297) main____ INFO    Memory statistics:
+2019-09-10 16:11:48.765608 (4297) main____ INFO      total physical memory  : 10214092 kB
+2019-09-10 16:11:48.765611 (4297) main____ INFO      free physical memory   : 8589584 kB
+2019-09-10 16:11:48.765615 (4297) main____ INFO      committed address space: 3032456 kB
+2019-09-10 16:11:48.765619 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.765647 (4297) main____ INFO    Important environment variables:
+2019-09-10 16:11:48.765657 (4297) main____ INFO      DISPLAY        : ':0'
+2019-09-10 16:11:48.765665 (4297) main____ INFO      LM_LICENSE_FILE: '5280@cadresearch.kel.net'
+2019-09-10 16:11:48.765669 (4297) main____ INFO    ----------------------------------------
+2019-09-10 16:11:48.776154 (4297) lic_core INFO    Initializing license system ...
+2019-09-10 16:11:48.823087 (4297) lic_core INFO    ... license system initialized.
+2019-09-10 16:11:48.891762 (4297) lic__man INFO    Claim 'main' for <ui>.
+2019-09-10 16:11:48.891839 (4297) lic_core INFO    (1) checking out 'jasper_interactive' ...
+2019-09-10 16:11:48.930119 (4297) lic_core INFO    ... (1) checkout succeeded
+2019-09-10 16:11:48.930219 (4297) lic__man INFO    Claim 'fpv' for <ui>.
+2019-09-10 16:11:48.930265 (4297) lic_core INFO    (2) checking out 'jasper_fpv' ...
+2019-09-10 16:11:48.944596 (4297) lic_core INFO    ... (2) checkout succeeded
+2019-09-10 16:11:51.213298 (4297) lic__man INFO    Claim 'fpv' for <ui>.
+2019-09-10 16:11:52.158498 (4297) lic__man INFO    Unclaim 'fpv' for <ui>.
+2019-09-10 16:11:52.158555 (4297) lic__man INFO    Claim 'fpv' for <ui>.
+2019-09-10 16:11:52.244560 (4297) session_ INFO    Starting analysis session with session id 'session_0' ...
+2019-09-10 16:11:52.246018 (4297) session_ INFO    Analysis session with session id 'session_0' started (pid: 4320)
+2019-09-10 16:12:04.679686 (4297) session_ INFO    Analysis session 'session_0' connected to the console (host: 10.1.220.170:55102)
+2019-09-10 16:12:06.990215 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:12:29.029158 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:13:09.070916 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:21:11.097302 (4297) lic__man INFO    Entering idle state.
+2019-09-10 16:42:22.983613 (4297) lic__man INFO    Leaving idle state.
+2019-09-10 16:45:50.951554 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:46:36.797265 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:46:50.927654 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:47:45.789310 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:47:55.353839 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:47:58.307691 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:47:58.709975 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 16:48:00.991126 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 16:48:09.922033 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 16:50:47.141618 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:50:49.669300 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:50:49.710488 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 16:50:51.703869 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 16:50:52.805866 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 16:53:53.860577 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:53:55.891821 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:54:11.903548 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:54:22.067999 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:54:24.575748 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 16:54:24.629600 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 16:54:26.589254 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 16:54:27.977724 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 17:11:01.904148 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:11:10.460015 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:11:12.917281 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:11:12.989071 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 17:11:14.927926 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 17:11:15.804784 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 17:13:44.714625 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:13:47.588945 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:13:47.655122 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 17:13:49.563022 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 17:13:50.654191 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 17:33:24.644106 (4297) lic__man INFO    Entering idle state.
+2019-09-10 17:41:04.643809 (4297) lic__man INFO    Leaving idle state.
+2019-09-10 17:45:57.088960 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:45:59.555083 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:45:59.631707 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 17:46:01.309732 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 17:46:02.661167 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 17:49:54.446638 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:49:56.888732 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 17:49:56.950768 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 17:49:58.750191 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 17:49:59.036142 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 17:59:09.643838 (4297) lic__man INFO    Entering idle state.
+2019-09-10 18:09:22.366580 (4297) lic__man INFO    Leaving idle state.
+2019-09-10 18:09:22.862093 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:09:38.014278 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:09:46.787905 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:10:19.385562 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:10:21.880139 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:10:21.935408 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 18:10:23.853250 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 18:10:24.771101 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 18:21:23.144004 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:21:25.943075 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:21:26.013637 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 18:21:27.737508 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 18:21:29.008840 (4297) lic__man INFO    Claim 'fpv' for 'session_0'.
+2019-09-10 18:36:09.657271 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:36:32.671157 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:36:35.106643 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:36:35.157890 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 18:36:35.714562 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 18:39:47.540636 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:39:49.941090 (4297) lic__man INFO    Unclaim everything for 'session_0'.
+2019-09-10 18:39:50.003809 (4297) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2019-09-10 18:39:50.519634 (4297) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2019-09-10 18:46:59.030570 (4297) main____ INFO    About to exit: requested from GUI
+2019-09-10 18:46:59.447542 (4297) session_ INFO    Analysis session 'session_0' disconnected.
+2019-09-10 18:46:59.516068 (4297) main____ INFO    Exiting with status 0.

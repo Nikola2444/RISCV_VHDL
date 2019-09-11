@@ -266,7 +266,24 @@ begin
                pc_next_sel_i => pc_next_sel_i
                );
 
-   
+   forward_check_inst: entity work.forwarding_checker
+     port map(clk => clk,
+              reset => reset,
+              id_ex_flush_i => id_ex_flush_i,
+              stall => if_id_write_i,
+              alu_result_mem_i => alu_result_mem_s,
+              rd_data_wb_i => rd_data_wb_s,
+              alu_in_a_i =>  a_ex_s,
+              alu_in_b_i =>  b_ex_s,
+              
+              rs1_address_id_i => instr_mem_read_i(19 downto 15),
+              rs2_address_id_i => instr_mem_read_i(24 downto 20),
+              reg_write_i =>reg_write_i,
+              rd_address_mem_i =>  rd_address_mem_s,
+              rd_address_wb_i =>  rd_address_wb_s,
+              
+              opcode_id_i => instr_mem_read_i(6 downto 0)
+              );
 end architecture;
 
 

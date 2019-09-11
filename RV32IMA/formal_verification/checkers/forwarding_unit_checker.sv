@@ -1,23 +1,23 @@
 module forwarding_unit_checker
 (
  
- input logic 	      reset,
- input logic 	      clk,
+ input logic 	     reset,
+ input logic 	     clk,
  
- input logic 	      reg_write_mem_i,
- input logic [4 : 0]  rd_address_mem_i,
+ input logic 	     reg_write_mem_i,
+ input logic [4 : 0] rd_address_mem_i,
  
  // wb inputs
- input logic 	      reg_write_wb_i,
- input logic [4 : 0]  rd_address_wb_i,
+ input logic 	     reg_write_wb_i,
+ input logic [4 : 0] rd_address_wb_i,
 
  // ex inputs
- input logic [4 : 0]  rs1_address_ex_i,
- input logic [4 : 0]  rs2_address_ex_i,
+ input logic [4 : 0] rs1_address_ex_i,
+ input logic [4 : 0] rs2_address_ex_i,
 
  //id inputs
- input logic [4 : 0]  rs1_address_id_i,
- input logic [4 : 0]  rs2_address_id_i,
+ input logic [4 : 0] rs1_address_id_i,
+ input logic [4 : 0] rs2_address_id_i,
  //forward control outputs
  input logic [1 : 0] alu_forward_a_o,
  input logic [1 : 0] alu_forward_b_o,
@@ -25,6 +25,8 @@ module forwarding_unit_checker
  //They control multiplexers infront of equality test
  input logic [1 : 0] branch_forward_a_o,
  input logic [1 : 0] branch_forward_b_o
+
+ //
  );
    logic 	     forward_both_to_alu;
    logic 	     forward_both_to_branch_cmp;

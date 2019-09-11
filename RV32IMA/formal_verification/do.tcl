@@ -4,6 +4,8 @@ set_elaborate_single_run_mode off
 
 
 # Checkers
+analyze -sv09 {checkers/assumptions.sv}
+analyze -sv09 {checkers/forwarding_checker.sv}
 analyze -sv09 {checkers/branch_checker.sv}
 analyze -sv09 {checkers/pc_checker.sv}
 analyze -sv09 {checkers/forwarding_unit_checker.sv}
