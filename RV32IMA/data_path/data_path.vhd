@@ -146,18 +146,18 @@ begin
    branch_adder_id_s <= std_logic_vector(signed(immediate_extended_id_s) + signed(pc_reg_id_s));
    
    --branch condition inputs update
-   branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
+   branch_condition_a_id_s <= rd_data_wb_s when branch_forward_a_i = "01" else
                               alu_result_mem_s when branch_forward_a_i = "10" else
                               rs1_data_id_s;
-   branch_condition_b_ex_s <= rd_data_wb_s when branch_forward_b_i = "01" else
+   branch_condition_b_id_s <= rd_data_wb_s when branch_forward_b_i = "01" else
                               alu_result_mem_s when branch_forward_b_i = "10" else
                               rs2_data_id_s;
    
    
    --check if branch condition is met
-   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
-                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
-                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
+   branch_condition_id_s <= '1' when ((signed(branch_condition_a_id_s) = signed(branch_condition_b_id_s)) and instr_mem_read_i(14 downto 13) = "00") else
+                         '1' when ((signed(branch_condition_a_id_s) < signed(branch_condition_b_id_s)) and instr_mem_read_i(14 downto 13) = "10") else
+                         '1' when ((signed(branch_condition_a_id_s) > signed(branch_condition_b_id_s)) and instr_mem_read_i(14 downto 13) = "11") else
                          '0';
 
    
@@ -249,7 +249,7 @@ begin
    -- Data memory
    data_mem_address_o <= alu_result_mem_s; 
    data_mem_write_o <= rs2_data_mem_s;
-
+   branch_condition_o <= branch_condition_id_s;
 
    --*****FORMAL_VERIFICATION_LOGIC*************************
 
@@ -259,11 +259,13 @@ begin
    branch_checker_inst: entity work.branch_checker
      port map (clk => clk,
                reset => reset,
-               opcode => instr_mem_read_i(6 downto 0),
-               immediate_extended_ex_s => immediate_extended_ex_s,
-               pc_reg_if_s => pc_reg_if_s,
-               pc_reg_ex_s => pc_reg_ex_s,
-               pc_next_sel_i => pc_next_sel_i
+               instruction_id_i => instr_mem_read_i,
+               branch_condition_i => branch_condition_id_s,
+               pc_next_if_i => pc_next_if_s,
+               pc_reg_id_i => pc_reg_id_s,
+               alu_result_ex_i => alu_result_ex_s,
+               id_ex_flush_i => id_ex_flush_i,
+               branch_adder_id_i => branch_adder_id_s
                );
 
    forward_check_inst: entity work.forwarding_checker
@@ -271,18 +273,22 @@ begin
               reset => reset,
               id_ex_flush_i => id_ex_flush_i,
               stall => if_id_write_i,
-              alu_result_mem_i => alu_result_mem_s,
-              rd_data_wb_i => rd_data_wb_s,
+                            
               alu_in_a_i =>  a_ex_s,
               alu_in_b_i =>  b_ex_s,
+              branch_condition_a_id_s => branch_condition_a_id_s,
+              branch_condition_b_id_s => branch_condition_b_id_s,
               
               rs1_address_id_i => instr_mem_read_i(19 downto 15),
-              rs2_address_id_i => instr_mem_read_i(24 downto 20),
-              reg_write_i =>reg_write_i,
+              rs2_address_id_i => instr_mem_read_i(24 downto 20),              
               rd_address_mem_i =>  rd_address_mem_s,
               rd_address_wb_i =>  rd_address_wb_s,
+              reg_write_i =>reg_write_i,
+
+              opcode_id_i => instr_mem_read_i(6 downto 0),
               
-              opcode_id_i => instr_mem_read_i(6 downto 0)
+              alu_result_mem_i => alu_result_mem_s,
+              rd_data_wb_i => rd_data_wb_s
               );
 end architecture;
 

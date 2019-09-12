@@ -25,6 +25,6 @@
 TODO list
 
 - Nece zaputacit procesor
-- Pokusaj da assumujes stall i flush
-- Kada ostavim assume za ispravne instrukcije proveri da li ce zapucati na los assert
-- Proveri nexttime reg_write_wb
+- Pokusaj da assumujes stall i flush DONE
+- Kada ostavim assume za ispravne instrukcije proveri da li ce zapucati na los assert DONE
+- Proveri nexttime reg_write_wb DONE

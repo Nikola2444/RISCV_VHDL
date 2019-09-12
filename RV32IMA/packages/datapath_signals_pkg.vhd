@@ -18,8 +18,8 @@ package datapath_signals_pkg is
    signal pc_reg_id_s: std_logic_vector (31 downto 0);
    signal rs1_data_id_s, rs2_data_id_s, immediate_extended_id_s: std_logic_vector (31 downto 0);
    --branch condidtion inputs
-   signal branch_condition_a_ex_s, branch_condition_b_ex_s:std_logic_vector(31 downto 0);   
-   --signal branch_condition_id_s : std_logic; --branch condition complement
+   signal branch_condition_a_id_s, branch_condition_b_id_s:std_logic_vector(31 downto 0);   
+   signal branch_condition_id_s : std_logic; --branch condition complement
    --branch_adder signal
    signal branch_adder_id_s: std_logic_vector (31 downto 0);
    signal instruction_id_s: std_logic_vector (31 downto 0);

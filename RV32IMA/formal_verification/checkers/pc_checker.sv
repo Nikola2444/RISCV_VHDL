@@ -37,6 +37,6 @@ module pc_checker
    assign no_jump_in_ex = opcode_ex != 7'b1100011 && opcode_ex != 7'b1101111 && opcode_ex != 7'b1100111;
    assign no_jump_in_mem = opcode_mem != 7'b1100111;       
    assign no_jump_in_id_ex_mem = no_jump_in_id  &&  no_jump_in_ex  && no_jump_in_mem;
-
+   
    pc_assert: assert property (no_jump_in_id_ex_mem && !if_id_write_s |-> (pc_reg == 0 || pc_reg_prev == pc_reg - 4));
 endmodule
