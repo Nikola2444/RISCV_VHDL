@@ -124,5 +124,11 @@ begin
               pc_reg => pc_reg_s,
               if_id_write_s => if_id_write_s,
               opcode_id => instr_mem_read_i(6 downto 0));
-
+  assumptions_inst: entity work.assumptions
+    port map (clk => clk,
+              reset => reset,
+              stall => if_id_write_s,
+              flush => if_id_flush_s,
+              instruction => instr_mem_read_i
+              );
 end architecture;

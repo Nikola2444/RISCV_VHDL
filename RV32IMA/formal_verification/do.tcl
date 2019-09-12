@@ -36,7 +36,7 @@ analyze -vhdl2k {../data_path/data_path.vhd}
 analyze -vhdl2k {../TOP_RISCV.vhd}
 analyze -vhdl2k {../formal_top_RISCV.vhd}
 
-elaborate -vhdl -top {formal_top_RISCV}
+elaborate -vhdl -top {TOP_RISCV}
 clock clk -factor 1 -phase 1 -both_edges
 #reset -none
 
