@@ -27,8 +27,7 @@ module forwarding_checker
    logic [4 : 0] 	 rs1_address_ex_r;
    logic [4 : 0] 	 rs2_address_ex_r;
    logic [6 : 0] 	 opcode_ex_r, opcode_mem_r;
-   logic 		 known_instr_check;
-   logic [6 : 0] 	 instruction_opcodes[9] = {7'h13, 7'h37, 7'h23, 7'h33, 7'h63, 7'h67, 7'h6f, 7'h17, 7'h17};
+   
    
    default clocking @(posedge clk); endclocking
    default disable iff !reset;
@@ -47,32 +46,29 @@ module forwarding_checker
       opcode_mem_r <= opcode_ex_r;
    end // always @ (posedge clk)
    
-   always @(opcode_id_i)begin
-      for (int i = 0; i < 9; i++)begin
-	 if ((opcode_mem_r) == instruction_opcodes[i])begin
-	    known_instr_check = 1;
-	    break;	    
-	 end
-	 else
-	   known_instr_check = 0;	 
-      end
-   end
+   
+   
+   assign mem_alu_forward_a_check = rs1_address_ex_r == rd_address_mem_i && rd_address_mem_i != 0;
+
+   assign mem_alu_forward_b_check = rs2_address_ex_r == rd_address_mem_i && rd_address_mem_i != 0;
+
+   assign wb_alu_forward_b_check = rs2_address_ex_r == rd_address_wb_i && rd_address_wb_i != 0;
+   
+   assign wb_alu_forward_a_check = rs1_address_ex_r == rd_address_wb_i && rd_address_wb_i != 0;
 
    
-   assign mem_alu_forward_a_check = $past(rs1_address_ex_r) == $past(rd_address_mem_i) && reg_write_i && $past(rd_address_mem_i) != 0;
+   // Asserts that correct value will be forwarded to alu input 'a' from mem stage to ex stage
+   mem_alu_a_forward_assert: assert property ((mem_alu_forward_a_check && opcode_ex_r != 7'b0010111 && opcode_ex_r != 7'b0110111) ##1 reg_write_i  |-> $past(alu_result_mem_i) == $past(alu_in_a_i ));
 
-   assign mem_alu_forward_b_check = $past(rs2_address_ex_r) == $past(rd_address_mem_i) && reg_write_i && $past(rd_address_mem_i) != 0;
+   // Asserts that correct value will be forwarded to alu input 'b' from mem stage to ex stage
+   mem_alu_b_forward_assert: assert property (mem_alu_forward_b_check && (opcode_ex_r == 7'b1101111 || opcode_ex_r == 7'b0110011) ##1 reg_write_i |-> $past(alu_result_mem_i) == $past(alu_in_b_i));
 
-   assign wb_alu_forward_b_check = $past(rs2_address_ex_r) == $past(rd_address_wb_i) && $past(reg_write_i) && $past(rd_address_wb_i) != 0 && !$past(mem_alu_forward_b_check);
+   // Asserts that correct value will be forwarded to alu input 'b' from wb stage to ex stage when there was no previous forwarding from mem_stage
+   wb_alu_b_forward_assert: assert property ((wb_alu_forward_b_check && (opcode_ex_r == 7'b0110011 || opcode_ex_r == 7'h1101111)) and (reg_write_i ##1 !reg_write_i) |-> $past(rd_data_wb_i) == $past(alu_in_b_i));
+   // Asserts that correct value will be forwarded to alu input 'a' from wb stage to ex stage when there was no previous forwarding from mem_stage
+   wb_alu_a_forward_assert: assert property ((wb_alu_forward_a_check && opcode_ex_r != 7'b0010111 && opcode_ex_r != 7'b0110111) and (reg_write_i ##1 !reg_write_i) |-> $past(rd_data_wb_i) == $past(alu_in_a_i));
 
    
-   //opcode_contraint: assume property ()
-   mem_alu_a_forward_assert: assert property (mem_alu_forward_a_check && opcode_mem_r != 7'b0010111 && opcode_mem_r != 7'b0110111|-> $past(alu_result_mem_i) == $past(alu_in_a_i));
-
-   
-   mem_alu_b_forward_assert: assert property (mem_alu_forward_b_check && (known_instr_check) && (opcode_mem_r == 7'b1101111 || opcode_mem_r == 7'b0110011) |-> $past(alu_result_mem_i) == $past(alu_in_b_i));
-
-   wb_alu_b_forward_assert: assert property (wb_alu_forward_b_check && known_instr_check && ($past(opcode_ex_r) == 7'b0110011 || $past(opcode_ex_r) != 7'h6f) |-> $past(rd_data_wb_i) == $past(alu_in_b_i));
    
    
    
