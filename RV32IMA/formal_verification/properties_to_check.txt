@@ -22,3 +22,9 @@
 
 --Check if All instructions that need to flush flush.
 
+TODO list
+
+- Nece zaputacit procesor
+- Pokusaj da assumujes stall i flush
+- Kada ostavim assume za ispravne instrukcije proveri da li ce zapucati na los assert
+- Proveri nexttime reg_write_wb

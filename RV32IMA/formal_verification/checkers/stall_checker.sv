@@ -38,5 +38,7 @@ module stall_checker
    
    //Conditional branches cause 0 or 1 or 2 clk stalls
    conditional_b_stall: assert property (opcode == 7'b1100011 |-> !stall or (stall ##1 !stall) or stall[*2]);
+
+   // TODO: load before R, exactly one clk stall
    
 endmodule

@@ -51,7 +51,7 @@ module forwarding_checker
       for (int i = 0; i < 9; i++)begin
 	 if ((opcode_mem_r) == instruction_opcodes[i])begin
 	    known_instr_check = 1;
-	    break;
+	    break;	    
 	 end
 	 else
 	   known_instr_check = 0;	 
