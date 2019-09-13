@@ -39,4 +39,8 @@ module pc_checker
    assign no_jump_in_id_ex_mem = no_jump_in_id  &&  no_jump_in_ex  && no_jump_in_mem;
    
    pc_assert: assert property (no_jump_in_id_ex_mem && !if_id_write_s |-> (pc_reg == 0 || pc_reg_prev == pc_reg - 4));
+
+   // PC will not change value for maximum of three clocks
+   pc_assert_2: assert property (not((pc_reg == $past(pc_reg))[*4]));
+   
 endmodule

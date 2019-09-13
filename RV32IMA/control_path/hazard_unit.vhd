@@ -32,7 +32,7 @@ architecture behavioral of hazard_unit is
 begin
 
    
-   process (rs1_address_id_i, rs2_address_id_i, branch_id_i, rd_address_ex_i, reg_write_ex_i, rd_address_mem_i, mem_to_reg_ex_i, mem_to_reg_mem_i) is
+   process (rs1_address_id_i, rs2_address_id_i, branch_id_i, rd_address_ex_i, reg_write_ex_i, rd_address_mem_i, mem_to_reg_ex_i, mem_to_reg_mem_i, stall_rs1_i, stall_rs2_i) is
    begin
       stall_s <= '0';
       if (branch_id_i = "00") then -- BUG HERE
@@ -48,7 +48,7 @@ begin
       elsif(branch_id_i = "11")then --jalr in id phase TODO: proveri da li je potrebno 
          if((rs1_address_id_i = rd_address_ex_i) and reg_write_ex_i = '1')then -- load or R-type in execution stage 
             stall_s <='1';
-            --jalr shouldn't stall 2 clk, only one
+         --jalr shouldn't stall 2 clk, only one!!!!!!!!!!!!!!!!
          --elsif((rs1_address_id_i = rd_address_mem_i) and mem_to_reg_mem_i = "10" and reg_write_mem_i = '1')then -- load in memory stage
          --   stall_s <='1';
          end if;

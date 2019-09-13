@@ -7,8 +7,7 @@ module assumptions
    
    default clocking @(posedge clk); endclocking
    default disable iff !reset;
-
-   assign opcode = instruction [6 : 0];
+   
   
    opcode_constraint: assume property (instruction[6 : 0] == 7'b0000011 || instruction[6 : 0] == 7'b1100011 || instruction[6 : 0] == 7'b0110011 ||
 				       instruction[6 : 0] == 7'b0010011 || instruction[6 : 0] == 7'b0010111 || instruction[6 : 0] == 7'b1100111 ||
