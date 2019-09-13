@@ -32,7 +32,7 @@ module forwarding_checker
    default clocking @(posedge clk); endclocking
    default disable iff !reset;
    // This here is neede because in control path when stall is asserted, rs1 and rs2 are reseted.
-   // And because of that forwarding unit doesnt forward, but that is not an error because it should
+   // And because of that forwarding unit doesnt forward, but that is not an error because it shouldn't
    // forward to a nop instruction. And this logic is here to reset rs1 and rs2.
    always @(posedge clk)begin
       if(!reset || !stall || id_ex_flush_i)begin
@@ -76,12 +76,12 @@ module forwarding_checker
 
    // Asserts that correct value will be forwarded to alu input 'b' from wb stage to ex stage when there was no previous forwarding from mem_stage
    wb_alu_b_forward_assert: assert property ((wb_alu_forward_b_check && ex_alu_b_opcode_check) and (reg_write_i ##1 !reg_write_i) |-> $past(rd_data_wb_i) == $past(alu_in_b_i));
-   
-   
+      
    /**********************************************************************************************/
    
    
-   /****************************ASSERTS THAT CHECK FORWARDING TO BRANCH CONDITION*****************/
+   
+/****************************ASSERTS THAT CHECK FORWARDING TO BRANCH CONDITION*****************/
 
    //Logic needed to formaly verify forwarding to branch condition inputs
    assign mem_branch_forward_a_check = rs1_address_id_i == rd_address_mem_i && rd_address_mem_i != 0;
@@ -100,9 +100,7 @@ module forwarding_checker
    
    // Asserts that correct value will be forwarded to branch condition input 'b' from wb stage to id stage
    wb_branch_b_forward_assert:assert property (wb_branch_forward_b_check and (reg_write_i ##1 !reg_write_i) |-> $past(branch_condition_b_id_s) == $past(rd_data_wb_i));
-   
-   
-   
+         
    /**********************************************************************************************/
    
 

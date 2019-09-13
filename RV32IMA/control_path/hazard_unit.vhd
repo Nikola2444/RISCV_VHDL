@@ -6,6 +6,9 @@ entity hazard_unit is
    port (
       rs1_address_id_i: in std_logic_vector(4 downto 0);
       rs2_address_id_i: in std_logic_vector(4 downto 0);
+      stall_rs1_i: in std_logic;
+      stall_rs2_i: in std_logic;
+
       branch_id_i: in std_logic_vector(1 downto 0);
 
       rd_address_ex_i: in std_logic_vector(4 downto 0);
@@ -27,13 +30,13 @@ end entity;
 architecture behavioral of hazard_unit is
    signal stall_s:std_logic:='0';
 begin
-   
+
    
    process (rs1_address_id_i, rs2_address_id_i, branch_id_i, rd_address_ex_i, reg_write_ex_i, rd_address_mem_i, mem_to_reg_ex_i, mem_to_reg_mem_i) is
    begin
       stall_s <= '0';
       if (branch_id_i = "00") then -- BUG HERE
-        if((rs1_address_id_i = rd_address_ex_i) and mem_to_reg_ex_i = "10" and reg_write_ex_i = '1')then -- load in execution stage
+        if(((rs1_address_id_i = rd_address_ex_i and stall_rs1_i = '1') or (rs2_address_id_i = rd_address_ex_i and stall_rs2_i = '1')) and mem_to_reg_ex_i = "10" and reg_write_ex_i = '1')then -- load in execution stage
             stall_s <='1';
          end if;
       elsif(branch_id_i = "01")then --branch in id phase

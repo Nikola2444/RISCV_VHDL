@@ -16,8 +16,6 @@ module stall_checker
    default clocking @(posedge clk); endclocking   
    default disable iff !reset;
    
-   
-   
    assign branch_forward_check = (rd_ex_s == rs1_id) || (rd_ex_s == rs2_id);
    
    
@@ -30,19 +28,13 @@ module stall_checker
    
    //Conditional branches cause 0 or 1 or 2 clk stalls
    conditional_b_stall: assert property (opcode == 7'b1100011 |-> !stall or (stall ##1 !stall) or stall[*2]);
-
-   // TODO: load before R, exactly one clk stall
-;
-   // Assert no stall when lui after lw
-   //load_before_lui: assert property (opcode == 7'b0000011 ##1 (opcode == 7'b0110111 || opcode == 7'b0010111 || opcode == 7'b1101111) |-> !stall); // BUG
-
-   //Assert only one stall when LOAD, R sequence appears
-   assign load_R_stall = (rs1_id == rd_ex_s) && $past(opcode) == 7'b0000011 && opcode == 7'b1100111;//rs2 shouldn't stall for every instruction. I type for example
    
-   //load_R_1_clk_stall: assert property (##1 load_R_stall |-> stall);// THIS found a bug
-
-   load_before_jalr: assert property (##1 load_R_stall |-> stall);// THIS found a bug
-
-
+   //Assert that load in EX causes a stall when rs1_id = rd_ex for all instructions except JAL, LUI, AUIPC and nop
+   assign opcode_check = (opcode != 7'b0110111 && opcode != 7'b0010111 && opcode != 7'b1101111 && opcode != 0) && $past(opcode) == 7'b0000011;   
+   load_in_ex: assert property (nexttime always( opcode_check && !$past(stall) && (rs1_id == rd_ex_s) |-> stall)); // BUG_found
+  
+   //Assert rs2_id == rd_ex shouldn't cause a stall when I-type, AUIPC, LUI, JAL, NOP  instruction are in ID and load in EX phase
+   assign opcode_check_for_I = (opcode == 7'b0110111 || opcode == 7'b0010111 || opcode == 7'b1101111 || opcode == 0 || opcode == 7'b0010011) && $past(opcode) == 7'b0000011;	// 
+   load_in_ex_I_in_id: assert property (rs2_id == rd_ex_s && rs1_id != rd_ex_s && opcode_check_for_I |-> !stall);
    
 endmodule

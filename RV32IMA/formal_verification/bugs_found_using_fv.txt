@@ -1,12 +1,12 @@
 BUG1:In forwarding unit add a0, a0, a0 would't work because if elseif was used instead of two separete ifs
-BUG2:LUI or AUIPC or JAL in ID phase and LOAD in EX phase cause an unnecesary stall
+BUG2:LUI or AUIPC or JAL in ID phase and LOAD in EX phase cause an unnecesary stall. DONE
 
-BUG3: LOAD doesnt cause a stall when JALR is in id stage and LOAD is in EX phase.
+BUG3: LOAD doesnt cause a stall when JALR is in id stage and LOAD is in EX phase. DONE
 
 BUG4: in hazard unit when BRANCH_id = 00 rs2 = rd should be checked, but only for some instructions, not for all, because
-      there is no point to stall when I instructions appear beacuse they do not use rs2 register.
+      there is no point to stall when I instructions appear beacuse they do not use rs2 register. DONE
 
 
-BUG5: load in EX and JALR in ID should cause only one clk stall, not two	
+BUG5: load in EX and JALR in ID should cause only one clk stall, not two . DONE
 
 

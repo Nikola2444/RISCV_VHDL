@@ -22,7 +22,8 @@ package controlpath_signals_pkg is
    signal alu_a_zero_id_s : std_logic;   
    
    signal control_stall_s: std_logic;
-
+   signal stall_rs1_id_s: std_logic;
+   signal stall_rs2_id_s: std_logic;
    signal alu_src_a_id_s : std_logic;
    signal alu_src_b_id_s : std_logic;
 

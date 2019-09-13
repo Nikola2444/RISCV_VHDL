@@ -166,6 +166,8 @@ begin
          alu_src_a_o => alu_src_a_id_s,
          alu_a_zero_o => alu_a_zero_id_s,
          reg_write_o => reg_write_id_s,
+         stall_rs1_o => stall_rs1_id_s,
+         stall_rs2_o => stall_rs2_id_s,
          alu_2bit_op_o => alu_2bit_op_id_s);
 
    alu_dec: entity work.alu_decoder(behavioral)
@@ -192,12 +194,15 @@ begin
          branch_forward_b_o => branch_forward_b_o);
 
    hazard_unit_1: entity work.hazard_unit(behavioral)
-      port map (
-      
+
+      port map (      
       rs1_address_id_i => rs1_address_id_s,
       rs2_address_id_i => rs2_address_id_s,
+      stall_rs1_i => stall_rs1_id_s,         
+      stall_rs2_i => stall_rs2_id_s,
       branch_id_i => branch_id_s,
-
+      
+      
       rd_address_ex_i => rd_address_ex_s,
       mem_to_reg_ex_i => mem_to_reg_ex_s,
       reg_write_ex_i => reg_write_ex_s,

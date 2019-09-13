@@ -40,7 +40,7 @@ module forwarding_unit_checker
    
    //Asserts that Forwarding from MEM has advantage over forwarding from WB for alu unit
    
-mem_over_wb_alu: assert property (always (rd_address_wb_i == rd_address_mem_i && reg_write_mem_i == reg_write_wb_i) |-> (alu_forward_a_o != 2'b01 && alu_forward_b_o != 2'b01));
+   mem_over_wb_alu: assert property (always (rd_address_wb_i == rd_address_mem_i && reg_write_mem_i == reg_write_wb_i) |-> (alu_forward_a_o != 2'b01 && alu_forward_b_o != 2'b01));
    
    //Asserts that Forwarding from MEM has advantage over forwarding from WB for branch instructions is ID phase
    mem_over_wb_branch: assert property (always (rd_address_wb_i == rd_address_mem_i && (reg_write_mem_i == reg_write_wb_i)) |-> (branch_forward_a_o != 2'b01 && branch_forward_b_o != 2'b01));
