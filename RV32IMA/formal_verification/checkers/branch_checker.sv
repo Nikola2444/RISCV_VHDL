@@ -8,7 +8,8 @@ module branch_checker
    input logic [31 : 0] pc_reg_id_i,
    input logic [31 : 0] alu_result_ex_i,
    input logic [31 : 0] branch_adder_id_i,
-   input logic 		id_ex_flush_i
+   input logic 		id_ex_flush_i,
+   input logic 		stall_i
    );
    
 
@@ -30,7 +31,7 @@ module branch_checker
    cb_pc_next_position_check: assert property (instruction_id_i[6 : 0] != 7'b1100111 ##1 (instruction_id_i[6 : 0] == 7'b1100011 and conditional_branch_check) |-> pc_next_if_i == branch_adder_id_i);
 
    //Asserts that JALR will jump to appropriate location
-   jalr_pc_next_position_check: assert property (nexttime always($past(instruction_id_i[6 : 0]) == 7'b1100111 && !$past(id_ex_flush_i) |-> pc_next_if_i == alu_result_ex_i));
+   jalr_pc_next_position_check: assert property (nexttime always($past(instruction_id_i[6 : 0]) == 7'b1100111 && !$past(id_ex_flush_i) && $past(stall_i) |-> pc_next_if_i == alu_result_ex_i));
    
 
    

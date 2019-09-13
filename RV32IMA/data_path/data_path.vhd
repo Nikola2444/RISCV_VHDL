@@ -265,7 +265,8 @@ begin
                pc_reg_id_i => pc_reg_id_s,
                alu_result_ex_i => alu_result_ex_s,
                id_ex_flush_i => id_ex_flush_i,
-               branch_adder_id_i => branch_adder_id_s
+               branch_adder_id_i => branch_adder_id_s,
+               stall_i => if_id_write_i
                );
 
    forward_check_inst: entity work.forwarding_checker

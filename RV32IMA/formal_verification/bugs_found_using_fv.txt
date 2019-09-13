@@ -6,6 +6,7 @@ BUG3: LOAD doesnt cause a stall when JALR is in id stage and LOAD is in EX phase
 BUG4: in hazard unit when BRANCH_id = 00 rs2 = rd should be checked, but only for some instructions, not for all, because
       there is no point to stall when I instructions appear beacuse they do not use rs2 register.
 
-	
+
+BUG5: load in EX and JALR in ID should cause only one clk stall, not two	
 
 
