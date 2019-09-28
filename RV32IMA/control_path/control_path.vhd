@@ -165,6 +165,8 @@ begin
          alu_src_a_o => alu_src_a_id_s,
          alu_a_zero_o => alu_a_zero_id_s,
          reg_write_o => reg_write_id_s,
+         rs1_in_use_o => rs1_in_use_id_s,
+         rs2_in_use_o => rs2_in_use_id_s,
          alu_2bit_op_o => alu_2bit_op_id_s);
 
    alu_dec: entity work.alu_decoder(behavioral)
@@ -194,6 +196,8 @@ begin
       
       rs1_address_id_i => rs1_address_id_s,
       rs2_address_id_i => rs2_address_id_s,
+      rs1_in_use_i => rs1_in_use_id_s,
+      rs2_in_use_i => rs2_in_use_id_s,
       branch_id_i => branch_id_s,
 
       rd_address_ex_i => rd_address_ex_s,

@@ -1,5 +1,4 @@
 li a0, 0x04038101 # Smulator has a bug and loads 0x04039101 = 67342593
-
 sw a0, 0(x0)#expected values
 lw a1, 0(x0)#67342593
 lh a2, 0(x0)#-28415
