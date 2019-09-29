@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 
 entity immediate is
-   port (instruction_i: in std_logic_vector (31 downto 0);
+   port (instr_mem_read_i: in std_logic_vector (31 downto 0);
          immediate_extended_o: out std_logic_vector (31 downto 0));
 end entity;
 
@@ -26,9 +26,9 @@ architecture Behavioral of immediate is
    constant fence_ecall_ebreak: std_logic_vector(2 downto 0):= "111"; -- TODO vidjeti sta ove instrukcije rade
 
 begin
-   opcode <= instruction_i(6 downto 0);
-   extension <= (others => instruction_i(31));
-   funct3 <= instruction_i(14 downto 12);
+   opcode <= instr_mem_read_i(6 downto 0);
+   extension <= (others => instr_mem_read_i(31));
+   funct3 <= instr_mem_read_i(14 downto 12);
    
    
    process (opcode) is
@@ -61,23 +61,23 @@ begin
       end case;
    end process;
    
-   process (instruction_i,instruction_type,extension,funct3) is
+   process (instr_mem_read_i,instruction_type,extension,funct3) is
    begin
       case instruction_type is
          when i_type_instruction =>
-            immediate_extended_o <= extension & instruction_i(31 downto 20);
+            immediate_extended_o <= extension & instr_mem_read_i(31 downto 20);
          when shamt_instruction =>
-            immediate_extended_o <= std_logic_vector(to_unsigned(0,27)) & instruction_i(24 downto 20);
+            immediate_extended_o <= std_logic_vector(to_unsigned(0,27)) & instr_mem_read_i(24 downto 20);
          when b_type_instruction =>
-            immediate_extended_o <= extension(18 downto 0) & instruction_i(31) & instruction_i(7) &
-                                   instruction_i(30 downto 25) & instruction_i(11 downto 8) & '0';
+            immediate_extended_o <= extension(18 downto 0) & instr_mem_read_i(31) & instr_mem_read_i(7) &
+                                   instr_mem_read_i(30 downto 25) & instr_mem_read_i(11 downto 8) & '0';
          when s_type_instruction =>
-            immediate_extended_o <= extension(19 downto 0) & instruction_i(31 downto 25) & instruction_i(11 downto 7);
+            immediate_extended_o <= extension(19 downto 0) & instr_mem_read_i(31 downto 25) & instr_mem_read_i(11 downto 7);
          when u_type_instruction =>
-            immediate_extended_o <= instruction_i(31 downto 12) & std_logic_vector(to_unsigned(0,12));
+            immediate_extended_o <= instr_mem_read_i(31 downto 12) & std_logic_vector(to_unsigned(0,12));
          when j_type_instruction =>
-            immediate_extended_o <= extension(10 downto 0) & instruction_i(31) &  instruction_i(19 downto 12) &
-                                    instruction_i(20) & instruction_i(30 downto 21) & '0';
+            immediate_extended_o <= extension(10 downto 0) & instr_mem_read_i(31) &  instr_mem_read_i(19 downto 12) &
+                                    instr_mem_read_i(20) & instr_mem_read_i(30 downto 21) & '0';
          when others =>
             immediate_extended_o <= (others =>'0');
       end case;

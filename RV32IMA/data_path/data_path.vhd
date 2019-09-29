@@ -10,22 +10,19 @@ entity data_path is
       clk: in std_logic;
       reset: in std_logic;      
       -- ********* INSTRUCTION memory i/o *******************
-      pc_o: out std_logic_vector (DATA_WIDTH - 1 downto 0);      
-      instruction_i: in std_logic_vector(31 downto 0);
+      instr_mem_addr_o: out std_logic_vector (31 downto 0);      
+      instr_mem_read_i: in std_logic_vector(31 downto 0);
       -- ********* DATA memory i/o **************************
-
-      ext_data_address_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      write_ext_data_o: out std_logic_vector(DATA_WIDTH - 1 downto 0);
-      read_ext_data_i: in std_logic_vector (DATA_WIDTH - 1 downto 0);      
-      -- ********* control signals **************************
-      
+      data_mem_addr_o: out std_logic_vector(31 downto 0);
+      data_mem_write_o: out std_logic_vector(31 downto 0);
+      data_mem_read_i: in std_logic_vector (31 downto 0);      
+      -- ********* control signals **************************      
       branch_i: in std_logic;
-      mem_read_i: in std_logic;
       mem_to_reg_i: in std_logic;
       alu_op_i: in std_logic_vector (4 downto 0);      
       --mem_write: in std_logic;-- data_path doenst need it
       alu_src_i: in std_logic;      
-      reg_write_i: in std_logic
+      rd_we_i: in std_logic
     -- ******************************************************
       );
    
@@ -42,13 +39,13 @@ architecture Behavioral of data_path is
 
    --**************SIGNALS*********************************
    
-   signal read_data1_s, read_data2_s, write_data_s, extended_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);
-   signal immediate_extended_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal rs1_data_s, rs2_data_s, rd_data_s, extended_data_s: std_logic_vector (31 downto 0);
+   signal immediate_extended_s: std_logic_vector(31 downto 0);
 
    -- Alu signals   
    signal alu_zero_s, alu_of_o_s: std_logic;
-   signal b_i_s, a_i_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-   signal alu_result_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal b_i_s, a_i_s: std_logic_vector(31 downto 0);
+   signal alu_result_s: std_logic_vector(31 downto 0);
 
    signal bcc : std_logic; --branch condition complement
    
@@ -73,43 +70,43 @@ begin
 
    
    --***********Combinational logic***************
-   bcc <= instruction_i(12);
+   bcc <= instr_mem_read_i(12);
    -- PC_reg update
    pc_next <= std_logic_vector(unsigned(immediate_extended_s) + unsigned(pc_reg)) when (branch_i = '1' and (alu_zero_s xor bcc) = '0') else
               std_logic_vector(unsigned(pc_reg) + to_unsigned(4, DATA_WIDTH));
 
    -- update of alu inputs
-   b_i_s <= read_data2_s when alu_src_i = '0' else
+   b_i_s <= rs2_data_s when alu_src_i = '0' else
             immediate_extended_s;
-   a_i_s <= read_data1_s;
+   a_i_s <= rs1_data_s;
 
    -- Reg_bank write_data_o update
-   write_data_s <= extended_data_s when mem_to_reg_i = '1' else
-                   alu_result_s;
+   rd_data_s <= extended_data_s when mem_to_reg_i = '1' else
+                alu_result_s;
    
    --********************************************
 
-   with instruction_i(14 downto 12) select
-      extended_data_s <= (31 downto 8 => read_ext_data_i(7)) & read_ext_data_i(7 downto 0) when "000",
-                          (31 downto 16 => read_ext_data_i(15)) & read_ext_data_i(15 downto 0) when "001",
-                          std_logic_vector(to_unsigned(0,24)) & read_ext_data_i(7 downto 0) when "100",
-                          std_logic_vector(to_unsigned(0,16)) & read_ext_data_i(15 downto 0) when "101",
-                          read_ext_data_i when others;
+   with instr_mem_read_i(14 downto 12) select
+      extended_data_s <= (31 downto 8 => data_mem_read_i(7)) & data_mem_read_i(7 downto 0) when "000",
+      (31 downto 16 => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
+      std_logic_vector(to_unsigned(0,24)) & data_mem_read_i(7 downto 0) when "100",
+      std_logic_vector(to_unsigned(0,16)) & data_mem_read_i(15 downto 0) when "101",
+      data_mem_read_i when others;
 
    --***********Register bank instance***********
    register_bank_1: entity work.register_bank
       generic map (
-         WIDTH => DATA_WIDTH)
+         WIDTH => 32)
       port map (
          clk        => clk,
          reset      => reset,
-         reg_write_i  => reg_write_i,
-         read_reg1_i  => instruction_i(19 downto 15),
-         read_reg2_i  => instruction_i(24 downto 20),
-         read_data1_o => read_data1_s,
-         read_data2_o => read_data2_s,
-         write_reg_i  => instruction_i(11 downto 7),
-         write_data_i => write_data_s);
+         rd_we_i  => rd_we_i,
+         rs1_address_i  => instr_mem_read_i (19 downto 15),
+         rs2_address_i  => instr_mem_read_i (24 downto 20),
+         rs1_data_o => rs1_data_s,
+         rs2_data_o => rs2_data_s,
+         rd_address_i  => instr_mem_read_i (11 downto 7),
+         rd_data_i => rd_data_s);
 
    --*********************************************
    
@@ -118,7 +115,7 @@ begin
    
    immediate_1: entity work.immediate
       port map (
-         instruction_i        => instruction_i,
+         instr_mem_read_i        => instr_mem_read_i,
          immediate_extended_o => immediate_extended_s);
    
    --********************************************
@@ -138,9 +135,9 @@ begin
 
 
    --***********Outputs**************************
-   pc_o <= pc_reg;
-   ext_data_address_o <= alu_result_s;
-   write_ext_data_o <= read_data2_s;
+   instr_mem_addr_o <= pc_reg;
+   data_mem_addr_o <= alu_result_s;
+   data_mem_write_o <= rs2_data_s;
    
 end architecture;
 

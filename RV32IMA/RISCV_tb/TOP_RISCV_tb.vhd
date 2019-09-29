@@ -80,15 +80,17 @@ begin
       port map (
          clk                => clk,
          reset              => reset,
-         instruction_i      => dob_instr_s,
-         pc_o               => addrb_instr_extended_s,         
-         mem_ext_write_o    => wea_data_s,
-         ext_data_address_o => addra_data_extended_s,
-         read_ext_data_i    => doa_data_s,
-         write_ext_data_o   => dia_data_s);
+         -- ********* INSTRUCTION memory i/o *******************       
+         instr_mem_read_i   => dob_instr_s,
+         instr_mem_addr_o   => addrb_instr_extended_s,
+         -- ********* DATA memory i/o **************************
+         data_mem_we_o    => wea_data_s,
+         data_mem_addr_o => addra_data_extended_s,
+         data_mem_read_i    => doa_data_s,
+         data_mem_write_o   => dia_data_s);
    
-   --******Filling instruction MEM*****************
-   --
+   --******WRITING INSTRUCTIONS INTO INSTRUCTION MEMORY*********
+
    read_file_proc:process
       variable row: line;
       variable i: integer:= 0;
@@ -107,7 +109,8 @@ begin
       reset <= '1' after 20 ns;
       wait;
    end process;
-   --****************************************************
+   
+   --***********************************************************
 
    
    clk_proc: process
