@@ -26,7 +26,7 @@ end BRAM;
 
 architecture behavioral of BRAM is
    
-   type ram_type is array(0 to 4*(2**WADDR)) of std_logic_vector(7 downto 0);
+   type ram_type is array(0 to 2**WADDR - 1) of std_logic_vector(7 downto 0);
    signal ram_s : ram_type := (others => (others => '0'));
    
 begin
@@ -54,7 +54,7 @@ begin
       end if;    
    end process;
    
-   -- asynchronous writing
+   -- asynchronous reading
    process(en_a_i, en_b_i, addr_a_i, addr_b_i, ram_s)
    begin
       if(en_a_i='1') then
