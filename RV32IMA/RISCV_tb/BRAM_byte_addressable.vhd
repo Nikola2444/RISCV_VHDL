@@ -6,7 +6,7 @@ entity BRAM is
    generic
       (
          WADDR : natural := 10
-         );
+       );
    port
       (
          clk		: in std_logic;         
@@ -26,8 +26,8 @@ entity BRAM is
 
 end BRAM;
 
-architecture behavioral of BRAM is type ram_type is array(0 to
-   2**WADDR - 1) of std_logic_vector(7 downto 0); signal ram_s :
+architecture behavioral of BRAM is type ram_type is array(0 to 2**WADDR - 1) 
+   of std_logic_vector(7 downto 0); signal ram_s :
    ram_type := (others => (others => '0'));
    
 begin

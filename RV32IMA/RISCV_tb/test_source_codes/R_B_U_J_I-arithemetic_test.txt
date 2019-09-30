@@ -9,7 +9,7 @@ beq a5, a4, valid0  #tested- add,addi,sub,beq,jal
 jal error
 valid0: auipc a4 1
 lui a5 1
-addi a5, a5, 32 # expected- a4=a5=4128
+addi a5, a5, 36 # expected- a4=a5=4128
 beq a5, a4, valid1  #tested- lui,auipc
 jal error
 valid1: li a0, 0xc

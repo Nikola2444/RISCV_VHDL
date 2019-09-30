@@ -9,25 +9,25 @@ ENTITY ALU IS
    GENERIC(
       WIDTH : NATURAL := 32);
    PORT(
-      a_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
-      b_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-      op_i  :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
-      res_o   :  OUT  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
-      zero_o   :  OUT  STD_LOGIC; --zero flag
-      of_o   :  OUT  STD_LOGIC); --overflow flag
+      a_i    : in STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
+      b_i    : in STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
+      op_i   : in STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
+      res_o  : out STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
+      zero_o : out STD_LOGIC; --zero flag
+      of_o   : out STD_LOGIC); --overflow flag
 END ALU;
 
 ARCHITECTURE behavioral OF ALU IS
 
-   constant l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
-   SIGNAL    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   SIGNAL    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   SIGNAL    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   SIGNAL    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
-   SIGNAL    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
+   constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
+   signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
+   signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
 
    
-BEGIN
+BEGin
 
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));
@@ -54,7 +54,7 @@ BEGIN
    sra_res <= std_logic_vector(shift_right(signed(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
    --multiplication
    muls_res <= std_logic_vector(signed(a_i)*signed(b_i));
-   mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); --mulsu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i)) when a_i(WIDTH-1)='0' elsestd_logic_vector(not((unsigned(not a_i)+1)*unsigned(b_i))+1);  
+   mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); 
    mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));
    --division
    divs_res <= std_logic_vector(signed(a_i)/signed(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
@@ -75,6 +75,7 @@ BEGIN
       xor_res when xor_op, --xor
       add_res when add_op, --add (changed opcode)
       sub_res when sub_op, --sub
+      eq_res when eq_op, -- set equal
       lts_res when lts_op, -- set less than signed
       ltu_res when ltu_op, -- set less than unsigned
       sll_res when sll_op, -- shift left logic
@@ -84,15 +85,14 @@ BEGIN
       muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
       mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
       mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
-      divu_res when divu_op, 
-      divs_res when divs_op,
-      remu_res when remu_op, 
-      rems_res when rems_op,
-      eq_res when eq_op,
+      divu_res when divu_op, -- divide unsigned
+      divs_res when divs_op, -- divide signed
+      remu_res when remu_op, -- reminder signed
+      rems_res when rems_op, -- reminder signed
       (others => '1') when others; 
 
 
-   -- FLAG OUTPUTS
+   -- flag outputs
    -- set zero output flag when result is zero
    zero_o <= '1' when res_s = std_logic_vector(to_unsigned(0,WIDTH)) else
              '0';
