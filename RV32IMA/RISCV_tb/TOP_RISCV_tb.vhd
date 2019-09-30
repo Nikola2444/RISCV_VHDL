@@ -16,12 +16,12 @@ architecture Behavioral of TOP_RISCV_tb is
    -- **************************************************
    signal clk: std_logic:='0';
    signal reset: std_logic;       
-   --Instruction_mem_signals
+   --************Instruction_mem_signals****************
    signal wea_instr_s,web_instr_s: std_logic;
    signal addra_instr_s,addrb_instr_s: std_logic_vector(9 downto 0);
    signal dia_instr_s,dib_instr_s:std_logic_vector(31 downto 0);
    signal doa_instr_s,dob_instr_s:std_logic_vector(31 downto 0);
-   --Data_mem_signals
+   --************Data_mem_signals***********************
    signal wea_data_s,web_data_s:std_logic;
    signal addra_data_s,addrb_data_s: std_logic_vector(9 downto 0);
    signal dia_data_s,dib_data_s:std_logic_vector(31 downto 0);
@@ -39,9 +39,9 @@ begin
    web_instr_s <= '0';
    dib_instr_s <= (others => '0');
 
-   -- Instruction Memory
-   -- PORT A : test bench instruction initializationa
-   -- PORT B : cpu reads instructions
+   --************Instruction memory***********************
+   -- Interface A : test bench instruction initialization
+   -- Interface B : cpu reads instructions
    instruction_mem: entity work.BRAM(behavioral)
       generic map(WADDR => 10)
       port map (clk=> clk,
@@ -56,8 +56,9 @@ begin
                 data_a_o => doa_instr_s,
                 data_b_o => dob_instr_s);
 
-
-   -- Data memory
+   --************Data memory******************************
+   -- Interface A : Used by CPU to write or read data
+   -- Interface B : Unused 
    data_mem: entity work.BRAM(behavioral)
       generic map(WADDR => 10)
       port map (clk=> clk,
@@ -71,7 +72,6 @@ begin
                 data_b_i => dib_data_s,
                 data_a_o => doa_data_s,
                 data_b_o => dob_data_s);
-
 
    --******TOP_RISCV instance**********************
    TOP_RISCV_1: entity work.TOP_RISCV
@@ -90,7 +90,6 @@ begin
          data_mem_write_o   => dia_data_s);
    
    --******WRITING INSTRUCTIONS INTO INSTRUCTION MEMORY*********
-
    read_file_proc:process
       variable row: line;
       variable i: integer:= 0;
@@ -110,9 +109,7 @@ begin
       wait;
    end process;
    
-   --***********************************************************
-
-   
+   --***********************************************************   
    clk_proc: process
    begin
       clk <= '1', '0' after 100 ns;

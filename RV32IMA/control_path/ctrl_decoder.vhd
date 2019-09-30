@@ -3,9 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity ctrl_decoder is
-   port ( -- from data_path
+   port (
+      --************ FROM DATA PATH************
       opcode_i: in std_logic_vector (6 downto 0);
-      -- to data_path
+      --************ TO DATA PATH**************
       branch_o: out std_logic;      
       mem_to_reg_o: out std_logic;
       mem_write_o: out std_logic;

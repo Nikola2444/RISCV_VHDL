@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity TOP_RISCV is
    generic (DATA_WIDTH: positive := 32);
    port(
-      -- ********* Sync ports *****************************
+      -- ********* SYNC *************************************
       clk: in std_logic;
       reset: in std_logic;
       -- ********* INSTRUCTION memory i/o *******************       
@@ -26,7 +26,7 @@ architecture structural of TOP_RISCV is
    signal alu_src_s: std_logic;
    signal rd_we_s: std_logic;
 begin
-   -- Data_path will be instantiated here
+
    --************************************
    data_path_1: entity work.data_path
       generic map (
@@ -44,7 +44,8 @@ begin
          alu_op_i           => alu_op_s,
          alu_src_i          => alu_src_s,
          rd_we_i            => rd_we_s);
-   -- Control_path will be instantiated here
+   
+   --************************************
    control_path_1: entity work.control_path
       port map (
          clk           => clk,
@@ -57,7 +58,8 @@ begin
          rd_we_o   => rd_we_s,
          alu_op_o      => alu_op_s);
 
+   --************************************
    
 
---************************************
+
 end architecture;

@@ -23,7 +23,7 @@ architecture Behavioral of immediate is
    constant u_type_instruction: std_logic_vector(2 downto 0):= "100";
    constant j_type_instruction: std_logic_vector(2 downto 0):= "101";
    constant shamt_instruction : std_logic_vector(2 downto 0):= "110"; 
-   constant fence_ecall_ebreak: std_logic_vector(2 downto 0):= "111"; -- TODO vidjeti sta ove instrukcije rade
+   constant fence_ecall_ebreak: std_logic_vector(2 downto 0):= "111";
 
 begin
    opcode <= instr_mem_read_i(6 downto 0);

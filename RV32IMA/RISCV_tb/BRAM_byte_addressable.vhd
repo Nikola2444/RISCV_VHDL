@@ -10,16 +10,18 @@ entity BRAM is
    port
       (
          clk		: in std_logic;
+         --***************INTERFACE A************************
          en_a_i	: in std_logic;
-         en_b_i	: in std_logic;
          data_a_i	: in std_logic_vector(31 downto 0);
-         data_b_i	: in std_logic_vector(31 downto 0);
          addr_a_i	: in std_logic_vector(WADDR - 1 downto 0);
-         addr_b_i	: in std_logic_vector(WADDR - 1 downto 0);
-         we_a_i	: in std_logic;
-         we_b_i	: in std_logic;
          data_a_o	: out std_logic_vector(31 downto 0);
-         data_b_o	: out std_logic_vector(31 downto 0)
+         we_a_i	: in std_logic;
+         --***************INTERFACE B************************
+         en_b_i	: in std_logic;         
+         data_b_i	: in std_logic_vector(31 downto 0);
+         addr_b_i	: in std_logic_vector(WADDR - 1 downto 0);                  
+         data_b_o	: out std_logic_vector(31 downto 0);
+         we_b_i	: in std_logic
          );
 
 end BRAM;

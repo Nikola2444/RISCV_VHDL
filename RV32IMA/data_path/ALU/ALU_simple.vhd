@@ -11,10 +11,10 @@ ENTITY ALU IS
    PORT(
       a_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
       b_i  :  IN   STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
-      op_i  :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
-      res_o   :  OUT  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
-      zero_o   :  OUT  STD_LOGIC; --zero flag
-      of_o   :  OUT  STD_LOGIC); --overflow flag
+      op_i :  IN   STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
+      res_o:  OUT  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --result
+      zero_o: OUT  STD_LOGIC; --zero flag
+      of_o :  OUT  STD_LOGIC); --overflow flag
 END ALU;
 
 ARCHITECTURE behavioral OF ALU IS
