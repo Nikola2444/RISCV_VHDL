@@ -28,8 +28,8 @@ package controlpath_signals_pkg is
    signal rs2_address_id_s  : std_logic_vector (4 downto 0);
    signal rd_address_id_s   : std_logic_vector (4 downto 0);
    signal bcc_id_s          : std_logic;
-   --*********       EXECUTE       **************
 
+   --*********       EXECUTE       **************
    signal branch_type_ex_s  : std_logic_vector(1 downto 0);
    signal funct3_ex_s       : std_logic_vector(2 downto 0);
    signal funct7_ex_s       : std_logic_vector(6 downto 0);
@@ -49,7 +49,6 @@ package controlpath_signals_pkg is
    signal rd_address_ex_s   : std_logic_vector (4 downto 0);
 
    --*********       MEMORY        **************
-
    signal funct3_mem_s      : std_logic_vector(2 downto 0);
    signal data_mem_we_mem_s : std_logic;
    signal rd_we_mem_s       : std_logic;
@@ -58,7 +57,6 @@ package controlpath_signals_pkg is
    signal rd_address_mem_s  : std_logic_vector (4 downto 0);
 
    --*********      WRITEBACK      **************
-
    signal funct3_wb_s       : std_logic_vector(2 downto 0);
    signal rd_we_wb_s        : std_logic;
    signal mem_to_reg_wb_s   : std_logic_vector(1 downto 0);

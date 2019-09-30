@@ -10,8 +10,6 @@ entity TOP_RISCV is
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
       instr_mem_read_i    : in  std_logic_vector(31 downto 0);
-      instr_mem_flush_o   : out std_logic;
-      instr_mem_en_o      : out std_logic;
       -- Data memory interface
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_read_i     : in  std_logic_vector(31 downto 0);
@@ -20,6 +18,9 @@ entity TOP_RISCV is
 end entity;
 
 architecture structural of TOP_RISCV is
+
+   signal instruction_s      : std_logic_vector(31 downto 0);
+
    signal set_a_zero_s       : std_logic;
    signal mem_to_reg_s       : std_logic_vector(1 downto 0);
    signal load_type_s        : std_logic_vector(2 downto 0);
@@ -52,6 +53,7 @@ begin
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
          instr_mem_read_i    => instr_mem_read_i,
+         instruction_o       => instruction_s,
          -- interface towards data memory
          data_mem_address_o  => data_mem_address_o,
          data_mem_write_o    => data_mem_write_o,
@@ -78,10 +80,6 @@ begin
          pc_en_i             => pc_en_s,
          if_id_en_i          => if_id_en_s); 
 
-      --flush current instruction
-      instr_mem_flush_o <= if_id_flush_s;
-
-
 
    -- Control_path instance
    control_path_1: entity work.control_path
@@ -90,7 +88,7 @@ begin
          clk                 => clk,
          reset               => reset,
          -- instruction is read from memory
-         instruction_i       => instr_mem_read_i,
+         instruction_i       => instruction_s,
          -- control signals are forwarded to data_path
          set_a_zero_o        => set_a_zero_s,
          mem_to_reg_o        => mem_to_reg_s,
@@ -114,6 +112,4 @@ begin
          pc_en_o             => pc_en_s,
          if_id_en_o          => if_id_en_s);
    
-   -- stall currnet instruction
-   instr_mem_en_o <= if_id_en_s;
 end architecture;

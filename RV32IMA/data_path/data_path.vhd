@@ -12,6 +12,7 @@ entity data_path is
       -- instruction memory interface
       instr_mem_address_o : out std_logic_vector (31 downto 0);      
       instr_mem_read_i    : in std_logic_vector(31 downto 0);
+      instruction_o       : out std_logic_vector(31 downto 0);
       -- data memory interface
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_write_o    : out std_logic_vector(31 downto 0);
@@ -63,11 +64,13 @@ begin
       if (rising_edge(clk)) then
          if(if_id_en_i='1')then
             if (reset = '0' or if_id_flush_i = '1')then
-               pc_reg_id_s <= (others => '0');
-               pc_adder_id_s <= (others => '0');
+               pc_reg_id_s      <= (others => '0');
+               pc_adder_id_s    <= (others => '0');
+               instruction_id_s <= (others => '0');
             else
-               pc_reg_id_s <= pc_reg_if_s;
-               pc_adder_id_s <= pc_adder_if_s;            
+               pc_reg_id_s      <= pc_reg_if_s;
+               pc_adder_id_s    <= pc_adder_if_s;            
+               instruction_id_s <= instruction_if_s;
             end if;
          end if;
       end if;      
@@ -118,13 +121,15 @@ begin
    begin
       if (rising_edge(clk)) then
          if (reset = '0')then
-            alu_result_wb_s <= (others => '0');
-            pc_adder_wb_s   <= (others => '0');
-            rd_address_wb_s <= (others => '0');
+            alu_result_wb_s    <= (others => '0');
+            pc_adder_wb_s      <= (others => '0');
+            rd_address_wb_s    <= (others => '0');
+            data_mem_read_wb_s <= (others => '0');
          else
-            alu_result_wb_s <= alu_result_mem_s;
-            pc_adder_wb_s   <= pc_adder_mem_s; 
-            rd_address_wb_s <= rd_address_mem_s;
+            alu_result_wb_s    <= alu_result_mem_s;
+            pc_adder_wb_s      <= pc_adder_mem_s; 
+            rd_address_wb_s    <= rd_address_mem_s;
+            data_mem_read_wb_s <= data_mem_read_mem_s;
          end if;
       end if;      
    end process;
@@ -148,9 +153,9 @@ begin
                               rs2_data_id_s;
    
    --check if branch condition is met
-   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
-                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
-                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
+   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "00") else
+                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "10") else
+                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "11") else
                          '0';
    
    --pc_next mux
@@ -182,16 +187,16 @@ begin
 
    -- extend data based on type of load instruction
    with load_type_i select
-      extended_data_wb_s <= (31 downto 8 => data_mem_read_i(7)) & data_mem_read_i(7 downto 0) when "000",
-      (31 downto 16 => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
-      std_logic_vector(to_unsigned(0,24))   & data_mem_read_i(7 downto 0) when "100",
-      std_logic_vector(to_unsigned(0,16))   & data_mem_read_i(15 downto 0) when "101",
-      data_mem_read_i when others;
+      extended_data_wb_s <= (31 downto 8 => data_mem_read_wb_s(7)) & data_mem_read_wb_s(7 downto 0) when "000",
+      (31 downto 16 => data_mem_read_wb_s(15)) & data_mem_read_wb_s(15 downto 0) when "001",
+      std_logic_vector(to_unsigned(0,24))   & data_mem_read_wb_s(7 downto 0) when "100",
+      std_logic_vector(to_unsigned(0,16))   & data_mem_read_wb_s(15 downto 0) when "101",
+      data_mem_read_wb_s when others;
 
    -- extract operand adresses from instruction
-   rs1_address_id_s <= instr_mem_read_i(19 downto 15);
-   rs2_address_id_s <= instr_mem_read_i(24 downto 20);
-   rd_address_id_s <= instr_mem_read_i(11 downto 7);
+   rs1_address_id_s <= instruction_id_s(19 downto 15);
+   rs2_address_id_s <= instruction_id_s(24 downto 20);
+   rd_address_id_s <= instruction_id_s(11 downto 7);
 
 
 
@@ -215,7 +220,7 @@ begin
    --Immediate unit instance
    immediate_1: entity work.immediate
       port map (
-         instruction_i        => instr_mem_read_i,
+         instruction_i        => instruction_id_s,
          immediate_extended_o => immediate_extended_id_s);
 
    --ALU unit instance
@@ -233,9 +238,12 @@ begin
    --***********  Outputs  ***************
    --From instruction memory
    instr_mem_address_o <= pc_reg_if_s;
+   instruction_if_s    <= instr_mem_read_i;
+   instruction_o       <= instruction_id_s;     
    --To data memory
    data_mem_address_o  <= alu_result_mem_s; 
    data_mem_write_o    <= rs2_data_mem_s;
+   data_mem_read_mem_s <= data_mem_read_i;
    
 end architecture;
 
