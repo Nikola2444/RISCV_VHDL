@@ -19,13 +19,11 @@ entity data_path is
       data_mem_read_i     : in std_logic_vector (31 downto 0);      
       -- control signals that are forwarded from data_path
       mem_to_reg_i        : in std_logic_vector(1 downto 0);
-      load_type_i         : in std_logic_vector(2 downto 0);
       alu_op_i            : in std_logic_vector (4 downto 0);      
       alu_src_a_i         : in std_logic;
       alu_src_b_i         : in std_logic;
-      pc_next_sel_i       : in std_logic_vector(1 downto 0);
+      pc_next_sel_i       : in std_logic;
       rd_we_i             : in std_logic;     
-      set_a_zero_i        : in std_logic;
       -- control signals for forwarding
       alu_forward_a_i     : in std_logic_vector (1 downto 0);
       alu_forward_b_i     : in std_logic_vector (1 downto 0);
@@ -34,7 +32,6 @@ entity data_path is
       branch_condition_o  : out std_logic;     
       -- control signals for flushing
       if_id_flush_i       : in std_logic;
-      id_ex_flush_i       : in std_logic;
       -- control signals for stalling
       pc_en_i             : in std_logic;
       if_id_en_i          : in std_logic);
@@ -80,7 +77,7 @@ begin
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0' or id_ex_flush_i = '1')then
+         if (reset = '0')then
             pc_adder_ex_s           <= (others => '0');
             rs1_data_ex_s           <= (others => '0');
             rs2_data_ex_s           <= (others => '0');
@@ -105,13 +102,11 @@ begin
             rs2_data_mem_s   <= (others => '0');
             pc_adder_mem_s   <= (others => '0');
             rd_address_mem_s <= (others => '0');
-            pc_reg_ex_s      <= (others => '0');
          else
             alu_result_mem_s <= alu_result_ex_s;
             rs2_data_mem_s   <= alu_forward_b_ex_s;
             pc_adder_mem_s   <= pc_adder_ex_s;
             rd_address_mem_s <= rd_address_ex_s;
-            pc_reg_ex_s      <= pc_reg_id_s;
          end if;
       end if;      
    end process;
@@ -153,15 +148,12 @@ begin
                               rs2_data_id_s;
    
    --check if branch condition is met
-   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "00") else
-                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "10") else
-                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instruction_id_s(14 downto 13) = "11") else
+   branch_condition_o <= '1' when (signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) else
                          '0';
    
    --pc_next mux
    with pc_next_sel_i select
-      pc_next_if_s <= pc_adder_if_s when "00",
-      alu_result_ex_s when "11",
+      pc_next_if_s <= pc_adder_if_s when '0',
       branch_adder_id_s when others;
    
    --forwarding muxes
@@ -176,22 +168,12 @@ begin
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
              alu_forward_b_ex_s;
 
-   a_ex_s <= (others=>'0') when set_a_zero_i = '1' else
-             pc_reg_ex_s when alu_src_a_i = '1' else
-             alu_forward_a_ex_s;
+   a_ex_s <= alu_forward_a_ex_s;
 
    -- reg_bank rd_data update
    rd_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
-                   extended_data_wb_s when mem_to_reg_i = "10"else
+                   data_mem_read_wb_s when mem_to_reg_i = "10"else
                    alu_result_wb_s;
-
-   -- extend data based on type of load instruction
-   with load_type_i select
-      extended_data_wb_s <= (31 downto 8 => data_mem_read_wb_s(7)) & data_mem_read_wb_s(7 downto 0) when "000",
-      (31 downto 16 => data_mem_read_wb_s(15)) & data_mem_read_wb_s(15 downto 0) when "001",
-      std_logic_vector(to_unsigned(0,24))   & data_mem_read_wb_s(7 downto 0) when "100",
-      std_logic_vector(to_unsigned(0,16))   & data_mem_read_wb_s(15 downto 0) when "101",
-      data_mem_read_wb_s when others;
 
    -- extract operand adresses from instruction
    rs1_address_id_s <= instruction_id_s(19 downto 15);

@@ -27,7 +27,6 @@ package datapath_signals_pkg is
 
    --*********       EXECUTE       **************
    signal pc_adder_ex_s           : std_logic_vector (31 downto 0);
-   signal pc_reg_ex_s             : std_logic_vector (31 downto 0);
    signal immediate_extended_ex_s : std_logic_vector (31 downto 0);
    signal alu_forward_a_ex_s      : std_logic_vector(31 downto 0);
    signal alu_forward_b_ex_s      : std_logic_vector(31 downto 0);
@@ -49,9 +48,9 @@ package datapath_signals_pkg is
    --*********      WRITEBACK      **************
    signal pc_adder_wb_s           : std_logic_vector (31 downto 0);
    signal alu_result_wb_s         : std_logic_vector(31 downto 0);
-   signal extended_data_wb_s      : std_logic_vector (31 downto 0);
    signal rd_data_wb_s            : std_logic_vector (31 downto 0);
    signal rd_address_wb_s         : std_logic_vector (4 downto 0);
    signal data_mem_read_wb_s      : std_logic_vector (31 downto 0);
+
 
 end package datapath_signals_pkg;

@@ -37,51 +37,13 @@ begin
             case funct3_i is
                when "000" =>
                   alu_op_o <= add_op;
-                  if(alu_2bit_op_i = "10") then 
-                     if(funct7_i(5)='1')then 
-                        alu_op_o <= sub_op;
-                     elsif(funct7_i(0)='1')then
-                        alu_op_o <= mulu_op;
-                     end if;
-                  end if;
-               when "001" =>
-                  alu_op_o <= sll_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= mulhs_op;
-                  end if;
-               when "010" =>
-                  alu_op_o <= lts_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= mulhsu_op;
-                  end if;
-               when "011" =>
-                  alu_op_o <= ltu_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= mulhu_op;
-                  end if;
-               when "100" =>
-                  alu_op_o <= xor_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= divs_op;
-                  end if;
-               when "101" =>
-                  alu_op_o <= srl_op;
-                  if(funct7_i(5)='1')then
-                     alu_op_o <= sra_op;
-                  end if;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= divu_op;
+                  if(funct7_i(5)='1')then 
+                     alu_op_o <= sub_op;
                   end if;
                when "110" =>
                   alu_op_o <= or_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= rems_op;
-                  end if;
                when others =>
                   alu_op_o <= and_op;
-                  if(alu_2bit_op_i = "10" and funct7_i(0)='1') then 
-                     alu_op_o <= remu_op;
-                  end if;
             end case;
       end case;
    end process;
