@@ -5,9 +5,9 @@ use ieee.numeric_std.all;
 entity control_path is
    port (clk: in std_logic;
          reset: in std_logic;        
-         -- ********* INSTRUCTION memory i/o *******************           
+         -- ********* Interfejs za prihvat instrukcije *********
          instr_mem_read_i: in std_logic_vector (31 downto 0);        
-         -- ********* CONTROL SIGNALS **************************      
+         -- ********* Kontrolni signali ************************      
          branch_o: out std_logic;
          mem_to_reg_o: out std_logic;
          mem_write_o: out std_logic;

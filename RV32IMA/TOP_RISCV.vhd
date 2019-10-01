@@ -8,10 +8,10 @@ entity TOP_RISCV is
       -- ********* SYNC *************************************
       clk: in std_logic;
       reset: in std_logic;
-      -- ********* INSTRUCTION memory i/o *******************       
+      -- ********* Interfejs za prihvat instrukcije *********
       instr_mem_addr_o: out std_logic_vector (31 downto 0);      
       instr_mem_read_i: in std_logic_vector(31 downto 0);
-      -- ********* DATA memory i/o **************************
+      -- ********* Interfejs za prihvat i upis podataka *****
       data_mem_we_o: out std_logic;  
       data_mem_addr_o: out std_logic_vector(31 downto 0);
       data_mem_write_o: out std_logic_vector(31 downto 0);
