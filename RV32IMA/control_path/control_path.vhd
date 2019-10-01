@@ -38,11 +38,6 @@ begin
 
 
    --*********** Combinational logic ******************
-   -- branch condition complement
-   -- when branch instruction is executing:
-   --    '0' -> beq blt bltu
-   --    '1' -> bne bge geu  (opposite,complement of adequate comparison)
-   bcc_id_s <= instruction_i(12);
 
    -- extract operation and operand data from instruction
    rs1_address_id_s <= instruction_i(19 downto 15);
@@ -61,11 +56,11 @@ begin
    -- base on which branch is executing: 
    --    control pc_next mux
    --    flush appropriate registers in pipeline
-   pc_next_if_s:process(branch_type_id_s,branch_type_ex_s,branch_condition_i,bcc_id_s)
+   pc_next_if_s:process(branch_id_s,branch_condition_i,bcc_id_s)
    begin
       if_id_flush_s <= '0';
-      pc_next_sel_o <= '1';
-      if (branch_type_id_s = "01" and (branch_condition_i = '1'))then --branch
+      pc_next_sel_o <= '0';
+      if (branch_id_s = '1' and branch_condition_i = '1')then --branch
          pc_next_sel_o <= '1';
          if_id_flush_s <= '1';
       end if;
@@ -79,7 +74,7 @@ begin
    begin
       if (rising_edge(clk)) then
          if (reset = '0' or control_pass_s = '0')then
-            branch_type_ex_s <= (others => '0');
+            branch_ex_s      <= '0';
             funct3_ex_s      <= (others => '0');
             funct7_ex_s      <= (others => '0');
             alu_src_b_ex_s   <= '0';
@@ -91,7 +86,7 @@ begin
             rd_we_ex_s       <= '0';
             data_mem_we_ex_s <= '0';
          else
-            branch_type_ex_s <= branch_type_id_s;
+            branch_ex_s      <= branch_id_s;
             funct7_ex_s      <= funct7_id_s;
             funct3_ex_s      <= funct3_id_s;
             alu_src_b_ex_s   <= alu_src_b_id_s;
@@ -146,35 +141,35 @@ begin
    -- Control decoder
    ctrl_dec: entity work.ctrl_decoder(behavioral)
       port map(
-         opcode_i => instruction_i(6 downto 0),
-         branch_type_o => branch_type_id_s,
-         mem_to_reg_o => mem_to_reg_id_s,
-         data_mem_we_o => data_mem_we_id_s,
-         alu_src_b_o => alu_src_b_id_s,
-         rd_we_o => rd_we_id_s,
-         rs1_in_use_o => rs1_in_use_id_s,
-         rs2_in_use_o => rs2_in_use_id_s,
-         alu_2bit_op_o => alu_2bit_op_id_s);
+         opcode_i       => instruction_i(6 downto 0),
+         branch_o       => branch_id_s,
+         mem_to_reg_o   => mem_to_reg_id_s,
+         data_mem_we_o  => data_mem_we_id_s,
+         alu_src_b_o    => alu_src_b_id_s,
+         rd_we_o        => rd_we_id_s,
+         rs1_in_use_o   => rs1_in_use_id_s,
+         rs2_in_use_o   => rs2_in_use_id_s,
+         alu_2bit_op_o  => alu_2bit_op_id_s);
 
    -- ALU decoder
    alu_dec: entity work.alu_decoder(behavioral)
       port map(
-         alu_2bit_op_i => alu_2bit_op_ex_s,
-         funct3_i => funct3_ex_s,
-         funct7_i => funct7_ex_s,
-         alu_op_o => alu_op_o);
+         alu_2bit_op_i  => alu_2bit_op_ex_s,
+         funct3_i       => funct3_ex_s,
+         funct7_i       => funct7_ex_s,
+         alu_op_o       => alu_op_o);
 
    -- Forwarding_unit
    forwarding_u: entity work.forwarding_unit(behavioral)
       port map (
-         rd_we_mem_i    => rd_we_mem_s,
-         rd_address_mem_i    => rd_address_mem_s,
-         rd_we_wb_i     => rd_we_wb_s,
-         rd_address_wb_i     => rd_address_wb_s,
-         rs1_address_ex_i     => rs1_address_ex_s,
-         rs2_address_ex_i     => rs2_address_ex_s,
-         rs1_address_id_i     => rs1_address_id_s,
-         rs2_address_id_i     => rs2_address_id_s,
+         rd_we_mem_i        => rd_we_mem_s,
+         rd_address_mem_i   => rd_address_mem_s,
+         rd_we_wb_i         => rd_we_wb_s,
+         rd_address_wb_i    => rd_address_wb_s,
+         rs1_address_ex_i   => rs1_address_ex_s,
+         rs2_address_ex_i   => rs2_address_ex_s,
+         rs1_address_id_i   => rs1_address_id_s,
+         rs2_address_id_i   => rs2_address_id_s,
          alu_forward_a_o    => alu_forward_a_o,
          alu_forward_b_o    => alu_forward_b_o,
          branch_forward_a_o => branch_forward_a_o,
@@ -187,7 +182,7 @@ begin
          rs2_address_id_i => rs2_address_id_s,
          rs1_in_use_i     => rs1_in_use_id_s,
          rs2_in_use_i     => rs2_in_use_id_s,
-         branch_type_id_i => branch_type_id_s,
+         branch_id_i      => branch_id_s,
 
          rd_address_ex_i  => rd_address_ex_s,
          mem_to_reg_ex_i  => mem_to_reg_ex_s,

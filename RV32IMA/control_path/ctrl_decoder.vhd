@@ -6,7 +6,7 @@ entity ctrl_decoder is
    port ( -- from data_path
       opcode_i: in std_logic_vector (6 downto 0);
       -- to data_path
-      branch_type_o  : out std_logic_vector(1 downto 0);
+      branch_o       : out std_logic;
       mem_to_reg_o   : out std_logic_vector(1 downto 0);
       data_mem_we_o  : out std_logic;
       alu_src_b_o    : out std_logic;
@@ -24,7 +24,7 @@ begin
    contol_dec:process(opcode_i)is
    begin
       --default
-      branch_type_o <= "00";
+      branch_o <= '0';
       mem_to_reg_o <= "00";
       data_mem_we_o <= '0';
       alu_src_b_o <= '0';
@@ -57,7 +57,7 @@ begin
             rs1_in_use_o <= '1';
          when "1100011" => --B type
             alu_2bit_op_o <= "01";
-            branch_type_o <= "01";
+            branch_o <= '1';
          when others =>
       end case;
    end process;

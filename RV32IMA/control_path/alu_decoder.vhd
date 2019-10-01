@@ -25,14 +25,7 @@ begin
          when "00" => 
             alu_op_o <= add_op;
          when "01" =>
-            case(funct3_i(2 downto 1))is
-               when "00" =>
-                  alu_op_o <= eq_op;
-               when "10" =>
-                  alu_op_o <= lts_op;
-               when others =>
-                  alu_op_o <= ltu_op;
-            end case;
+            alu_op_o <= eq_op;
          when others =>
             case funct3_i is
                when "000" =>

@@ -23,7 +23,7 @@ ARCHITECTURE behavioral OF ALU IS
    signal    add_res, sub_res, or_res, and_res,res_s, eq_res :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 
    
-BEGin
+BEGIN
 
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));

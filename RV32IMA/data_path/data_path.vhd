@@ -20,7 +20,6 @@ entity data_path is
       -- control signals that are forwarded from data_path
       mem_to_reg_i        : in std_logic_vector(1 downto 0);
       alu_op_i            : in std_logic_vector (4 downto 0);      
-      alu_src_a_i         : in std_logic;
       alu_src_b_i         : in std_logic;
       pc_next_sel_i       : in std_logic;
       rd_we_i             : in std_logic;     
