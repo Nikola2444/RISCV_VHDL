@@ -11,10 +11,10 @@ entity hazard_unit is
       rs2_in_use_i     : in std_logic;
       branch_id_i      : in std_logic;
       rd_address_ex_i  : in std_logic_vector(4 downto 0);
-      mem_to_reg_ex_i  : in std_logic_vector(1 downto 0);
+      mem_to_reg_ex_i  : in std_logic;
       rd_we_ex_i       : in std_logic;
       rd_address_mem_i : in std_logic_vector(4 downto 0);
-      mem_to_reg_mem_i : in std_logic_vector(1 downto 0);
+      mem_to_reg_mem_i : in std_logic;
       --control outputs
       -- if '0' stalls pc register
       pc_en_o          : out std_logic; 
@@ -41,7 +41,7 @@ begin
       if (branch_id_i = '0') then -- no branch in id
          if(((rs1_address_id_i = rd_address_ex_i and rs1_in_use_i = '1') or
             (rs2_address_id_i = rd_address_ex_i and rs2_in_use_i = '1')) and
-            mem_to_reg_ex_i = "10" and rd_we_ex_i = '1')then -- load in execution stage
+            mem_to_reg_ex_i = '1' and rd_we_ex_i = '1')then -- load in execution stage
             en_s <='0';
          end if;
       elsif(branch_id_i = '1')then -- branch in id phase
@@ -49,7 +49,7 @@ begin
             and rd_we_ex_i = '1')then -- load or R-type in execution stage
             en_s <='0';
          elsif((rs1_address_id_i = rd_address_mem_i or rs2_address_id_i = rd_address_mem_i)
-            and mem_to_reg_mem_i = "10")then -- load in memory stage 
+            and mem_to_reg_mem_i = '1')then -- load in memory stage 
             en_s <='0';
          end if;
       end if;

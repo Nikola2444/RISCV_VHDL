@@ -30,7 +30,7 @@ architecture behavioral of BRAM is type ram_type is array(0 to 2**WADDR - 1)
    
 begin
 
-   -- synchronous writing
+   -- sinhroni upis
    process(clk)
    begin
       if(rising_edge(clk)) then
@@ -65,7 +65,7 @@ begin
       end if;
    end process;
    
-   -- asynchronous reading
+   -- asinhrono citanje
    process(en_a_i, en_b_i, addr_a_i, addr_b_i)
    begin
       if(en_a_i='1') then

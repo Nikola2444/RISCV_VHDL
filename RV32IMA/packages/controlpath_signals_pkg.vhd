@@ -19,7 +19,7 @@ package controlpath_signals_pkg is
    signal alu_src_b_id_s    : std_logic := '0';
    signal data_mem_we_id_s  : std_logic := '0';
    signal rd_we_id_s        : std_logic := '0';
-   signal mem_to_reg_id_s   : std_logic_vector(1 downto 0) := (others=>'0');
+   signal mem_to_reg_id_s   : std_logic := '0';
    signal rs1_address_id_s  : std_logic_vector (4 downto 0) := (others=>'0');
    signal rs2_address_id_s  : std_logic_vector (4 downto 0) := (others=>'0');
    signal rd_address_id_s   : std_logic_vector (4 downto 0) := (others=>'0');
@@ -33,7 +33,7 @@ package controlpath_signals_pkg is
    signal alu_src_b_ex_s    : std_logic := '0';
    signal data_mem_we_ex_s  : std_logic := '0';
    signal rd_we_ex_s        : std_logic := '0';
-   signal mem_to_reg_ex_s   : std_logic_vector(1 downto 0) := (others=>'0');
+   signal mem_to_reg_ex_s   : std_logic := '0';
 
 
    signal rs1_address_ex_s  : std_logic_vector (4 downto 0) := (others=>'0');
@@ -43,12 +43,12 @@ package controlpath_signals_pkg is
    --*********       MEMORY        **************
    signal data_mem_we_mem_s : std_logic := '0';
    signal rd_we_mem_s       : std_logic := '0';
-   signal mem_to_reg_mem_s  : std_logic_vector(1 downto 0) := (others=>'0');
+   signal mem_to_reg_mem_s  : std_logic := '0';
    signal rd_address_mem_s  : std_logic_vector (4 downto 0) := (others=>'0');
 
    --*********      WRITEBACK      **************
    signal rd_we_wb_s        : std_logic := '0';
-   signal mem_to_reg_wb_s   : std_logic_vector(1 downto 0) := (others=>'0');
+   signal mem_to_reg_wb_s   : std_logic := '0';
    signal rd_address_wb_s   : std_logic_vector (4 downto 0) := (others=>'0');
 
 

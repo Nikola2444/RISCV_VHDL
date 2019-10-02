@@ -6,32 +6,32 @@ use work.datapath_signals_pkg.all;
 
 entity data_path is
    port(
-      -- global synchronization ports
+      -- sinhronizacioni signali
       clk                 : in std_logic;
       reset               : in std_logic;      
-      -- instruction memory interface
+      -- interfejs ka memoriji za instrukcije
       instr_mem_address_o : out std_logic_vector (31 downto 0);      
       instr_mem_read_i    : in std_logic_vector(31 downto 0);
       instruction_o       : out std_logic_vector(31 downto 0);
-      -- data memory interface
+      -- interfejs ka memoriji za podatke
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_write_o    : out std_logic_vector(31 downto 0);
       data_mem_read_i     : in std_logic_vector (31 downto 0);      
-      -- control signals that are forwarded from data_path
-      mem_to_reg_i        : in std_logic_vector(1 downto 0);
+      -- kontrolni signali
+      mem_to_reg_i        : in std_logic;
       alu_op_i            : in std_logic_vector (4 downto 0);      
       alu_src_b_i         : in std_logic;
       pc_next_sel_i       : in std_logic;
       rd_we_i             : in std_logic;     
-      -- control signals for forwarding
+      branch_condition_o  : out std_logic;     
+      -- kontrolni signali za prosledjivanje operanada u ranije faze protocne obrade
       alu_forward_a_i     : in std_logic_vector (1 downto 0);
       alu_forward_b_i     : in std_logic_vector (1 downto 0);
       branch_forward_a_i  : in std_logic_vector (1 downto 0); 
       branch_forward_b_i  : in std_logic_vector(1 downto 0);
-      branch_condition_o  : out std_logic;     
-      -- control signals for flushing
+      -- kontrolni signal za resetovanje if/id registra
       if_id_flush_i       : in std_logic;
-      -- control signals for stalling
+      -- kontrolni signali za zaustavljanje protocne obrade
       pc_en_i             : in std_logic;
       if_id_en_i          : in std_logic);
    
@@ -41,8 +41,8 @@ end entity;
 architecture Behavioral of data_path is
 begin
    
-   --***********  Sequential logic  ******************
-   --Program Counter
+   --***********  Sekvencijalna logika  ******************
+   --Programski brojac
    pc_proc:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -54,7 +54,7 @@ begin
       end if;      
    end process;
 
-   --IF/ID register
+   --IF/ID registar
    if_id:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -72,7 +72,7 @@ begin
       end if;      
    end process;
    
-   --ID/EX register
+   --ID/EX registar
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -92,7 +92,7 @@ begin
       end if;      
    end process;
 
-   --EX/MEM register
+   --EX/MEM registar
    ex_mem:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -110,7 +110,7 @@ begin
       end if;      
    end process;
 
-   --MEM/WB register
+   --MEM/WB registar
    mem_wb:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -131,14 +131,14 @@ begin
 
 
 
-   --***********  Combinational logic  ***************
-   --pc_adder_s update
+   --***********  Kombinaciona logika  ***************
+   -- sabirac za uvecavanje programskog brojaca (sledeca instrukcija)
    pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, 32));
 
-   --branch_adder update
+   -- sabirac za uslovne skokove
    branch_adder_id_s <= std_logic_vector(signed(immediate_extended_id_s) + signed(pc_reg_id_s));
    
-   --branch condition inputs update
+   -- multiplekseri za prosledjivanje operanada komparatoru za proveravanje uslova za skok
    branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
                               alu_result_mem_s when branch_forward_a_i = "10" else
                               rs1_data_id_s;
@@ -146,16 +146,16 @@ begin
                               alu_result_mem_s when branch_forward_b_i = "10" else
                               rs2_data_id_s;
    
-   --check if branch condition is met
+   -- provera uslova za skok
    branch_condition_o <= '1' when (signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) else
                          '0';
    
-   --pc_next mux
+   -- multiplekser za azuriranje programskog brojaca
    with pc_next_sel_i select
       pc_next_if_s <= pc_adder_if_s when '0',
       branch_adder_id_s when others;
    
-   --forwarding muxes
+   -- multiplekseri za prosledjivanje operanada iz kasnijih faza pajplajna
    alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else
                          alu_result_mem_s when alu_forward_a_i = "10" else
                          rs1_data_ex_s;
@@ -163,18 +163,17 @@ begin
                          alu_result_mem_s when alu_forward_b_i = "10" else
                          rs2_data_ex_s;
 
-   -- update alu inputs
+   -- multiplekser za biranje 'b' operanda alu jedinice
    b_ex_s <= immediate_extended_ex_s when alu_src_b_i = '1' else
              alu_forward_b_ex_s;
 
    a_ex_s <= alu_forward_a_ex_s;
 
-   -- reg_bank rd_data update
-   rd_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
-                   data_mem_read_wb_s when mem_to_reg_i = "10"else
+   -- multiplekser koji selektuje sta se upisuje u odredisni registar
+   rd_data_wb_s <= data_mem_read_wb_s when mem_to_reg_i = '1' else
                    alu_result_wb_s;
 
-   -- extract operand adresses from instruction
+   -- izdvoji adrese opereanada iz 32-bitne instrukcije
    rs1_address_id_s <= instruction_id_s(19 downto 15);
    rs2_address_id_s <= instruction_id_s(24 downto 20);
    rd_address_id_s <= instruction_id_s(11 downto 7);
@@ -182,8 +181,8 @@ begin
 
 
 
-   --***********  Instantiation ***********
-   --Register bank
+   --***********  Instanciranja ***********
+   -- Registarska banka
    register_bank_1: entity work.register_bank
       generic map (
          WIDTH => 32)
@@ -198,13 +197,13 @@ begin
          rd_address_i   => rd_address_wb_s,
          rd_data_i      => rd_data_wb_s);
    
-   --Immediate unit instance
+   -- Jedinice za prosirivanje konstante (immediate)
    immediate_1: entity work.immediate
       port map (
          instruction_i        => instruction_id_s,
          immediate_extended_o => immediate_extended_id_s);
 
-   --ALU unit instance
+   -- ALU jedinica
    ALU_1: entity work.ALU
       generic map (
          WIDTH => 32)
@@ -216,12 +215,13 @@ begin
          zero_o => alu_zero_ex_s,
          of_o   => alu_of_ex_s);
 
-   --***********  Outputs  ***************
-   --From instruction memory
+   --***********  Ulazi/Izlazi  ***************
+   -- Ka controlpath-u
+   instruction_o       <= instruction_id_s;     
+   -- Sa memorijom za instrukcije
    instr_mem_address_o <= pc_reg_if_s;
    instruction_if_s    <= instr_mem_read_i;
-   instruction_o       <= instruction_id_s;     
-   --To data memory
+   -- Sa memorijom za podatke
    data_mem_address_o  <= alu_result_mem_s; 
    data_mem_write_o    <= rs2_data_mem_s;
    data_mem_read_mem_s <= data_mem_read_i;
