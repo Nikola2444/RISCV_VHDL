@@ -23,7 +23,7 @@ architecture Behavioral of register_bank is
    
 begin
 
-   -- synchronous write, reset
+   -- sinhroni upis
    reg_bank_write: process (clk) is
    begin
       if (falling_edge(clk))then      
@@ -35,7 +35,7 @@ begin
       end if;      
    end process;
 
-   -- asynchronous read (zero-th registe set to zero as per spec)
+   -- asinhrono citanje, po specifikaciji nulti registar je uvek nula
    reg_bank_read: process (rs1_address_i,rs2_address_i,reg_bank_s) is
    begin
       if(to_integer(unsigned(rs1_address_i))=0) then

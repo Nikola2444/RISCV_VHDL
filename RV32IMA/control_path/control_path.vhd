@@ -5,28 +5,28 @@ use work.controlpath_signals_pkg.all;
 
 entity control_path is
    port (
-         -- global synchronization signals
+         -- sinhronizacija
          clk                : in std_logic;
          reset              : in std_logic;
-         -- instruction is read from memory
+         -- instrukcija dolazi iz datapah-a
          instruction_i      : in std_logic_vector (31 downto 0);
          -- from data_path comparator
          branch_condition_i : in std_logic;
-         -- control signals forwarded to datapath and memory
+         -- kontrolni signali koji se prosledjiuju u datapath
          mem_to_reg_o: out std_logic;
          alu_op_o: out std_logic_vector(4 downto 0);
          alu_src_b_o: out std_logic;
          rd_we_o: out std_logic;
          pc_next_sel_o: out std_logic;
          data_mem_we_o: out std_logic_vector(3 downto 0);
-         -- control singals for forwarding
+         -- kontrolni signali za prosledjivanje operanada u ranije faze protocne obrade
          alu_forward_a_o: out std_logic_vector (1 downto 0);
          alu_forward_b_o: out std_logic_vector (1 downto 0);
          branch_forward_a_o: out std_logic_vector (1 downto 0); -- mux a 
          branch_forward_b_o: out std_logic_vector(1 downto 0); -- mux b
-         -- control singals for flushing
+         -- kontrolni signal za resetovanje if/id registra
          if_id_flush_o: out std_logic;
-         -- control signals for stalling
+         -- kontrolni signali za zaustavljanje protocne obrade
          pc_en_o : out std_logic;
          if_id_en_o : out std_logic
          );  
@@ -37,9 +37,9 @@ architecture behavioral of control_path is
 begin
 
 
-   --*********** Combinational logic ******************
+   --*********** Kombinaciona logika ******************
 
-   -- extract operation and operand data from instruction
+   -- izdvoji adrese operanada iz instrukcije
    rs1_address_id_s <= instruction_i(19 downto 15);
    rs2_address_id_s <= instruction_i(24 downto 20);
    rd_address_id_s <= instruction_i(11 downto 7);
@@ -47,20 +47,21 @@ begin
    funct7_id_s <= instruction_i(31 downto 25);
    funct3_id_s <= instruction_i(14 downto 12);
 
-   -- this is decoder that decides which bytes are written to memory
-   data_mem_write_decoder:
+   -- signal upisa 32-bitnog podatka u memoriju se prosiruje na cetiri 
+   -- memorija je bajt-adresibilna pa postoji we signal za svaki bajt na lokaciji sirine 32 bita  
+   data_mem_write_enable:
    data_mem_we_o <= "1111" when data_mem_we_mem_s = '1' else
                     "0000";
 
-   -- this process covers conditional and unconditional branches
-   -- base on which branch is executing: 
-   --    control pc_next mux
-   --    flush appropriate registers in pipeline
+   -- ovaj proces nadzire instrukcije skokova
+   -- za uslovni skok
+   --    kontrolise multiplekser za sledecu adresu PC-a
+   --    resetuje if/id registar ukoliko je uslov zadovoljen
    pc_next_if_s:process(branch_id_s,branch_condition_i,bcc_id_s)
    begin
       if_id_flush_s <= '0';
       pc_next_sel_o <= '0';
-      if (branch_id_s = '1' and branch_condition_i = '1')then --branch
+      if (branch_id_s = '1' and branch_condition_i = '1')then
          pc_next_sel_o <= '1';
          if_id_flush_s <= '1';
       end if;
@@ -68,8 +69,8 @@ begin
    
 
 
-   --*********** Sequential logic ******************
-   --ID/EX register
+   --*********** Sekvencijalna logika ******************
+   --ID/EX registar
    id_ex:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -100,7 +101,7 @@ begin
       end if;      
    end process;
 
-   --EX/MEM register
+   --EX/MEM registar
    ex_mem:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -118,7 +119,7 @@ begin
       end if;      
    end process;
 
-   --MEM/WB register
+   --MEM/WB registar
    mem_wb:process (clk) is
    begin
       if (rising_edge(clk)) then
@@ -136,9 +137,9 @@ begin
 
 
 
-   --*********** Instantiation ******************
+   --*********** Instanciranje ******************
 
-   -- Control decoder
+   -- Dekoder za kontrolne signale
    ctrl_dec: entity work.ctrl_decoder(behavioral)
       port map(
          opcode_i       => instruction_i(6 downto 0),
@@ -151,7 +152,7 @@ begin
          rs2_in_use_o   => rs2_in_use_id_s,
          alu_2bit_op_o  => alu_2bit_op_id_s);
 
-   -- ALU decoder
+   -- Dekoder za ALU operaciju
    alu_dec: entity work.alu_decoder(behavioral)
       port map(
          alu_2bit_op_i  => alu_2bit_op_ex_s,
@@ -159,7 +160,7 @@ begin
          funct7_i       => funct7_ex_s,
          alu_op_o       => alu_op_o);
 
-   -- Forwarding_unit
+   -- Jedinica za prosledjivanje operanada
    forwarding_u: entity work.forwarding_unit(behavioral)
       port map (
          rd_we_mem_i        => rd_we_mem_s,
@@ -175,7 +176,7 @@ begin
          branch_forward_a_o => branch_forward_a_o,
          branch_forward_b_o => branch_forward_b_o);
 
-   -- Hazard unit
+   -- Jedinica za razresavanje hazarda
    hazard_u: entity work.hazard_unit(behavioral)
       port map (
          rs1_address_id_i => rs1_address_id_s,
@@ -197,9 +198,9 @@ begin
 
 
 
-   --********** Outputs **************
+   --********** Izlazi **************
 
-   -- forward control signals to datapath
+   -- prosledi kontrolne signale datapath-u
    if_id_en_o <= if_id_en_s;
    mem_to_reg_o <= mem_to_reg_wb_s;
    alu_src_b_o <= alu_src_b_ex_s;

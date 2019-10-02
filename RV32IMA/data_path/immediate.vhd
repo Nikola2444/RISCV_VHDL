@@ -30,7 +30,7 @@ begin
    extension <= (others => instruction_i(31));
    funct3 <= instruction_i(14 downto 12);
    
-   -- based on opcode find instruction type
+   -- u odnosu na opcode pronadji instrukciju
    process (opcode, funct3) is
    begin
       case opcode(6 downto 2) is
@@ -47,7 +47,7 @@ begin
       end case;
    end process;
    
-   -- based on instruction type from previous process extend data
+   -- na osnovu instrukcije iz prethodnog procesa, izdvoji i prosiri konstantu(immediate) polje na 32 bita
    process (instruction_i,instruction_type,extension,funct3) is
    begin
       case instruction_type is

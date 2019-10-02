@@ -3,9 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity ctrl_decoder is
-   port ( -- from data_path
+   port (
+      -- opcode instrukcije
       opcode_i: in std_logic_vector (6 downto 0);
-      -- to data_path
+      -- kontrolni signali
       branch_o       : out std_logic;
       mem_to_reg_o   : out std_logic;
       data_mem_we_o  : out std_logic;
@@ -23,7 +24,7 @@ begin
 
    contol_dec:process(opcode_i)is
    begin
-      --default
+      -- podrazumevane vrednosti
       branch_o <= '0';
       mem_to_reg_o <= '0';
       data_mem_we_o <= '0';

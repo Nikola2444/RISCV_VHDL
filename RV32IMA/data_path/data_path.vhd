@@ -181,7 +181,7 @@ begin
 
 
 
-   --***********  Instanciranja ***********
+   --***********  Instanciranje modula ***********
    -- Registarska banka
    register_bank_1: entity work.register_bank
       generic map (

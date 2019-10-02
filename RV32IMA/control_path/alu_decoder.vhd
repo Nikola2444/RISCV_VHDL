@@ -16,10 +16,12 @@ end entity;
 architecture behavioral of alu_decoder is
 begin 
 
-   --finds appropriate alu operation from control_decoder output and funct fields
+   -- pronalazi odgovarajucu operaciju ALU jedinice u odnosu na:
+   --    dvobitni signal alu_2bit_op koji dolazi iz control decodera
+   --    funct3 i funct7 polja u instrukciji
    alu_dec:process(alu_2bit_op_i,funct3_i,funct7_i)is
    begin
-      --default
+      -- podrazumevane vrednosti
       alu_op_o <= "00000";
       case alu_2bit_op_i is
          when "00" => 
