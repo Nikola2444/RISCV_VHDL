@@ -4,12 +4,12 @@ use ieee.numeric_std.all;
 
 entity ctrl_decoder is
    port (
-      --************ DATA PATH ulazi************
+      --************ Opcode polje instrukcije************
       opcode_i: in std_logic_vector (6 downto 0);
-      --************ DATA PATH izlazi**************
+      --************ Kontrolni signali*******************
       branch_o: out std_logic;      
       mem_to_reg_o: out std_logic;
-      mem_write_o: out std_logic;
+      data_mem_we_o: out std_logic;
       alu_src_o: out std_logic;
       rd_we_o: out std_logic;
       alu_2bit_op_o: out std_logic_vector(1 downto 0)
@@ -24,7 +24,7 @@ begin
       --***Podrazumevane vrednost***
       branch_o <= '0';
       mem_to_reg_o <= '0';
-      mem_write_o <= '0';
+      data_mem_we_o <= '0';
       alu_src_o <= '0';
       rd_we_o <= '0';
       alu_2bit_op_o <= "00";
@@ -37,7 +37,7 @@ begin
             rd_we_o <= '1';
          when "01000" => --STORE, 3v ~ funct3
             alu_2bit_op_o <= "00";
-            mem_write_o <= '1';
+            data_mem_we_o <= '1';
             alu_src_o <= '1';
          when "01100" => --R type, 
             alu_2bit_op_o <= "10";
