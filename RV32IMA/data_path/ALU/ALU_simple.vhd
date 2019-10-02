@@ -41,11 +41,11 @@ BEGIN
    -- prosledi jedan od rezultata na izlaz u odnosu na  operaciju
    res_o <= res_s;
    with op_i select
-      res_s <= and_res when and_op, --and
-               or_res  when or_op, --or
-               add_res when add_op, --add
-               sub_res when sub_op, --sub
-               eq_res  when eq_op, -- set equal
+      res_s <= and_res when and_op,
+               or_res  when or_op,
+               add_res when add_op,
+               sub_res when sub_op,
+               eq_res  when eq_op,
                (others => '1') when others; 
 
 
