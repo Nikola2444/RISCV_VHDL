@@ -49,7 +49,7 @@ begin
       end case;
    end process;
    
-   -- na osnovu instrukcije iz prethodnog procesa, izdvoji i prosiri konstantu(immediate) polje na 32 bita
+   -- na osnovu instrukcije iz prethodnog procesa, izdvoji i prosiri konstantu(immediate polje) na 32 bita
    process (instruction_i,instruction_type,extension,funct3) is
    begin
       case instruction_type is

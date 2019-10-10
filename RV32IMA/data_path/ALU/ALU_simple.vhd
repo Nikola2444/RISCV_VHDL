@@ -20,7 +20,7 @@ END ALU;
 ARCHITECTURE behavioral OF ALU IS
 
    constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
-   signal    add_res, sub_res, or_res, and_res,res_s, eq_res :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    add_res, sub_res, or_res, and_res,res_s:  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 
    
 BEGin
@@ -32,10 +32,7 @@ BEGin
    -- and gate
    and_res <= a_i and b_i;
    -- or gate
-   or_res <= a_i or b_i;
-   -- equal
-   eq_res <= std_logic_vector(to_unsigned(1, WIDTH)) when (signed(a_i) = signed(b_i)) else
-             std_logic_vector(to_unsigned(0, WIDTH));
+   or_res <= a_i or b_i;   
 
    
    -- SELECT RESULT
@@ -45,7 +42,6 @@ BEGin
                or_res  when or_op, --or
                add_res when add_op, --add
                sub_res when sub_op, --sub
-               eq_res  when eq_op, -- set equal
                (others => '1') when others; 
 
 
