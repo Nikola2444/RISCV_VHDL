@@ -5,6 +5,9 @@ use std.textio.all;
 use work.txt_util.all;
 
 entity TOP_RISCV_tb is
+generic (
+        Vivado_version    :std_logic  := '0'
+    );
 -- port ();
 end entity;
 
@@ -108,10 +111,13 @@ begin
    begin
       reset       <= '0';
       wea_instr_s <= (others => '1');
+      wait until rising_edge(clk);
       while (not endfile(RISCV_instructions))loop
          readline(RISCV_instructions, row);
-         addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
-         dina_instr_s  <= to_std_logic_vector(string(row));
+         if (row'length > 0) then
+            addra_instr_s <= std_logic_vector(to_unsigned(i, 10));
+            dina_instr_s  <= to_std_logic_vector(string(row));
+         end if;
          i             := i + 4;
          wait until rising_edge(clk);
       end loop;
