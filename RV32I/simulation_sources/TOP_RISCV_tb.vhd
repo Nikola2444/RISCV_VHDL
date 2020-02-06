@@ -11,7 +11,7 @@ end entity;
 
 architecture Behavioral of TOP_RISCV_tb is
    -- File operands   
-   file RISCV_instructions             : text open read_mode is "../../../../../RISCV_tb/assembly_code.txt";
+   file RISCV_instructions             : text open read_mode is "../../../../../simulation_sources/assembly_code.txt";
    -- Signals
    signal clk                          : std_logic := '0';
    signal reset                        : std_logic;
