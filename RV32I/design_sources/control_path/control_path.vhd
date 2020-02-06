@@ -25,8 +25,8 @@ entity control_path is
       -- control singals for forwarding
       alu_forward_a_o    : out std_logic_vector (1 downto 0);
       alu_forward_b_o    : out std_logic_vector (1 downto 0);
-      branch_forward_a_o : out std_logic_vector (1 downto 0);  -- mux a 
-      branch_forward_b_o : out std_logic_vector(1 downto 0);   -- mux b
+      branch_forward_a_o : out std_logic;  -- mux a 
+      branch_forward_b_o : out std_logic;   -- mux b
       -- control singals for flushing
       if_id_flush_o      : out std_logic;
       id_ex_flush_o      : out std_logic;
