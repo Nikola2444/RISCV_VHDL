@@ -22,8 +22,8 @@ entity forwarding_unit is
       alu_forward_b_o    : out std_logic_vector(1 downto 0);
       -- forward control outputs
       -- they control multiplexers in front of equality test
-      branch_forward_a_o : out std_logic;
-      branch_forward_b_o : out std_logic);
+      branch_forward_a_o : out std_logic_vector (1 downto 0);
+      branch_forward_b_o : out std_logic_vector(1 downto 0));
 end entity;
 
 architecture Behavioral of forwarding_unit is
@@ -66,17 +66,25 @@ begin
    forward_branch_proc : process(rd_we_mem_i, rd_address_mem_i, rd_we_wb_i, rd_address_wb_i,
                                  rs1_address_id_i, rs2_address_id_i)is
    begin
-      branch_forward_b_o <= '0';
-      branch_forward_a_o <= '0';
+      branch_forward_b_o <= "00";
+      branch_forward_a_o <= "00";
       -- forwarding from WB stage
       if (rd_we_wb_i = '1' and rd_address_wb_i /= zero_c)then
          if (rd_address_wb_i = rs1_address_id_i)then
-            branch_forward_a_o <= '1'; 
+            branch_forward_a_o <= "01";
          end if;
          if(rd_address_wb_i = rs2_address_id_i)then
-            branch_forward_b_o <= '1';
+            branch_forward_b_o <= "01";
          end if;
-      end if;     
-      
+      end if;
+      -- forwarding from MEM stage
+      if (rd_we_mem_i = '1' and rd_address_mem_i /= zero_c)then
+         if (rd_address_mem_i = rs1_address_id_i)then
+            branch_forward_a_o <= "10";
+         end if;
+         if (rd_address_mem_i = rs2_address_id_i)then
+            branch_forward_b_o <= "10";
+         end if;
+      end if;
    end process;
 end architecture;
