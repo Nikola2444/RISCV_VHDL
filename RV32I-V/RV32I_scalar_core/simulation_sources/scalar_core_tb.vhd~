@@ -4,12 +4,12 @@ use ieee.numeric_std.all;
 use std.textio.all;
 use work.txt_util.all;
 
-entity TOP_RISCV_tb is
+entity scalar_core_tb is
 -- port ();
 end entity;
 
 
-architecture Behavioral of TOP_RISCV_tb is
+architecture Behavioral of scalar_core_tb is
    -- File operands   
    file RISCV_instructions             : text open read_mode is "../../../../../simulation_sources/assembly_code.txt";
    -- Signals
