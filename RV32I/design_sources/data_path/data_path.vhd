@@ -57,7 +57,6 @@ architecture Behavioral of data_path is
    signal branch_condition_b_ex_s : std_logic_vector (31 downto 0);   
    signal branch_condition_a_ex_s : std_logic_vector (31 downto 0);   
    signal branch_adder_id_s       : std_logic_vector (31 downto 0);
-   signal instruction_id_s        : std_logic_vector (31 downto 0);
    signal rs1_address_id_s        : std_logic_vector (4 downto 0);
    signal rs2_address_id_s        : std_logic_vector (4 downto 0);
    signal rd_address_id_s         : std_logic_vector (4 downto 0);
