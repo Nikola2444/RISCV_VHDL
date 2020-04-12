@@ -34,8 +34,6 @@ architecture structural of TOP_RISCV is
 
    signal alu_forward_a_s    : std_logic_vector(1 downto 0);
    signal alu_forward_b_s    : std_logic_vector(1 downto 0);
-   signal branch_forward_a_s : std_logic_vector(1 downto 0);
-   signal branch_forward_b_s : std_logic_vector(1 downto 0);
    signal branch_condition_s : std_logic;
 
    signal pc_en_s            : std_logic;
@@ -68,8 +66,6 @@ begin
          -- control signals for forwaring
          alu_forward_a_i     => alu_forward_a_s,
          alu_forward_b_i     => alu_forward_b_s,
-         branch_forward_a_i  => branch_forward_a_s,
-         branch_forward_b_i  => branch_forward_b_s,
          branch_condition_o  => branch_condition_s,
          -- control signals for flushing
          if_id_flush_i       => if_id_flush_s,
@@ -103,8 +99,6 @@ begin
          -- control signals for forwarding
          alu_forward_a_o     => alu_forward_a_s,
          alu_forward_b_o     => alu_forward_b_s,
-         branch_forward_a_o  => branch_forward_a_s,
-         branch_forward_b_o  => branch_forward_b_s,
          branch_condition_i  => branch_condition_s,
          -- control signals for flushing
          data_mem_we_o       => data_mem_we_o,

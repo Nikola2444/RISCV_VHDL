@@ -67,6 +67,7 @@ begin
             mem_to_reg_o  <= "01";
             branch_type_o <= "10";
          when "1100111" =>              -- JALR
+            rs1_in_use_o  <= '1';
             mem_to_reg_o  <= "01";
             rd_we_o       <= '1';
             alu_src_b_o   <= '1';

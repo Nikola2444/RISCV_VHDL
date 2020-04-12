@@ -28,8 +28,6 @@ entity data_path is
       -- control signals for forwarding
       alu_forward_a_i     : in  std_logic_vector (1 downto 0);
       alu_forward_b_i     : in  std_logic_vector (1 downto 0);
-      branch_forward_a_i  : in  std_logic_vector (1 downto 0);
-      branch_forward_b_i  : in  std_logic_vector(1 downto 0);
       branch_condition_o  : out std_logic;
       -- control signals for flushing
       if_id_flush_i       : in  std_logic;
@@ -54,8 +52,6 @@ architecture Behavioral of data_path is
    signal rs1_data_id_s           : std_logic_vector (31 downto 0);
    signal rs2_data_id_s           : std_logic_vector (31 downto 0);
    signal immediate_extended_id_s : std_logic_vector (31 downto 0);
-   signal branch_condition_b_ex_s : std_logic_vector (31 downto 0);   
-   signal branch_condition_a_ex_s : std_logic_vector (31 downto 0);   
    signal branch_adder_id_s       : std_logic_vector (31 downto 0);
    signal rs1_address_id_s        : std_logic_vector (4 downto 0);
    signal rs2_address_id_s        : std_logic_vector (4 downto 0);
@@ -187,18 +183,13 @@ begin
    branch_adder_id_s <= std_logic_vector(signed(immediate_extended_id_s) + signed(pc_reg_id_s));
 
    --branch condition inputs update
-   branch_condition_a_ex_s <= rd_data_wb_s when branch_forward_a_i = "01" else
-                              alu_result_mem_s when branch_forward_a_i = "10" else
-                              rs1_data_id_s;
-   branch_condition_b_ex_s <= rd_data_wb_s when branch_forward_b_i = "01" else
-                              alu_result_mem_s when branch_forward_b_i = "10" else
-                              rs2_data_id_s;
-
+	--TODO: UNDER CONSTRUCTION
    --check if branch condition is met
-   branch_condition_o <= '1' when ((signed(branch_condition_a_ex_s) = signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
-                         '1' when ((signed(branch_condition_a_ex_s) < signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
-                         '1' when ((signed(branch_condition_a_ex_s) > signed(branch_condition_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
+   branch_condition_o <= '1' when ((signed(alu_forward_a_ex_s) = signed(alu_forward_b_ex_s)) and instr_mem_read_i(14 downto 13) = "00") else
+                         '1' when ((signed(alu_forward_a_ex_s) < signed(alu_forward_b_ex_s)) and instr_mem_read_i(14 downto 13) = "10") else
+                         '1' when ((signed(alu_forward_a_ex_s) > signed(alu_forward_b_ex_s)) and instr_mem_read_i(14 downto 13) = "11") else
                          '0';
+	--TODO: END OF CONSTRUCTION
 
    --pc_next mux
    with pc_next_sel_i select
