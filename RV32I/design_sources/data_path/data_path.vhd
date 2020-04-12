@@ -62,6 +62,7 @@ architecture Behavioral of data_path is
    signal pc_adder_ex_s           : std_logic_vector (31 downto 0);
    signal pc_reg_ex_s             : std_logic_vector (31 downto 0);
    signal immediate_extended_ex_s : std_logic_vector (31 downto 0);
+   signal branch_adder_ex_s       : std_logic_vector (31 downto 0);
    signal alu_forward_a_ex_s      : std_logic_vector(31 downto 0);
    signal alu_forward_b_ex_s      : std_logic_vector(31 downto 0);
    signal alu_zero_ex_s           : std_logic;
@@ -125,12 +126,14 @@ begin
             rs1_data_ex_s           <= (others => '0');
             rs2_data_ex_s           <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
+				branch_adder_ex_s			<= (others => '0');
             rd_address_ex_s         <= (others => '0');
          else
             pc_adder_ex_s           <= pc_adder_id_s;
             rs1_data_ex_s           <= rs1_data_id_s;
             rs2_data_ex_s           <= rs2_data_id_s;
             immediate_extended_ex_s <= immediate_extended_id_s;
+				branch_adder_ex_s			<= branch_adder_id_s;
             rd_address_ex_s         <= rd_address_id_s;
          end if;
       end if;
@@ -193,9 +196,10 @@ begin
 
    --pc_next mux
    with pc_next_sel_i select
-      pc_next_if_s <= pc_adder_if_s when "00",
-      alu_result_ex_s               when "11",
-      branch_adder_id_s             when others;
+      pc_next_if_s <=   pc_adder_if_s when "00",
+								branch_adder_ex_s when "01",
+								alu_result_ex_s when "11",
+								branch_adder_id_s when others;
 
    --forwarding muxes
    alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else

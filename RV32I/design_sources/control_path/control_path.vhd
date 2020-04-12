@@ -137,16 +137,16 @@ begin
       if_id_flush_s <= '0';
       id_ex_flush_s <= '0';
       pc_next_sel_o <= "00";
-      if(branch_type_id_s = "10")then
+      if(branch_type_id_s = "10")then -- JAL
          pc_next_sel_o <= "10";
          if_id_flush_s <= '1';
       end if;
-      if (branch_type_ex_s = "01" and (branch_conf_ex_s = '1')) then
+      if (branch_type_ex_s = "01" and (branch_conf_ex_s = '1')) then -- Branch
          pc_next_sel_o <= "01";
          if_id_flush_s <= '1';
          id_ex_flush_s <= '1';
       end if;
-      if(branch_type_ex_s = "11") then
+      if(branch_type_ex_s = "11") then -- JALR
          pc_next_sel_o <= "11";
          if_id_flush_s <= '1';
          id_ex_flush_s <= '1';
