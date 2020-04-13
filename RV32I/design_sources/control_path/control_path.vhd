@@ -61,7 +61,6 @@ architecture behavioral of control_path is
    signal rs1_address_id_s  : std_logic_vector (4 downto 0);
    signal rs2_address_id_s  : std_logic_vector (4 downto 0);
    signal rd_address_id_s   : std_logic_vector (4 downto 0);
-   signal bcc_id_s          : std_logic;
    --*********       EXECUTE       **************
 
    signal branch_type_ex_s  : std_logic_vector(1 downto 0);
@@ -107,7 +106,7 @@ begin
    -- when branch instruction is executing:
    --    '0' -> beq blt bltu
    --    '1' -> bne bge geu  (opposite,complement of adequate comparison)
-   bcc_id_s <= instruction_i(12);
+   bcc_ex_s <= funct3_ex_s(0);
 
    -- extract operation and operand data from instruction
    rs1_address_id_s <= instruction_i(19 downto 15);
@@ -132,7 +131,7 @@ begin
    -- base on which branch is executing: 
    --    control pc_next mux
    --    flush appropriate registers in pipeline
-   pc_next_if_s : process(branch_type_ex_s, branch_condition_i, branch_conf_ex_s)
+   pc_next_if_s : process(branch_type_id_s, branch_type_ex_s, branch_conf_ex_s)
    begin
       if_id_flush_s <= '0';
       id_ex_flush_s <= '0';
@@ -174,7 +173,6 @@ begin
             rd_address_ex_s  <= (others => '0');
             rd_we_ex_s       <= '0';
             data_mem_we_ex_s <= '0';
-				bcc_ex_s 		  <= '0';
          else
             branch_type_ex_s <= branch_type_id_s;
             funct7_ex_s      <= funct7_id_s;
@@ -188,7 +186,6 @@ begin
             rd_address_ex_s  <= rd_address_id_s;
             rd_we_ex_s       <= rd_we_id_s;
             data_mem_we_ex_s <= data_mem_we_id_s;
-				bcc_ex_s 		  <= bcc_id_s;
          end if;
       end if;
    end process;

@@ -97,7 +97,7 @@ BEGin
    --zero_o <= '1' when res_s = std_logic_vector(to_unsigned(0,WIDTH)) else
              --'0';
    -- overflow happens when inputs have same sign, and output has different
-   --of_o <= '1' when ((op_i="00011" and (a_i(WIDTH-1)=b_i(WIDTH-1)) and ((a_i(WIDTH-1) xor res_s(WIDTH-1))='1')) or (op_i="10011" and (a_i(WIDTH-1)=res_s(WIDTH-1)) and ((a_i(WIDTH-1) xor b_i(WIDTH-1))='1'))) else '0';
+   --of_o <= '1' when ((op_i=add_op and (a_i(WIDTH-1)=b_i(WIDTH-1)) and ((a_i(WIDTH-1) xor res_s(WIDTH-1))='1')) or (op_i=sub_op and (a_i(WIDTH-1)=res_s(WIDTH-1)) and ((a_i(WIDTH-1) xor b_i(WIDTH-1))='1'))) else '0';
 
 
 END behavioral;
