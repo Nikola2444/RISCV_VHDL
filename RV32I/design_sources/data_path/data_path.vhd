@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.alu_ops_pkg.all;
 
 
 
@@ -19,7 +20,7 @@ entity data_path is
       -- control signals that are forwarded from data_path
       mem_to_reg_i        : in  std_logic_vector(1 downto 0);
       load_type_i         : in  std_logic_vector(2 downto 0);
-      alu_op_i            : in  std_logic_vector (4 downto 0);
+      alu_op_i            : in  alu_op_t;
       alu_src_a_i         : in  std_logic;
       alu_src_b_i         : in  std_logic;
       pc_next_sel_i       : in  std_logic_vector(1 downto 0);
@@ -198,10 +199,10 @@ begin
 
    --forwarding muxes
    alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else
-                         alu_result_mem_s when alu_forward_a_i = "10" else
+                         alu_result_mem_s when alu_forward_a_i = "11" else
                          rs1_data_ex_s;
    alu_forward_b_ex_s <= rd_data_wb_s when alu_forward_b_i = "01" else
-                         alu_result_mem_s when alu_forward_b_i = "10" else
+                         alu_result_mem_s when alu_forward_b_i = "11" else
                          rs2_data_ex_s;
 
    -- update alu inputs
@@ -213,9 +214,10 @@ begin
              alu_forward_a_ex_s;
 
    -- reg_bank rd_data update
-   rd_data_wb_s <= pc_adder_wb_s when mem_to_reg_i = "01" else
-                   extended_data_wb_s when mem_to_reg_i = "10"else
-                   alu_result_wb_s;
+	with mem_to_reg_i select
+		rd_data_wb_s <= pc_adder_wb_s when "01",
+							extended_data_wb_s when "10",
+							alu_result_wb_s when others;
 
    -- extend data based on type of load instruction
    with load_type_i select

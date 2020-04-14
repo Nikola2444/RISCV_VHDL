@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.alu_ops_pkg.all;
 
 entity TOP_RISCV is
    port(
@@ -23,7 +24,7 @@ architecture structural of TOP_RISCV is
    signal set_a_zero_s       : std_logic;
    signal mem_to_reg_s       : std_logic_vector(1 downto 0);
    signal load_type_s        : std_logic_vector(2 downto 0);
-   signal alu_op_s           : std_logic_vector(4 downto 0);
+   signal alu_op_s           : alu_op_t;
    signal alu_src_b_s        : std_logic;
    signal alu_src_a_s        : std_logic;
    signal rd_we_s            : std_logic;

@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.alu_ops_pkg.all;
 
 
 entity control_path is
@@ -16,7 +17,7 @@ entity control_path is
       set_a_zero_o       : out std_logic;
       mem_to_reg_o       : out std_logic_vector(1 downto 0);
       load_type_o        : out std_logic_vector(2 downto 0);
-      alu_op_o           : out std_logic_vector(4 downto 0);
+      alu_op_o           : out alu_op_t;
       alu_src_b_o        : out std_logic;
       alu_src_a_o        : out std_logic;
       rd_we_o            : out std_logic;
@@ -182,7 +183,8 @@ begin
             alu_src_b_ex_s   <= alu_src_b_id_s;
             mem_to_reg_ex_s  <= mem_to_reg_id_s;
             alu_2bit_op_ex_s <= alu_2bit_op_id_s;
-            rs1_address_ex_s <= rs1_address_id_s; rs2_address_ex_s <= rs2_address_id_s;
+            rs1_address_ex_s <= rs1_address_id_s; 
+				rs2_address_ex_s <= rs2_address_id_s;
             rd_address_ex_s  <= rd_address_id_s;
             rd_we_ex_s       <= rd_we_id_s;
             data_mem_we_ex_s <= data_mem_we_id_s;
@@ -264,8 +266,6 @@ begin
          rd_address_wb_i    => rd_address_wb_s,
          rs1_address_ex_i   => rs1_address_ex_s,
          rs2_address_ex_i   => rs2_address_ex_s,
-         rs1_address_id_i   => rs1_address_id_s,
-         rs2_address_id_i   => rs2_address_id_s,
          alu_forward_a_o    => alu_forward_a_o,
          alu_forward_b_o    => alu_forward_b_o);
 
