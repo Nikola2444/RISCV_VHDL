@@ -30,6 +30,7 @@ entity data_path is
       alu_forward_a_i     : in  fwd_a_t;
       alu_forward_b_i     : in  fwd_b_t;
       branch_condition_o  : out std_logic;
+      branch_op_i         : in std_logic_vector(1 downto 0);
       -- control signals for flushing
       if_id_flush_i       : in  std_logic;
       id_ex_flush_i       : in  std_logic;
@@ -53,18 +54,15 @@ architecture Behavioral of data_path is
    signal rs1_data_id_s           : std_logic_vector (31 downto 0);
    signal rs2_data_id_s           : std_logic_vector (31 downto 0);
    signal immediate_extended_id_s : std_logic_vector (31 downto 0);
-   signal branch_adder_id_s       : std_logic_vector (31 downto 0);
    signal rs1_address_id_s        : std_logic_vector (4 downto 0);
    signal rs2_address_id_s        : std_logic_vector (4 downto 0);
    signal rd_address_id_s         : std_logic_vector (4 downto 0);
    signal if_id_reg_flush_s       : std_logic;
-   signal branch_op_id_s             : std_logic_vector (1 downto 0);
 
    --*********       EXECUTE       **************
    signal pc_adder_ex_s           : std_logic_vector (31 downto 0);
    signal pc_reg_ex_s             : std_logic_vector (31 downto 0);
    signal immediate_extended_ex_s : std_logic_vector (31 downto 0);
-   signal branch_adder_ex_s       : std_logic_vector (31 downto 0);
    signal alu_forward_a_ex_s      : std_logic_vector(31 downto 0);
    signal alu_forward_b_ex_s      : std_logic_vector(31 downto 0);
    signal alu_zero_ex_s           : std_logic;
@@ -74,7 +72,6 @@ architecture Behavioral of data_path is
    signal rs1_data_ex_s           : std_logic_vector (31 downto 0);
    signal rs2_data_ex_s           : std_logic_vector (31 downto 0);
    signal rd_address_ex_s         : std_logic_vector (4 downto 0);
-   signal branch_op_ex_s             : std_logic_vector (1 downto 0);
 
    --*********       MEMORY        **************
    signal pc_adder_mem_s          : std_logic_vector (31 downto 0);
@@ -129,17 +126,13 @@ begin
             rs1_data_ex_s           <= (others => '0');
             rs2_data_ex_s           <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
-				branch_adder_ex_s			<= (others => '0');
             rd_address_ex_s         <= (others => '0');
-				branch_op_ex_s				<= (others => '0');
          else
             pc_adder_ex_s           <= pc_adder_id_s;
             rs1_data_ex_s           <= rs1_data_id_s;
             rs2_data_ex_s           <= rs2_data_id_s;
             immediate_extended_ex_s <= immediate_extended_id_s;
-				branch_adder_ex_s			<= branch_adder_id_s;
             rd_address_ex_s         <= rd_address_id_s;
-				branch_op_ex_s				<= branch_op_id_s;
          end if;
       end if;
    end process;
@@ -184,20 +177,17 @@ begin
 
 
    --***********  Combinational logic  ***************
-	branch_op_id_s <= instr_mem_read_i(14 downto 13);
 
 
    --pc_adder_s update
    pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, 32));
 
-   --branch_adder update
-   branch_adder_id_s <= std_logic_vector(signed(immediate_extended_id_s) + signed(pc_reg_id_s));
 
 
    --branch condition 
-   branch_condition_o <='1' when ((signed(alu_forward_a_ex_s) = signed(alu_forward_b_ex_s)) and branch_op_ex_s = "00") else
-                        '1' when ((signed(alu_forward_a_ex_s) < signed(alu_forward_b_ex_s)) and branch_op_ex_s = "10") else
-                        '1' when ((signed(alu_forward_a_ex_s) > signed(alu_forward_b_ex_s)) and branch_op_ex_s = "11") else
+   branch_condition_o <='1' when ((signed(alu_forward_a_ex_s) = signed(alu_forward_b_ex_s)) and branch_op_i = "00") else
+                        '1' when ((signed(alu_forward_a_ex_s) < signed(alu_forward_b_ex_s)) and branch_op_i = "10") else
+                        '1' when ((signed(alu_forward_a_ex_s) > signed(alu_forward_b_ex_s)) and branch_op_i = "11") else
                         '0';
    --pc_next mux
    with pc_next_sel_i select

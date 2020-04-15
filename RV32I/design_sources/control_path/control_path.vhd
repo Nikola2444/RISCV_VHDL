@@ -23,6 +23,7 @@ entity control_path is
       rd_we_o            : out std_logic;
       pc_next_sel_o      : out std_logic;
       data_mem_we_o      : out std_logic_vector(3 downto 0);
+      branch_op_o        : out std_logic_vector(1 downto 0);
       -- control singals for forwarding
       alu_forward_a_o    : out fwd_a_t;
       alu_forward_b_o    : out fwd_b_t;
@@ -108,6 +109,8 @@ begin
    --    '0' -> beq blt bltu
    --    '1' -> bne bge geu  (opposite,complement of adequate comparison)
    bcc_ex_s <= funct3_ex_s(0);
+
+	branch_op_o <= funct3_ex_s(2 downto 1);
 
    -- extract operation and operand data from instruction
    rs1_address_id_s <= instruction_i(19 downto 15);
