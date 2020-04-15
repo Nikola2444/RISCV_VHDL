@@ -24,8 +24,8 @@ entity control_path is
       pc_next_sel_o      : out std_logic;
       data_mem_we_o      : out std_logic_vector(3 downto 0);
       -- control singals for forwarding
-      alu_forward_a_o    : out std_logic_vector (1 downto 0);
-      alu_forward_b_o    : out std_logic_vector (1 downto 0);
+      alu_forward_a_o    : out fwd_a_t;
+      alu_forward_b_o    : out fwd_b_t;
       -- control singals for flushing
       if_id_flush_o      : out std_logic;
       id_ex_flush_o      : out std_logic;

@@ -27,8 +27,8 @@ entity data_path is
       rd_we_i             : in  std_logic;
       set_a_zero_i        : in  std_logic;
       -- control signals for forwarding
-      alu_forward_a_i     : in  std_logic_vector (1 downto 0);
-      alu_forward_b_i     : in  std_logic_vector (1 downto 0);
+      alu_forward_a_i     : in  fwd_a_t;
+      alu_forward_b_i     : in  fwd_b_t;
       branch_condition_o  : out std_logic;
       -- control signals for flushing
       if_id_flush_i       : in  std_logic;
@@ -205,11 +205,11 @@ begin
 								alu_result_ex_s when others;
 
    --forwarding muxes
-   alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else
-                         alu_result_mem_s when alu_forward_a_i = "11" else
+   alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = fwd_a_from_wb else
+                         alu_result_mem_s when alu_forward_a_i = fwd_a_from_mem else
                          rs1_data_ex_s;
-   alu_forward_b_ex_s <= rd_data_wb_s when alu_forward_b_i = "01" else
-                         alu_result_mem_s when alu_forward_b_i = "11" else
+   alu_forward_b_ex_s <= rd_data_wb_s when alu_forward_b_i = fwd_b_from_wb else
+                         alu_result_mem_s when alu_forward_b_i = fwd_b_from_mem else
                          rs2_data_ex_s;
 
    -- update alu inputs

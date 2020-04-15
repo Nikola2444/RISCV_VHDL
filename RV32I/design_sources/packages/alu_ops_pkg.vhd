@@ -3,7 +3,9 @@ use ieee.std_logic_1164.all;
 
 package alu_ops_pkg is
 
-	type alu_op_t is (and_op,or_op,xor_op,add_op,sub_op,eq_op,lts_op,ltu_op,sll_op,srl_op,sra_op);
+	type alu_op_t is (and_op,or_op,xor_op,add_op,sub_op,lts_op,ltu_op,sll_op,srl_op,sra_op);
+	type fwd_a_t is (dont_fwd_a, fwd_a_from_mem, fwd_a_from_wb );
+	type fwd_b_t is (dont_fwd_b, fwd_b_from_mem, fwd_b_from_wb );
    -- ALU OP CODE
    --constant and_op: std_logic_vector (4 downto 0):="00000"; ---> bitwise and
    --constant or_op: std_logic_vector (4 downto 0):="00001"; ---> bitwise or
