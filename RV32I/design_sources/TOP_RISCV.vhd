@@ -28,7 +28,7 @@ architecture structural of TOP_RISCV is
    signal alu_src_b_s        : std_logic;
    signal alu_src_a_s        : std_logic;
    signal rd_we_s            : std_logic;
-   signal pc_next_sel_s      : std_logic_vector(1 downto 0);
+   signal pc_next_sel_s      : std_logic;
 
    signal if_id_flush_s      : std_logic;
    signal id_ex_flush_s      : std_logic;

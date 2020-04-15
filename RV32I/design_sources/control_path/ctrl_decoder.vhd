@@ -58,10 +58,16 @@ begin
             rd_we_o       <= '1';
             rs1_in_use_o  <= '1';
          when "1100011" =>              --B type
-            alu_2bit_op_o <= "01";
+            alu_2bit_op_o <= "00";
+            alu_src_a_o   <= '1';
+            alu_src_b_o   <= '1';
             branch_type_o <= "01";
+            rs1_in_use_o  <= '1';
+            rs2_in_use_o  <= '1';
          when "1101111" =>              -- JAL
             rd_we_o       <= '1';
+            alu_src_a_o   <= '1';
+            alu_src_b_o   <= '1';
             mem_to_reg_o  <= "01";
             branch_type_o <= "10";
          when "1100111" =>              -- JALR

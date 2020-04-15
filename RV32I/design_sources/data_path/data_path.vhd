@@ -23,7 +23,7 @@ entity data_path is
       alu_op_i            : in  alu_op_t;
       alu_src_a_i         : in  std_logic;
       alu_src_b_i         : in  std_logic;
-      pc_next_sel_i       : in  std_logic_vector(1 downto 0);
+      pc_next_sel_i       : in  std_logic;
       rd_we_i             : in  std_logic;
       set_a_zero_i        : in  std_logic;
       -- control signals for forwarding
@@ -201,10 +201,8 @@ begin
                         '0';
    --pc_next mux
    with pc_next_sel_i select
-      pc_next_if_s <=   pc_adder_if_s when "00",
-								branch_adder_ex_s when "01",
-								alu_result_ex_s when "11",
-								branch_adder_id_s when others;
+      pc_next_if_s <=   pc_adder_if_s when '0',
+								alu_result_ex_s when others;
 
    --forwarding muxes
    alu_forward_a_ex_s <= rd_data_wb_s when alu_forward_a_i = "01" else

@@ -14,10 +14,12 @@ entity alu_decoder is
 end entity;
 
 architecture behavioral of alu_decoder is
+	signal funct7_5_s : std_logic;
 begin
 
+ 	funct7_5_s <= funct7_i(5);
    --finds appropriate alu operation from control_decoder output and funct fields
-   alu_dec : process(alu_2bit_op_i, funct3_i, funct7_i)is
+   alu_dec : process(alu_2bit_op_i, funct3_i, funct7_5_s)is
    begin
       --default
       alu_op_o <= add_op;

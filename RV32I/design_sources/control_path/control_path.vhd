@@ -21,7 +21,7 @@ entity control_path is
       alu_src_b_o        : out std_logic;
       alu_src_a_o        : out std_logic;
       rd_we_o            : out std_logic;
-      pc_next_sel_o      : out std_logic_vector(1 downto 0);
+      pc_next_sel_o      : out std_logic;
       data_mem_we_o      : out std_logic_vector(3 downto 0);
       -- control singals for forwarding
       alu_forward_a_o    : out std_logic_vector (1 downto 0);
@@ -132,24 +132,16 @@ begin
    -- base on which branch is executing: 
    --    control pc_next mux
    --    flush appropriate registers in pipeline
-   pc_next_if_s : process(branch_type_id_s, branch_type_ex_s, branch_conf_ex_s)
+   pc_next_if_s : process(branch_type_ex_s, branch_conf_ex_s)
    begin
-      if_id_flush_s <= '0';
-      id_ex_flush_s <= '0';
-      pc_next_sel_o <= "00";
-      if(branch_type_id_s = "10")then -- JAL
-         pc_next_sel_o <= "10";
+      if((branch_type_ex_s = "10") or (branch_type_ex_s = "01" and branch_conf_ex_s = '1') or (branch_type_ex_s = "11")) then
+         pc_next_sel_o <= '1';
          if_id_flush_s <= '1';
-      end if;
-      if (branch_type_ex_s = "01" and (branch_conf_ex_s = '1')) then -- Branch
-         pc_next_sel_o <= "01";
-         if_id_flush_s <= '1';
-         id_ex_flush_s <= '1';
-      end if;
-      if(branch_type_ex_s = "11") then -- JALR
-         pc_next_sel_o <= "11";
-         if_id_flush_s <= '1';
-         id_ex_flush_s <= '1';
+			id_ex_flush_s <= '1';
+		else
+			if_id_flush_s <= '0';
+			id_ex_flush_s <= '0';
+			pc_next_sel_o <= '0';
       end if;
    end process;
 
