@@ -58,6 +58,7 @@ architecture Behavioral of data_path is
    signal rs2_address_id_s        : std_logic_vector (4 downto 0);
    signal rd_address_id_s         : std_logic_vector (4 downto 0);
    signal if_id_reg_flush_s       : std_logic;
+   signal branch_op_id_s             : std_logic_vector (1 downto 0);
 
    --*********       EXECUTE       **************
    signal pc_adder_ex_s           : std_logic_vector (31 downto 0);
@@ -73,6 +74,7 @@ architecture Behavioral of data_path is
    signal rs1_data_ex_s           : std_logic_vector (31 downto 0);
    signal rs2_data_ex_s           : std_logic_vector (31 downto 0);
    signal rd_address_ex_s         : std_logic_vector (4 downto 0);
+   signal branch_op_ex_s             : std_logic_vector (1 downto 0);
 
    --*********       MEMORY        **************
    signal pc_adder_mem_s          : std_logic_vector (31 downto 0);
@@ -129,6 +131,7 @@ begin
             immediate_extended_ex_s <= (others => '0');
 				branch_adder_ex_s			<= (others => '0');
             rd_address_ex_s         <= (others => '0');
+				branch_op_ex_s				<= (others => '0');
          else
             pc_adder_ex_s           <= pc_adder_id_s;
             rs1_data_ex_s           <= rs1_data_id_s;
@@ -136,6 +139,7 @@ begin
             immediate_extended_ex_s <= immediate_extended_id_s;
 				branch_adder_ex_s			<= branch_adder_id_s;
             rd_address_ex_s         <= rd_address_id_s;
+				branch_op_ex_s				<= branch_op_id_s;
          end if;
       end if;
    end process;
@@ -180,6 +184,9 @@ begin
 
 
    --***********  Combinational logic  ***************
+	branch_op_id_s <= instr_mem_read_i(14 downto 13);
+
+
    --pc_adder_s update
    pc_adder_if_s <= std_logic_vector(unsigned(pc_reg_if_s) + to_unsigned(4, 32));
 
@@ -188,8 +195,10 @@ begin
 
 
    --branch condition 
-   branch_condition_o <= alu_result_ex_s(0);
-
+   branch_condition_o <='1' when ((signed(alu_forward_a_ex_s) = signed(alu_forward_b_ex_s)) and branch_op_ex_s = "00") else
+                        '1' when ((signed(alu_forward_a_ex_s) < signed(alu_forward_b_ex_s)) and branch_op_ex_s = "10") else
+                        '1' when ((signed(alu_forward_a_ex_s) > signed(alu_forward_b_ex_s)) and branch_op_ex_s = "11") else
+                        '0';
    --pc_next mux
    with pc_next_sel_i select
       pc_next_if_s <=   pc_adder_if_s when "00",

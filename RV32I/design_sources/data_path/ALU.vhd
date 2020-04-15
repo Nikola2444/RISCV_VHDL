@@ -40,8 +40,8 @@ BEGIN
    -- xor gate
    xor_res <= a_i xor b_i;
    -- equal
-   eq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) = signed(b_i)) else
-             std_logic_vector(to_unsigned(0,WIDTH));
+   --eq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) = signed(b_i)) else
+             --std_logic_vector(to_unsigned(0,WIDTH));
    -- less then signed
    lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) < signed(b_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
@@ -75,7 +75,7 @@ BEGIN
       xor_res when xor_op, --xor
       add_res when add_op, --add (changed opcode)
       sub_res when sub_op, --sub
-      eq_res when eq_op, -- set equal
+      --eq_res when eq_op, -- set equal
       lts_res when lts_op, -- set less than signed
       ltu_res when ltu_op, -- set less than unsigned
       sll_res when sll_op, -- shift left logic
