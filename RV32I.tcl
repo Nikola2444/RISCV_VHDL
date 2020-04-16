@@ -27,7 +27,7 @@ add_files -norecurse ./RV32I/design_sources/data_path/immediate.vhd
 add_files -norecurse ./RV32I/design_sources/data_path/register_bank.vhd
 add_files -norecurse ./RV32I/design_sources/data_path/data_path.vhd
 
-add_files -norecurse ./RV32I/design_sources/packages/alu_ops_pkg.vhd 
+add_files -norecurse ./RV32I/design_sources/packages/util_pkg.vhd 
 
 add_files -norecurse ./RV32I/design_sources/control_path/hazard_unit.vhd 
 add_files -norecurse ./RV32I/design_sources/control_path/forwarding_unit.vhd 

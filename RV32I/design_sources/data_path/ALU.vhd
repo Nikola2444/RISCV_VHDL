@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 use ieee.math_real.all;
-use work.alu_ops_pkg.all;
+use work.util_pkg.all;
 
 
 ENTITY ALU IS
