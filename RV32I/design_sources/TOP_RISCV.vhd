@@ -7,6 +7,7 @@ entity TOP_RISCV is
    port(
       -- Synchronization ports
       clk                 : in  std_logic;
+      ce                  : in  std_logic;
       reset               : in  std_logic;
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
@@ -48,6 +49,7 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
+         ce                  => ce,
          reset               => reset,
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
@@ -87,6 +89,7 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
+         ce                  => ce,
          reset               => reset,
          -- instruction is read from memory
          instruction_i       => instr_mem_read_i,

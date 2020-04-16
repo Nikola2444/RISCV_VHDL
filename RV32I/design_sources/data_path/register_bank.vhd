@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 entity register_bank is
    generic (WIDTH : positive := 32);
    port (clk           : in  std_logic;
+			ce            : in  std_logic;
          reset         : in  std_logic;
          rs1_address_i : in  std_logic_vector(4 downto 0);
          rs2_address_i : in  std_logic_vector(4 downto 0);
@@ -26,7 +27,7 @@ begin
    -- synchronous write, reset
    reg_bank_write : process (clk) is
    begin
-      if (falling_edge(clk))then
+      if (falling_edge(clk) and ce='1')then
          if (reset = '0')then
             reg_bank_s <= (others => (others => '0'));
          elsif (rd_we_i = '1') then

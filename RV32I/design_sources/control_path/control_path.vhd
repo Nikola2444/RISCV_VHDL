@@ -8,6 +8,7 @@ entity control_path is
    port (
       -- global synchronization signals
       clk                : in  std_logic;
+      ce                 : in  std_logic;
       reset              : in  std_logic;
       -- instruction is read from memory
       instruction_i      : in  std_logic_vector (31 downto 0);
@@ -154,7 +155,7 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
             branch_type_ex_s <= (others => '0');
             funct3_ex_s      <= (others => '0');
@@ -190,7 +191,7 @@ begin
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             funct3_mem_s      <= (others => '0');
             data_mem_we_mem_s <= '0';
@@ -210,7 +211,7 @@ begin
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             funct3_wb_s     <= (others => '0');
             rd_we_wb_s      <= '0';

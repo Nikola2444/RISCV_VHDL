@@ -9,6 +9,7 @@ entity data_path is
    port(
       -- global synchronization ports
       clk                 : in  std_logic;
+      ce                  : in  std_logic;
       reset               : in  std_logic;
       -- instruction memory interface
       instr_mem_address_o : out std_logic_vector (31 downto 0);
@@ -92,7 +93,7 @@ begin
    --Program Counter
    pc_proc : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
          elsif (pc_en_i = '1') then
@@ -104,7 +105,7 @@ begin
    --IF/ID register
    if_id : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if(if_id_en_i = '1')then
             if (reset = '0' or if_id_flush_i = '1')then
                pc_reg_id_s   <= (others => '0');
@@ -120,7 +121,7 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0' or id_ex_flush_i = '1')then
             pc_adder_ex_s           <= (others => '0');
             rs1_data_ex_s           <= (others => '0');
@@ -140,7 +141,7 @@ begin
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             alu_result_mem_s <= (others => '0');
             rs2_data_mem_s   <= (others => '0');
@@ -160,7 +161,7 @@ begin
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             alu_result_wb_s <= (others => '0');
             pc_adder_wb_s   <= (others => '0');
