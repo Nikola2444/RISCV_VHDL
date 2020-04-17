@@ -25,7 +25,7 @@ generic (
     COL_WIDTH : integer := 8;                       -- Specify column width (byte width, typically 8 or 9)
     RAM_DEPTH : integer := 1024;                    -- Specify RAM depth (number of entries)
     RAM_PERFORMANCE : string := "LOW_LATENCY";      -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-    INIT_FILE : string := "assembly_code.txt"            -- Specify name/location of RAM initialization file if using one (leave blank if not)
+    INIT_FILE : string := ""            -- Specify name/location of RAM initialization file if using one (leave blank if not)
     );
 
 port (
@@ -75,6 +75,7 @@ variable i : integer := 0;
 variable ram_array	: ram_type;
 variable bitvec : bit_vector(C_NB_COL*C_COL_WIDTH-1 downto 0);
 begin
+	 ram_array := (others => (others => '0'));
     while not endfile(ramfile) loop
         readline (ramfile, ramfileline);
         read (ramfileline, bitvec);
@@ -102,7 +103,12 @@ process(clk)
 begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
-            ram_data_a <= ram_array(to_integer(unsigned(addra)));
+			  -- Lines marked with + are added by user to Xilinx template
+			  	if(rsta_s = '0')then -- +
+					ram_data_a <= ram_array(to_integer(unsigned(addra)));
+				else -- +
+					ram_data_a <= (others => '0'); -- +
+				end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(wea(i) = '1') then
                     ram_array(to_integer(unsigned(addra)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dina((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
@@ -116,7 +122,12 @@ process(clk)
 begin
     if(clk'event and clk = '1') then
         if(enb = '1') then
-            ram_data_b <= ram_array(to_integer(unsigned(addrb)));
+			  -- Lines marked with + are added by user to Xilinx template
+			  	if(rstb_s = '0')then -- +
+					ram_data_b <= ram_array(to_integer(unsigned(addrb)));
+				else -- +
+					ram_data_b <= (others => '0'); -- +
+				end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(web(i) = '1') then
                     ram_array(to_integer(unsigned(addrb)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dinb((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
