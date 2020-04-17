@@ -104,7 +104,7 @@ begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
-			  	if(rsta_s = '0')then -- +
+			  	if(rsta = '0')then -- +
 					ram_data_a <= ram_array(to_integer(unsigned(addra)));
 				else -- +
 					ram_data_a <= (others => '0'); -- +
@@ -123,7 +123,7 @@ begin
     if(clk'event and clk = '1') then
         if(enb = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
-			  	if(rstb_s = '0')then -- +
+			  	if(rstb = '0')then -- +
 					ram_data_b <= ram_array(to_integer(unsigned(addrb)));
 				else -- +
 					ram_data_b <= (others => '0'); -- +

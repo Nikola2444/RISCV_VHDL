@@ -69,11 +69,20 @@ begin
          data_mem_read_i    => douta_data_s,
          data_mem_write_o   => dina_data_s);
 
-
--- Instantiation of instruction memory
+-- INSTRUCTION CACHE
+--Port A singals
 clk_instr_s <= clk;
 addra_instr_s <= addra_instr_32_s((clogb2(RAM_DEPTH)+1) downto 2);
-
+wea_instr_s <= "0000";
+regcea_instr_s <= '0';
+--Port B singals
+addrb_instr_s <= (others=>'0');
+dinb_instr_s <= (others=>'0');
+web_instr_s <= (others=>'0');
+enb_instr_s <= '0';
+rstb_instr_s <= '0';
+regceb_instr_s <= '0';
+-- Instantiation of instruction memory
 instruction_cache : entity work.BRAM_tdp_rf_bw(rtl)
 generic map (
 		NB_COL => NB_COL,
@@ -100,8 +109,20 @@ port map  (
 		doutb  => doutb_instr_s
 );
 
+--DATA CACHE
+--Port A signals
 clk_data_s <= clk;
 addra_data_s <= addra_data_32_s((clogb2(RAM_DEPTH)+1) downto 2);
+rsta_data_s <= '0';
+ena_data_s <= '1';
+regcea_data_s <= '0';
+--Port B singals
+addrb_data_s <= (others=>'0');
+dinb_data_s <= (others=>'0');
+web_data_s <= (others=>'0');
+enb_data_s <= '0';
+rstb_data_s <= '0';
+regceb_data_s <= '0';
 -- Instantiation of data memory
 data_cache : entity work.BRAM_tdp_rf_bw(rtl)
 generic map (
