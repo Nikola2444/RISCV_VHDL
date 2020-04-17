@@ -240,6 +240,7 @@ begin
          WIDTH => 32)
       port map (
          clk           => clk,
+         ce            => ce,
          reset         => reset,
          rd_we_i       => rd_we_i,
          rs1_address_i => rs1_address_id_s,
