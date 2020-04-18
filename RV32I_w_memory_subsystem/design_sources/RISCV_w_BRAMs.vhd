@@ -7,7 +7,18 @@ use work.ram_pkg.all;
 entity RISCV_w_BRAMs is
 	port (clk : in std_logic;
 			ce : in std_logic;
-			reset : in std_logic);
+			reset : in std_logic;
+			-- PORT B of instruction memory
+			doutb_instr: out std_logic_vector(31 downto 0);
+			dinb_instr: in std_logic_vector(31 downto 0);
+			addrb_instr: in std_logic_vector(9 downto 0);
+         web_instr: in std_logic_vector(3 downto 0); 	  -- Port B Write enable
+			-- PORT B of data memory
+			doutb_data: out std_logic_vector(31 downto 0);
+			dinb_data: in std_logic_vector(31 downto 0);
+			addrb_data: in std_logic_vector(9 downto 0);
+         web_data: in std_logic_vector(3 downto 0) 	  -- Port B Write enable
+			);
 end entity;
 
 architecture Behavioral of RISCV_w_BRAMs is
@@ -20,7 +31,7 @@ architecture Behavioral of RISCV_w_BRAMs is
         signal addra_instr_32_s : std_logic_vector(31 downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
         signal addrb_instr_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port B Address bus, width determined from RAM_DEPTH
         signal dina_instr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
-        signal dinb_instr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port B RAM input data
+        signal dinb_instr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
         signal wea_instr_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
         signal web_instr_s : std_logic_vector(NB_COL-1 downto 0); 	  -- Port B Write enable
         signal clk_instr_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
@@ -39,8 +50,8 @@ architecture Behavioral of RISCV_w_BRAMs is
         signal addrb_data_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port B Address bus, width determined from RAM_DEPTH
         signal dina_data_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
         signal dinb_data_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port B RAM input data
-        signal wea_data_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
         signal clk_data_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
+        signal wea_data_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
         signal web_data_s : std_logic_vector(NB_COL-1 downto 0); 	  -- Port B Write enable
         signal ena_data_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
         signal enb_data_s : std_logic;                       			  -- Port B RAM Enable, for additional power savings, disable port when not in use
@@ -76,10 +87,11 @@ addra_instr_s <= addra_instr_32_s((clogb2(RAM_DEPTH)+1) downto 2);
 wea_instr_s <= "0000";
 regcea_instr_s <= '0';
 --Port B singals
-addrb_instr_s <= (others=>'0');
-dinb_instr_s <= (others=>'0');
-web_instr_s <= (others=>'0');
-enb_instr_s <= '0';
+addrb_instr_s <= addrb_instr; --<= (others=>'0');
+dinb_instr_s <= dinb_instr; -- <= (others=>'0');
+doutb_instr <= doutb_instr_s;
+web_instr_s <= web_instr; -- <= (others=>'0');
+enb_instr_s <= '1';
 rstb_instr_s <= '0';
 regceb_instr_s <= '0';
 -- Instantiation of instruction memory
@@ -117,10 +129,11 @@ rsta_data_s <= '0';
 ena_data_s <= '1';
 regcea_data_s <= '0';
 --Port B singals
-addrb_data_s <= (others=>'0');
-dinb_data_s <= (others=>'0');
-web_data_s <= (others=>'0');
-enb_data_s <= '0';
+addrb_data_s <= addrb_data; --<= (others=>'0');
+dinb_data_s <= dinb_data; -- <= (others=>'0');
+doutb_data <= doutb_data_s; 
+web_data_s <= web_data; -- <= (others=>'0');
+enb_data_s <= '1';
 rstb_data_s <= '0';
 regceb_data_s <= '0';
 -- Instantiation of data memory

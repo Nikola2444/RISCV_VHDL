@@ -7,11 +7,6 @@
 --  it is suggested to use a no change RAM as it is more power efficient.
 --  If a reset or enable is not necessary, it may be tied off or removed from the code.
 --  Modify the parameters for the desired RAM characteristics.
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-
 library ieee;
 library work;
 use ieee.std_logic_1164.all;
