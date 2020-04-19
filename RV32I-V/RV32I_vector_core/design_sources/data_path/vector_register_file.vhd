@@ -3,9 +3,9 @@ use ieee.std_logic_1164.all;
 use work.clogb2_pkg.all;
 
 entity vector_register_file is
-   generic (DATA_WIDTH   : natural := 32;
-            MAX_VECTOR_LENGTH   : natural := 64;
-            NUM_OF_LANES : natural := 1
+   generic (DATA_WIDTH        : natural := 32;
+            MAX_VECTOR_LENGTH : natural := 64;
+            NUM_OF_LANES      : natural := 1
             );
    port (clk   : in std_logic;
          reset : in std_logic;
@@ -30,8 +30,8 @@ end entity;
 
 architecture structural of vector_register_file is
    component VRF_BRAM_addr_generator is
-      generic(MAX_VECTOR_LENGTH   : natural := 2048;
-              NUM_OF_LANES : natural := 1);
+      generic(MAX_VECTOR_LENGTH : natural := 2048;
+              NUM_OF_LANES      : natural := 1);
       port (
          clk                  : in std_logic;
          reset                : in std_logic;
@@ -78,8 +78,8 @@ architecture structural of vector_register_file is
 begin
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator
-      generic map (MAX_VECTOR_LENGTH   => MAX_VECTOR_LENGTH,
-                   NUM_OF_LANES => NUM_OF_LANES)
+      generic map (MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH,
+                   NUM_OF_LANES      => NUM_OF_LANES)
       port map (
          clk                  => clk,
          reset                => reset,
@@ -132,5 +132,6 @@ begin
          rst_read_i      => '0',
          output_reg_en_i => '0',
          read_data_o     => vs2_data_o);
+
 
 end structural;

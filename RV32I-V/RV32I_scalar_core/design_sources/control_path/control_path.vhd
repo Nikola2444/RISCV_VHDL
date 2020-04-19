@@ -126,7 +126,7 @@ begin
                        "0000";
 
    -- this process covers conditional and unconditional branches
-   -- base on which branch is executing: 
+   -- based on which branch is executing: 
    --    control pc_next mux
    --    flush appropriate registers in pipeline
    pc_next_if_s : process(branch_type_id_s, branch_type_ex_s, branch_condition_i, bcc_id_s)

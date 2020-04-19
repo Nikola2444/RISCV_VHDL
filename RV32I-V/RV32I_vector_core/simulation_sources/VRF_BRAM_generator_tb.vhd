@@ -28,6 +28,7 @@ architecture behavioral of VRF_BRAM_addr_generator_tb is
    signal BRAM2_we_o           : std_logic;
    signal BRAM2_re_o           : std_logic;
    signal ready_o              : std_logic;
+   signal access_type_next: std_logic_vector (1 downto 0);
 begin
    VRF_BRAM_addr_generator_1: entity work.VRF_BRAM_addr_generator
       generic map (
@@ -59,7 +60,8 @@ begin
 
    reset_gen:process
    begin
-      reset <= '1', '0' after 20 ns;
+      reset <= '0', '1' after 20 ns;      
       wait;
    end process;
+   vrf_type_of_access_i <= "01" after 660 ns;
 end architecture;

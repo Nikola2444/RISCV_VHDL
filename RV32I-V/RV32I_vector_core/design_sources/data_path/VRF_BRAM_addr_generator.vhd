@@ -46,6 +46,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
 
    --  This table contains starting addresses of every vector register inside BRAM
    type lookup_table_of_vr_indexes is array (0 to 31) of std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
+   type addr_gen_states is (idle, addr_gen_read_and_write, addr_gen_only_read, addr_gen_only_write);
    --***************************************************************************
 
    -- ******************FUNCTION DEFINITIONS NEEDED FOR THIS MODULE*************
@@ -69,11 +70,10 @@ architecture behavioral of VRF_BRAM_addr_generator is
    --***************************************************************************
 
    --********************SIGNALS NEEDED FOR SEQUENTIAL LOGIC********************
+   signal state_reg, state_next     : addr_gen_states;
    -- Conter_reg counts from 0 to num_of_elements inside a single vector
    -- register, and is needed for BRAM address generation
-   signal counter_reg, counter_next                   : std_logic_vector(clogb2(vector_reg_num_of_elements_c) - 1 downto 0);
-   signal BRAM12_w_address_reg, BRAM12_w_address_next : std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
-   signal BRAM12_we_next, BRAM12_we_reg               : std_logic;
+   signal counter_reg, counter_next : std_logic_vector(clogb2(vector_reg_num_of_elements_c) - 1 downto 0);
    --***************************************************************************
 
    --********************SIGNALS NEEDED FOR COMBINATIONAL LOGIC*****************
@@ -82,7 +82,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
 
 
    --// **************************ARCHITECTURE BEGIN**************************************
-   
+
 begin
    type_of_access_s <= read_and_write when vrf_type_of_access_i = "00" else
                        only_write when vrf_type_of_access_i = "01" else
@@ -93,60 +93,97 @@ begin
    process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '1') then
-            counter_reg          <= (others => '0');
-            BRAM12_w_address_reg <= (others => '0');
-            BRAM12_we_reg        <= '0';
+         if (reset = '0') then
+            counter_reg <= (others => '0');
+            state_reg   <= idle;
          else
-            counter_reg          <= counter_next;
-            BRAM12_w_address_reg <= BRAM12_w_address_next;
-            BRAM12_we_reg        <= BRAM12_we_next;
+            counter_reg <= counter_next;
+            state_reg   <= state_next;
          end if;
       end if;
    end process;
 
    --********************************COMBINATION LOGIC*************************************      
-   read_counter : process (counter_reg, vector_length_i, type_of_access_s)
+   counter_increment : process (state_reg, counter_reg, vector_length_i, type_of_access_s)
    begin
-      counter_next <= std_logic_vector(unsigned(counter_reg) + one_c);
-      if (counter_reg = vector_length_i or type_of_access_s = no_access) then
-         counter_next <= (others => '0');
-      end if;
+      case state_reg is
+         when idle =>
+            counter_next <= (others => '0');            
+         when addr_gen_read_and_write =>
+            counter_next <= std_logic_vector(unsigned(counter_reg) + one_c);            
+         when others =>
+            counter_next <= std_logic_vector(unsigned(counter_reg) + one_c);            
+      end case;
    end process;
 
-   BRAM12_w_address_next <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_reg));
-   -- BRAM12_w_address_next  <= "00000"&std_logic_vector(unsigned(counter_reg) + unsigned(vd_address_i));
-   BRAM12_we_next        <= '1' when (type_of_access_s = read_and_write or type_of_access_s = only_write) else
-                     '0';
+
+   -- TODO: maybe set ready clk earlier
+   read_write_en_gen_fsm : process (state_reg, type_of_access_s, counter_reg, vector_length_i)
+   begin
+      BRAM1_re_o <= '1';
+      BRAM2_re_o <= '1';
+      BRAM1_we_o <= '1';
+      BRAM2_we_o <= '1';
+      ready_o    <= '0';
+      state_next <= idle;
+      case state_reg is
+         when idle =>            
+            if (type_of_access_s = read_and_write)then
+               BRAM1_we_o <= '0';
+               BRAM2_we_o <= '0';
+               state_next <= addr_gen_read_and_write;
+            elsif (type_of_access_s = only_write)then
+               state_next <= addr_gen_only_write;
+            elsif (type_of_access_s = only_read)then
+               state_next <= addr_gen_only_read;
+            else
+               BRAM1_we_o <= '0';
+               BRAM2_we_o <= '0';
+               ready_o <= '1';
+               state_next <= idle;
+            end if;
+         when addr_gen_read_and_write =>
+            state_next <= addr_gen_read_and_write;
+            if (counter_reg = vector_length_i)then
+               BRAM1_re_o <= '0';
+               BRAM2_re_o <= '0';
+               ready_o <= '1';
+               state_next <= idle;
+            end if;
+         when addr_gen_only_write =>
+            state_next <= addr_gen_only_write;
+            BRAM1_re_o <= '0';
+            BRAM2_re_o <= '0';
+            if (counter_reg = std_logic_vector(unsigned(vector_length_i) - to_unsigned(1, clogb2(vector_reg_num_of_elements_c)))) then
+               ready_o <= '1';
+               state_next <= idle;
+            end if;
+         when addr_gen_only_read =>
+            state_next <= addr_gen_only_read;
+            BRAM1_we_o <= '0';
+            BRAM2_we_o <= '0';
+            if (counter_reg = std_logic_vector(unsigned(vector_length_i) - to_unsigned(1, clogb2(vector_reg_num_of_elements_c)))) then
+               state_next <= idle;
+            end if;
+      end case;
+   end process;
 
    --**************************************OUTPUTS******************************************
    --BRAM read and write enable outputs
-   BRAM1_re_o <= '1' when type_of_access_s = read_and_write or type_of_access_s = only_read else
-                 '0';
-   BRAM2_re_o <= '1' when type_of_access_s = read_and_write or type_of_access_s = only_read else
-                 '0';
-   BRAM1_we_o <= BRAM12_we_next when type_of_access_s = only_write else
-                 BRAM12_we_reg when type_of_access_s = read_and_write else
-                 '0';
-   BRAM2_we_o <= BRAM12_we_next when type_of_access_s = only_write else
-                 BRAM12_we_reg when type_of_access_s = read_and_write else
-                 '0';
-
    --BRAM address outputs
-   BRAM1_r_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vs1_address_i)))) + unsigned(counter_reg));
-   BRAM2_r_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vs2_address_i)))) + unsigned(counter_reg));
+
+
+   BRAM1_r_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vs1_address_i)))) + unsigned(counter_next));
+   BRAM2_r_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vs2_address_i)))) + unsigned(counter_next));
 
 
 
+   BRAM1_w_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_reg))
+                        when type_of_access_s = read_and_write else
+                        std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_next));
+   BRAM2_w_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_reg))
+                        when type_of_access_s = read_and_write else
+                        std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_next));
 
-   BRAM1_w_address_o <= BRAM12_w_address_next when type_of_access_s = only_write else
-                        BRAM12_w_address_reg when type_of_access_s = read_and_write else
-                        (others => '0');
-   BRAM2_w_address_o <= BRAM12_w_address_next when type_of_access_s = only_write else
-                        BRAM12_w_address_reg when type_of_access_s = read_and_write else
-                        (others => '0');
-
-   --control signals ouptus
-   ready_o <= '1' when counter_reg = std_logic_vector(to_unsigned(0, clogb2(vector_reg_num_of_elements_c))) else
-              '0';
+--control signals ouptus   
 end behavioral;
