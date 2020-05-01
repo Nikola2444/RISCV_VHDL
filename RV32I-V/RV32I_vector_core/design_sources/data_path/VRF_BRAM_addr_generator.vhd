@@ -11,8 +11,8 @@ use work.clogb2_pkg.all;
 use ieee.numeric_std.all;
 
 entity VRF_BRAM_addr_generator is
-   generic(MAX_VECTOR_LENGTH : natural := 64;
-           NUM_OF_LANES      : natural := 1);
+   generic(MAX_VECTOR_LENGTH : natural := 64
+           );
    port (
       clk   : in std_logic;
       reset : in std_logic;
@@ -64,7 +64,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
    --**************************CONSTANTS****************************************
    -- Each lane has 32 vector register, and this constant describes the amount of
    -- elements per vector register.
-   constant vector_reg_num_of_elements_c : integer := MAX_VECTOR_LENGTH/NUM_OF_LANES;
+   constant vector_reg_num_of_elements_c : integer := MAX_VECTOR_LENGTH;
 
    constant one_c : unsigned(clogb2(vector_reg_num_of_elements_c) - 1 downto 0) := to_unsigned(1, clogb2(vector_reg_num_of_elements_c));
    --***************************************************************************
@@ -127,7 +127,7 @@ begin
       ready_o    <= '0';
       state_next <= idle;
       case state_reg is
-         when idle =>            
+         when idle =>
             if (type_of_access_s = read_and_write)then
                BRAM1_we_o <= '0';
                BRAM2_we_o <= '0';
@@ -179,10 +179,10 @@ begin
 
 
    BRAM1_w_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_reg))
-                        when type_of_access_s = read_and_write else
+                        when state_reg =  addr_gen_read_and_write else
                         std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_next));
    BRAM2_w_address_o <= std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_reg))
-                        when type_of_access_s = read_and_write else
+                        when state_reg =  addr_gen_read_and_write else
                         std_logic_vector(unsigned(index_lookup_table_s(to_integer(unsigned(vd_address_i)))) + unsigned(counter_next));
 
 --control signals ouptus   

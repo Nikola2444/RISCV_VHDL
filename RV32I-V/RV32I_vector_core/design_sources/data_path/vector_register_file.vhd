@@ -4,15 +4,14 @@ use work.clogb2_pkg.all;
 
 entity vector_register_file is
    generic (DATA_WIDTH        : natural := 32;
-            MAX_VECTOR_LENGTH : natural := 64;
-            NUM_OF_LANES      : natural := 1
+            MAX_VECTOR_LENGTH : natural := 64            
             );
    port (clk   : in std_logic;
          reset : in std_logic;
 
          -- Control_signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
-
+         vector_length_i   : in  std_logic_vector(clogb2(MAX_VECTOR_LENGTH) -1 downto 0);
          -- input data
          vs1_address_i : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i : in std_logic_vector(4 downto 0);
@@ -30,8 +29,8 @@ end entity;
 
 architecture structural of vector_register_file is
    component VRF_BRAM_addr_generator is
-      generic(MAX_VECTOR_LENGTH : natural := 2048;
-              NUM_OF_LANES      : natural := 1);
+      generic(MAX_VECTOR_LENGTH : natural := 2048
+              );
       port (
          clk                  : in std_logic;
          reset                : in std_logic;
@@ -78,8 +77,7 @@ architecture structural of vector_register_file is
 begin
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator
-      generic map (MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH,
-                   NUM_OF_LANES      => NUM_OF_LANES)
+      generic map (MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH)
       port map (
          clk                  => clk,
          reset                => reset,
@@ -87,7 +85,7 @@ begin
          vs1_address_i        => vs1_address_i,
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,
-         vector_length_i      => "100000",
+         vector_length_i      => vector_length_i,
          bram1_r_address_o    => bram1_r_address_s,
          bram1_w_address_o    => bram1_w_address_s,
          bram1_we_o           => bram1_we_s,

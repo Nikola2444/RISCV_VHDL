@@ -74,12 +74,12 @@ begin
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH        => DATA_WIDTH,
-         MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH,
-         NUM_OF_LANES      => NUM_OF_LANES)
+         MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH/NUM_OF_LANES)
       port map (
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
+         vector_length_i => "1111",
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
          vd_address_i         => vector_instruction_i(11 downto 7),

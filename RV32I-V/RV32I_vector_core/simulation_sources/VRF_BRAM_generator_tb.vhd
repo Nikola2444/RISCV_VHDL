@@ -14,7 +14,7 @@ end entity;
 architecture behavioral of VRF_BRAM_addr_generator_tb is
    signal clk                  : std_logic := '0';
    signal reset                : std_logic;
-   signal vrf_type_of_access_i : std_logic_vector(1 downto 0) := "00";
+   signal vrf_type_of_access_i : std_logic_vector(1 downto 0) := "11";
    signal vs1_address_i        : std_logic_vector(4 downto 0) := (others => '0');
    signal vs2_address_i        : std_logic_vector(4 downto 0):= "00001";
    signal vd_address_i         : std_logic_vector(4 downto 0):= (others => '0');
@@ -28,12 +28,10 @@ architecture behavioral of VRF_BRAM_addr_generator_tb is
    signal BRAM2_we_o           : std_logic;
    signal BRAM2_re_o           : std_logic;
    signal ready_o              : std_logic;
-   signal access_type_next: std_logic_vector (1 downto 0);
-begin
+   begin
    VRF_BRAM_addr_generator_1: entity work.VRF_BRAM_addr_generator
       generic map (
-         MAX_VECTOR_LENGTH   => MAX_VECTOR_LENGTH,
-         NUM_OF_LANES => NUM_OF_LANES)
+         MAX_VECTOR_LENGTH   => MAX_VECTOR_LENGTH)
       port map (
          clk                  => clk,
          reset                => reset,
@@ -63,5 +61,5 @@ begin
       reset <= '0', '1' after 20 ns;      
       wait;
    end process;
-   vrf_type_of_access_i <= "01" after 660 ns;
+   vrf_type_of_access_i <= "01" after 661 ns;
 end architecture;
