@@ -7,11 +7,11 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use work.clogb2_pkg.all;
+use work.custom_functions_pkg.all;
 use ieee.numeric_std.all;
 
 entity VRF_BRAM_addr_generator is
-   generic(MAX_VECTOR_LENGTH : natural := 64
+   generic(VECTOR_LENGTH : natural := 64
            );
    port (
       clk   : in std_logic;
@@ -24,15 +24,15 @@ entity VRF_BRAM_addr_generator is
       vs2_address_i        : in std_logic_vector(4 downto 0);
       vd_address_i         : in std_logic_vector(4 downto 0);
 
-      vector_length_i   : in  std_logic_vector(clogb2(MAX_VECTOR_LENGTH) -1 downto 0);
+      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) -1 downto 0);
       -- output signals
-      BRAM1_r_address_o : out std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
-      BRAM1_w_address_o : out std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
+      BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+      BRAM1_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
       BRAM1_we_o        : out std_logic;
       BRAM1_re_o        : out std_logic;
 
-      BRAM2_r_address_o : out std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
-      BRAM2_w_address_o : out std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
+      BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+      BRAM2_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
       BRAM2_we_o        : out std_logic;
       BRAM2_re_o        : out std_logic;
 
@@ -45,18 +45,18 @@ architecture behavioral of VRF_BRAM_addr_generator is
    type access_type is (read_and_write, only_write, only_read, no_access);
 
    --  This table contains starting addresses of every vector register inside BRAM
-   type lookup_table_of_vr_indexes is array (0 to 31) of std_logic_vector(clogb2(MAX_VECTOR_LENGTH*32) - 1 downto 0);
+   type lookup_table_of_vr_indexes is array (0 to 31) of std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
    type addr_gen_states is (idle, addr_gen_read_and_write, addr_gen_only_read, addr_gen_only_write);
    --***************************************************************************
 
    -- ******************FUNCTION DEFINITIONS NEEDED FOR THIS MODULE*************
    -- Purpose of this function is initialization of a look_up_table_of_vr_indexes;
-   -- Parameter: MAX_VECTOR_LENGTH - is the distance between two vector registers
-   function init_lookup_table (MAX_VECTOR_LENGTH : in natural) return lookup_table_of_vr_indexes is
+   -- Parameter: VECTOR_LENGTH - is the distance between two vector registers
+   function init_lookup_table (VECTOR_LENGTH : in natural) return lookup_table_of_vr_indexes is
       variable lookup_table_v : lookup_table_of_vr_indexes;
    begin
       for i in lookup_table_of_vr_indexes'range loop
-         lookup_table_v(i) := std_logic_vector(to_unsigned(i * MAX_VECTOR_LENGTH, clogb2(MAX_VECTOR_LENGTH*32)));
+         lookup_table_v(i) := std_logic_vector(to_unsigned(i * VECTOR_LENGTH, clogb2(VECTOR_LENGTH*32)));
       end loop;
       return lookup_table_v;
    end function;
@@ -64,7 +64,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
    --**************************CONSTANTS****************************************
    -- Each lane has 32 vector register, and this constant describes the amount of
    -- elements per vector register.
-   constant vector_reg_num_of_elements_c : integer := MAX_VECTOR_LENGTH;
+   constant vector_reg_num_of_elements_c : integer := VECTOR_LENGTH;
 
    constant one_c : unsigned(clogb2(vector_reg_num_of_elements_c) - 1 downto 0) := to_unsigned(1, clogb2(vector_reg_num_of_elements_c));
    --***************************************************************************
@@ -77,7 +77,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
    --***************************************************************************
 
    --********************SIGNALS NEEDED FOR COMBINATIONAL LOGIC*****************
-   signal index_lookup_table_s : lookup_table_of_vr_indexes := init_lookup_table(MAX_VECTOR_LENGTH);
+   signal index_lookup_table_s : lookup_table_of_vr_indexes := init_lookup_table(VECTOR_LENGTH);
    signal type_of_access_s     : access_type;
 
 

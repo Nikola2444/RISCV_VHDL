@@ -1,14 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use work.clogb2_pkg.all;
+use work.custom_functions_pkg.all;
 library UNIMACRO;
 use UNIMACRO.vcomponents.all;
 
 
 entity vector_lane is
    generic (DATA_WIDTH        : natural := 32;
-            MAX_VECTOR_LENGTH : natural := 64;
-            NUM_OF_LANES      : natural := 1
+            VECTOR_LENGTH : natural := 64            
             );
    port(clk                  : in std_logic;
         reset                : in std_logic;
@@ -60,6 +59,9 @@ architecture structural of vector_lane is
 -- LOAD FIFO I/O signals
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
+
+-- Constants used until CSR registers are implemented
+   constant vector_length_c : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0) := (others => '1');
 begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
@@ -74,12 +76,12 @@ begin
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH        => DATA_WIDTH,
-         MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH/NUM_OF_LANES)
+         VECTOR_LENGTH => VECTOR_LENGTH)
       port map (
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
-         vector_length_i => "1111",
+         vector_length_i      => vector_length_c,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
          vd_address_i         => vector_instruction_i(11 downto 7),

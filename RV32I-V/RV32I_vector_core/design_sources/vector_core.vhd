@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.clogb2_pkg.all;
+use work.custom_functions_pkg.all;
 
 
 entity vector_core is
@@ -74,8 +74,7 @@ begin
       vector_lane_1 : entity work.vector_lane
          generic map (
             DATA_WIDTH        => DATA_WIDTH,
-            MAX_VECTOR_LENGTH => MAX_VECTOR_LENGTH,
-            NUM_OF_LANES      => NUM_OF_LANES)
+            VECTOR_LENGTH => MAX_VECTOR_LENGTH/NUM_OF_LANES)
          port map (
             clk                     => clk,
             reset                   => reset,

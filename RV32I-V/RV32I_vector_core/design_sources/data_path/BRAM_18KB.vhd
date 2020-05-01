@@ -11,7 +11,7 @@ library ieee;
 library work;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.clogb2_pkg.all;
+use work.custom_functions_pkg.all;
 use std.textio.all;
 
 entity BRAM_18KB is
@@ -72,11 +72,20 @@ architecture rtl of BRAM_18KB is
          return (others => (others => '0'));
       end if;
    end;
+
+   function init_BRAM return ram_type is
+      variable ram_v: ram_type;
+   begin
+      for i in ram_type'range loop
+         ram_v(i) := std_logic_vector(to_unsigned(i, RAM_WIDTH));
+      end loop;
+      return ram_v;
+   end;
    --*******************************************************************************************************************************************
    
 --**************** Following code defines RAM***************************************************************************************************
 
-   signal ram_name : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
+   signal ram_name : ram_type := init_BRAM;
 
 begin
    
