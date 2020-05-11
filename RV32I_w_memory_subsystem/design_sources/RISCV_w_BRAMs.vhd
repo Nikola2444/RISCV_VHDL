@@ -7,10 +7,12 @@ use work.ram_pkg.all;
 entity RISCV_w_BRAMs is
 	port (clk : in std_logic;
 			reset : in std_logic;
-			--Instruction memory
+			--Instruction cache
 			dread_instr: out std_logic_vector(31 downto 0);
-			--Data memory
+			--Data cache
 			dread_data: out std_logic_vector(31 downto 0)
+			--Level 2 cache
+			dread_l2c: out std_logic_vector(31 downto 0)
 			);
 end entity;
 
@@ -20,46 +22,72 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal ce_s : std_logic;
 
    -- Instruction cache signals
-		signal clk_instr_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal addr_instr_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
-		signal addr_instr_32_cache_s : std_logic_vector(31 downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
-		signal dwrite_instr_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
-		signal dwrite_instr_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
-		signal dread_instr_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);   --  Port A RAM output data
-		signal dread_instr_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);   --  Port A RAM output data
-		signal we_instr_contr_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
-		signal we_instr_cache_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
-		signal en_instr_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal rst_instr_cache_s : std_logic;               			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal regce_instr_cache_s : std_logic;                       			  -- Port A Output register enable
+		signal clk_instr_cache_s : std_logic;
+		signal addr_instr_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);
+		signal addr_instr_32_cache_s : std_logic_vector(31 downto 0);
+		signal dwrite_instr_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dwrite_instr_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dread_instr_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dread_instr_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal we_instr_contr_s : std_logic_vector(NB_COL-1 downto 0);
+		signal we_instr_cache_s : std_logic_vector(NB_COL-1 downto 0);
+		signal en_instr_cache_s : std_logic;
+		signal rst_instr_cache_s : std_logic;
+		signal regce_instr_cache_s : std_logic;
 
 	-- Data cache signals
-		signal clk_data_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal addr_data_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
-		signal addr_data_32_cache_s : std_logic_vector(31 downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
-		signal dwrite_data_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
-		signal dwrite_data_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);		  -- Port A RAM input data
-		signal dread_data_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);   --  Port A RAM output data
-		signal dread_data_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);   --  Port A RAM output data
-		signal we_data_contr_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
-		signal we_data_cache_s : std_logic_vector(NB_COL-1 downto 0);	  -- Port A Write enable
-		signal en_data_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal rst_data_cache_s : std_logic;             			  -- Port A RAM Enable, for additional power savings, disable port when not in use
-		signal regce_data_cache_s : std_logic;                       			  -- Port A Output register enable
+		signal clk_data_cache_s : std_logic;
+		signal addr_data_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);
+		signal addr_data_32_cache_s : std_logic_vector(31 downto 0);
+		signal dwrite_data_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dwrite_data_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dread_data_contr_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dread_data_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0); 
+		signal we_data_contr_s : std_logic_vector(NB_COL-1 downto 0);
+		signal we_data_cache_s : std_logic_vector(NB_COL-1 downto 0);
+		signal en_data_cache_s : std_logic; 
+		signal rst_data_cache_s : std_logic; 
+		signal regce_data_cache_s : std_logic;
 
-	-- Instruction cache singals
+	-- Instruction cache tag store singals
 		signal din_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
 		signal dout_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
 		signal addr_instr_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
 		signal ena_instr_tag_s : std_logic;
 		signal regce_instr_tag_s : std_logic;
+		signal clk_instr_tag_s : std_logic;
+		signal rst_instr_tag_s : std_logic;
+		signal we_instr_tag_s : std_logic;
 
-	-- Data cache singals
+	-- Data cache tag store singals
 		signal din_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
 		signal dout_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
 		signal addr_data_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
 		signal ena_data_tag_s : std_logic;
 		signal regce_data_tag_s : std_logic;
+		signal clk_data_tag_s : std_logic;
+		signal rst_data_tag_s : std_logic;
+		signal we_data_tag_s : std_logic;
+
+	-- Level 2 cache signals
+		signal clk_l2_cache_s : std_logic;
+		signal addr_l2_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);
+		signal dwrite_l2_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal dread_l2_cache_s : std_logic_vector(NB_COL*COL_WIDTH-1 downto 0);
+		signal we_l2_cache_s : std_logic_vector(NB_COL-1 downto 0);
+		signal en_l2_cache_s : std_logic;
+		signal rst_l2_cache_s : std_logic;
+		signal regce_l2_cache_s : std_logic;
+
+	-- Level 2 cache tag store singnals
+		signal din_l2_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dout_l2_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal addr_l2_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
+		signal ena_l2_tag_s : std_logic;
+		signal regce_l2_tag_s : std_logic;
+		signal clk_l2_tag_s : std_logic;
+		signal rst_l2_tag_s : std_logic;
+		signal we_l2_tag_s : std_logic;
 begin
 
    -- Top Moule - RISCV processsor core instance
@@ -84,8 +112,9 @@ begin
 
 cc_directly_mapped: entity work.cache_contr_dm(behavioral)
 	generic map (
-		BLOCK_WIDTH => 3,
-		CACHE_WIDTH => 8
+		BLOCK_SIZE => BLOCK_SIZE,
+		L1_CACHE_SIZE => L1_CACHE_SIZE,
+		L2_CACHE_SIZE => L2_CACHE_SIZE
 	)
 	port map(
 		clk => clk,
@@ -99,15 +128,38 @@ cc_directly_mapped: entity work.cache_contr_dm(behavioral)
 		addr_instr_i => addr_instr_32_cache_s,
 		we_instr_i => we_instr_contr_s,
 		we_instr_o => we_instr_cache_s,
-		-- Data memory
-		-- Instruction memory
+		-- Data cache
 		dread_data_i => dread_data_contr_s,
 		dread_data_o => dread_data_cache_s,
 		dwrite_data_i => dwrite_data_contr_s,
 		dwrite_data_o => dwrite_data_cache_s,
 		addr_data_i => addr_data_32_cache_s,
 		we_data_i => we_data_contr_s,
-		we_data_o => we_data_cache_s
+	--  Instruction cache tag store and bookkeeping
+		addra_instr_tag_o =>  addr_instr_tag_s,
+		dina_instr_tag_o => din_instr_tag_s,
+		wea_instr_tag_o => we_instr_tag_s,
+		ena_instr_tag_o => en_instr_tag_s,
+		douta_instr_tag_i => dout_instr_tag_s,
+		--  Data cache tag store and bookkeeping
+		addra_data_tag_o => addr_instr_tag_s,
+		dina_data_tag_o => din_instr_tag_s,
+		wea_data_tag_o => we_instr_tag_s,
+		ena_data_tag_o => en_instr_tag_s,
+		douta_data_tag_i => dout_instr_tag_s,
+
+		-- LVL 2 CACHES
+		dread_l2_i => dread_l2_cache_s,
+		dwrite_l2_o => dwrite_l2_cache_s,
+		addr_l2_i => addr_l2_cache_s,
+		we_l2_o => we_l2_cache_s,
+
+		--  Level 2 cache tag store and bookkeeping
+		addra_l2_tag_o => addr_l2_tag_s,
+		dina_l2_tag_o => din_l2_tag_s,
+		wea_l2_tag_o => we_l2_tag_s,
+		ena_l2_tag_o => ena_l2_tag_s,
+		douta_l2_tag_i => dout_l2_tag_s
 	);
 
 
@@ -117,7 +169,7 @@ clk_instr_cache_s <= clk;
 addr_instr_cache_s <= addr_instr_32_cache_s((clogb2(RAM_DEPTH)+1) downto 2);
 we_instr_contr_s <= "0000";
 regce_instr_cache_s <= '0';
--- Instantiation of instruction memory
+-- Instantiation of instruction cache
 instruction_cache : entity work.BRAM_sp_rf_bw(rtl)
 	generic map (
 			NB_COL => L1_CACHE_NB_COL,
@@ -144,11 +196,10 @@ dread_instr <= dread_instr_cache_s;
 --Port A signals
 clk_data_cache_s <= clk;
 addr_data_cache_s <= addr_data_32_cache_s((clogb2(RAM_DEPTH)+1) downto 2);
-rst_data_cache_s <= '0';
+rst_data_cache_s <= reset;
 en_data_cache_s <= '1';
 regce_data_cache_s <= '0';
--- Instantiation of data memory
-
+-- Instantiation of data cache
 data_cache : entity work.BRAM_sp_rf_bw(rtl)
 generic map (
 		NB_COL => L1_CACHE_NB_COL,
@@ -171,8 +222,12 @@ port map  (
 --dummy for synth
 dread_data <= dread_data_cache_s;
 
+
+clk_data_tag_s <= clk;
+rst_data_tag_s <= reset;
+regce_data_tag_s <= '1';
 --tag store for data cache
-instruction_tag_store: entity ram_sp_ar(rtl)
+data_tag_store: entity ram_sp_ar(rtl)
 generic map (
     RAM_WIDTH => L1C_TAG_AWIDTH + L1C_BKK_AWIDTH,
     RAM_DEPTH => L1C_NB_BLOCKS
@@ -180,13 +235,17 @@ generic map (
 port map(
         addra => addr_data_tag_s,
         dina => din_data_tag_s,
-        clka => clk,
+        clka => clk_data_tag_s,
         ena => ena_data_tag_s,
-        rsta => reset,
+        rsta => rst_data_tag_s,
         regce => regce_data_tag_s,
-        douta => dout_data_tag_s
+        douta => dout_data_tag_s,
+        wea => we_data_tag_s
 	  );
 
+clk_instr_tag_s <= clk;
+rst_instr_tag_s <= reset;
+regce_instr_cache_s <='1';
 --tag store for instruction cache
 instruction_tag_store: entity ram_sp_ar(rtl)
 generic map (
@@ -195,11 +254,64 @@ generic map (
 	 )
 port map(
         addra => addr_instr_tag_s,
-        dina => din_data_instrs,
-        clka => clk,
+        dina => din_instr_tag_s,
+        clka => clk_instr_tag_s,
         ena => ena_instr_tag_s,
-        rsta => reset,
+        rsta => rst_instr_tag_s,
         regce => regce_instr_tag_s,
-        douta => dout_instr_tag_s
+        douta => dout_instr_tag_s,
+        wea => we_instr_tag_s
 	  );
+
+--Level 2 cache
+--Port A signals
+clk_l2_cache_s <= clk;
+rst_l2_cache_s <= reset;
+en_l2_cache_s <= '1';
+regce_l2_cache_s <= '0';
+-- Instantiation of level 2 cache
+level_2_cache : entity work.BRAM_sp_rf_bw(rtl)
+generic map (
+		NB_COL => L2_CACHE_NB_COL,
+		COL_WIDTH => L2_CACHE_COL_WIDTH,
+		RAM_DEPTH => L2_CACHE_DEPTH,
+		RAM_PERFORMANCE => "LOW_LATENCY",
+		INIT_FILE => "" 
+)
+port map  (
+		addra  => addr_l2_cache_s,
+		dina   => dwrite_l2_cache_s,
+		clk   => clk_l2_cache_s,
+		wea    => we_l2_cache_s,
+		ena    => en_l2_cache_s,
+		rsta   => rst_l2_cache_s,
+		regcea => regce_l2_cache_s,
+		douta  => dread_l2_cache_s
+);
+--dummy for synth
+dread_l2c <= dread_l2_cache_s;
+
+
+
+clk_l2_tag_s <= clk;
+rst_l2_tag_s <= reset;
+regce_l2_tag_s <= '1';
+-- tag store for Level 2 cache
+level_2_tag_store: entity ram_sp_ar(rtl)
+generic map (
+    RAM_WIDTH => L2C_TAG_AWIDTH + L2C_BKK_AWIDTH,
+    RAM_DEPTH => L2C_NB_BLOCKS
+	 )
+port map(
+        addra => addr_l2_tag_s,
+        dina => din_l2_tag_s,
+        clka => clk_l2_tag_s,
+        ena => ena_l2_tag_s,
+        rsta => rst_l2_tag_s,
+        regce => regce_l2_tag_s,
+        douta => dout_l2_tag_s,
+        wea => we_l2_tag_s
+	  );
+
+
 end architecture;
