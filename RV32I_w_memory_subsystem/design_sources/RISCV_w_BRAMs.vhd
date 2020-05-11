@@ -15,15 +15,11 @@ entity RISCV_w_BRAMs is
 end entity;
 
 architecture Behavioral of RISCV_w_BRAMs is
-   -- Signals
-		constant RAM_DEPTH : integer := 1024;
-		constant NB_COL : integer := 4;
-		constant COL_WIDTH : integer := 8;
 
 	-- Other signals
 		signal ce_s : std_logic;
 
-   -- Instruction memory signals
+   -- Instruction cache signals
 		signal clk_instr_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
 		signal addr_instr_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
 		signal addr_instr_32_cache_s : std_logic_vector(31 downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
@@ -37,7 +33,7 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal rst_instr_cache_s : std_logic;               			  -- Port A RAM Enable, for additional power savings, disable port when not in use
 		signal regce_instr_cache_s : std_logic;                       			  -- Port A Output register enable
 
-	-- Data memory signals
+	-- Data cache signals
 		signal clk_data_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
 		signal addr_data_cache_s : std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
 		signal addr_data_32_cache_s : std_logic_vector(31 downto 0);     -- Port A Address bus, width determined from RAM_DEPTH
@@ -50,6 +46,20 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal en_data_cache_s : std_logic;                       			  -- Port A RAM Enable, for additional power savings, disable port when not in use
 		signal rst_data_cache_s : std_logic;             			  -- Port A RAM Enable, for additional power savings, disable port when not in use
 		signal regce_data_cache_s : std_logic;                       			  -- Port A Output register enable
+
+	-- Instruction cache singals
+		signal din_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dout_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal addr_instr_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
+		signal ena_instr_tag_s : std_logic;
+		signal regce_instr_tag_s : std_logic;
+
+	-- Data cache singals
+		signal din_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dout_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal addr_data_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
+		signal ena_data_tag_s : std_logic;
+		signal regce_data_tag_s : std_logic;
 begin
 
    -- Top Moule - RISCV processsor core instance
@@ -110,9 +120,9 @@ regce_instr_cache_s <= '0';
 -- Instantiation of instruction memory
 instruction_cache : entity work.BRAM_sp_rf_bw(rtl)
 	generic map (
-			NB_COL => NB_COL,
-			COL_WIDTH => COL_WIDTH,
-			RAM_DEPTH => RAM_DEPTH,
+			NB_COL => L1_CACHE_NB_COL,
+			COL_WIDTH => L1_CACHE_COL_WIDTH,
+			RAM_DEPTH => L1_CACHE_DEPTH,
 			RAM_PERFORMANCE => "LOW_LATENCY",
 			INIT_FILE => "assembly_code.txt" 
 	)
@@ -141,9 +151,9 @@ regce_data_cache_s <= '0';
 
 data_cache : entity work.BRAM_sp_rf_bw(rtl)
 generic map (
-		NB_COL => NB_COL,
-		COL_WIDTH => COL_WIDTH,
-		RAM_DEPTH => RAM_DEPTH,
+		NB_COL => L1_CACHE_NB_COL,
+		COL_WIDTH => L1_CACHE_COL_WIDTH,
+		RAM_DEPTH => L1_CACHE_DEPTH,
 		RAM_PERFORMANCE => "LOW_LATENCY",
 		INIT_FILE => "" 
 )
@@ -160,4 +170,36 @@ port map  (
 
 --dummy for synth
 dread_data <= dread_data_cache_s;
+
+--tag store for data cache
+instruction_tag_store: entity ram_sp_ar(rtl)
+generic map (
+    RAM_WIDTH => L1C_TAG_AWIDTH + L1C_BKK_AWIDTH,
+    RAM_DEPTH => L1C_NB_BLOCKS
+	 )
+port map(
+        addra => addr_data_tag_s,
+        dina => din_data_tag_s,
+        clka => clk,
+        ena => ena_data_tag_s,
+        rsta => reset,
+        regce => regce_data_tag_s,
+        douta => dout_data_tag_s
+	  );
+
+--tag store for instruction cache
+instruction_tag_store: entity ram_sp_ar(rtl)
+generic map (
+    RAM_WIDTH => L1C_TAG_AWIDTH + L1C_BKK_AWIDTH,
+    RAM_DEPTH => L1C_NB_BLOCKS
+	 )
+port map(
+        addra => addr_instr_tag_s,
+        dina => din_data_instrs,
+        clka => clk,
+        ena => ena_instr_tag_s,
+        rsta => reset,
+        regce => regce_instr_tag_s,
+        douta => dout_instr_tag_s
+	  );
 end architecture;
