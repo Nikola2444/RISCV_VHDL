@@ -19,7 +19,7 @@ package ram_pkg is
 		constant L1C_NB_BLOCKS : integer := L1_CACHE_SIZE/BLOCK_SIZE; 
 	-- Cache depth is size in bytes divided by word size in bytes
 		constant L1C_DEPTH : integer := L1_CACHE_SIZE/4; 
-		constant L1C_NB_COL : integer := 4; -- fixed, word is 4 bytes
+		constant L1C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
 		constant L1C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
 		constant L1C_AWIDTH : integer := clogb2(L1_CACHE_SIZE);
@@ -39,7 +39,7 @@ package ram_pkg is
 		constant L2C_NB_BLOCKS : integer := L2_CACHE_SIZE/BLOCK_SIZE; 
 	-- Cache depth is size in bytes divided by word size in bytes
 		constant L2C_DEPTH : integer := L2_CACHE_SIZE/4; 
-		constant L2C_NB_COL : integer := 4; -- fixed, word is 4 bytes
+		constant L2C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
 		constant L2C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
 		constant L2C_AWIDTH : integer := clogb2(L2_CACHE_SIZE);
