@@ -13,42 +13,42 @@ package ram_pkg is
 
 	-- Basic Level 1 cache parameters:
 	-- This will be size of both instruction and data caches in bytes
-		constant L1_CACHE_SIZE : integer := 4096; 
+		constant LVL1_CACHE_SIZE : integer := 4096; 
 	-- Derived cache parameters:
 	-- Number of blocks in cache
-		constant L1C_NB_BLOCKS : integer := L1_CACHE_SIZE/BLOCK_SIZE; 
+		constant LVL1C_NB_BLOCKS : integer := LVL1_CACHE_SIZE/BLOCK_SIZE; 
 	-- Cache depth is size in bytes divided by word size in bytes
-		constant L1C_DEPTH : integer := L1_CACHE_SIZE/4; 
-		constant L1C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
-		constant L1C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
+		constant LVL1C_DEPTH : integer := LVL1_CACHE_SIZE/4; 
+		constant LVL1C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
+		constant LVL1C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
-		constant L1C_ADDR_WIDTH : integer := clogb2(L1_CACHE_SIZE);
+		constant LVL1C_ADDR_WIDTH : integer := clogb2(LVL1_CACHE_SIZE);
 	-- Number of bits needed to address all blocks inside the cache
-		constant L1C_INDEX_WIDTH : integer := L1C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
+		constant LVL1C_INDEX_WIDTH : integer := LVL1C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant L1C_TAG_WIDTH : integer := 32 - L1C_ADDR_WIDTH;
+		constant LVL1C_TAG_WIDTH : integer := 32 - LVL1C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant L1C_BKK_WIDTH : integer := 2;
+		constant LVL1C_BKK_WIDTH : integer := 2;
 
 
-	-- Basic L2 cache parameters:
+	-- Basic LVL2 cache parameters:
 	-- This will be size of both instruction and data caches in bytes
-		constant L2_CACHE_SIZE : integer := 4096; 
+		constant LVL2_CACHE_SIZE : integer := 4096; 
 	-- Derived cache parameters:
 	-- Number of blocks in cache
-		constant L2C_NB_BLOCKS : integer := L2_CACHE_SIZE/BLOCK_SIZE; 
+		constant LVL2C_NB_BLOCKS : integer := LVL2_CACHE_SIZE/BLOCK_SIZE; 
 	-- Cache depth is size in bytes divided by word size in bytes
-		constant L2C_DEPTH : integer := L2_CACHE_SIZE/4; 
-		constant L2C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
-		constant L2C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
+		constant LVL2C_DEPTH : integer := LVL2_CACHE_SIZE/4; 
+		constant LVL2C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
+		constant LVL2C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
-		constant L2C_ADDR_WIDTH : integer := clogb2(L2_CACHE_SIZE);
+		constant LVL2C_ADDR_WIDTH : integer := clogb2(LVL2_CACHE_SIZE);
 	-- Number of bits needed to address all blocks inside the cache
-		constant L2C_INDEX_WIDTH : integer := L2C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
+		constant LVL2C_INDEX_WIDTH : integer := LVL2C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant L2C_TAG_WIDTH : integer := 32 - L2C_ADDR_WIDTH;
+		constant LVL2C_TAG_WIDTH : integer := 32 - LVL2C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant L2C_BKK_WIDTH : integer := 2;
+		constant LVL2C_BKK_WIDTH : integer := 2;
 
 end ram_pkg;
 
