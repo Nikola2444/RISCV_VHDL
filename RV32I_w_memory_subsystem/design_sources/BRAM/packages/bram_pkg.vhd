@@ -9,7 +9,7 @@ package ram_pkg is
 	-- Block size is 64 bytes, this can be changed, as long as it is power of 2
 		constant BLOCK_SIZE : integer := 64;
 	-- Number of bits needed to address all bytes inside the block
-		constant BLOCK_AWIDTH : integer := clogb2(BLOCK_SIZE);
+		constant BLOCK_ADDR_WIDTH : integer := clogb2(BLOCK_SIZE);
 
 	-- Basic Level 1 cache parameters:
 	-- This will be size of both instruction and data caches in bytes
@@ -22,13 +22,13 @@ package ram_pkg is
 		constant L1C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
 		constant L1C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
-		constant L1C_AWIDTH : integer := clogb2(L1_CACHE_SIZE);
+		constant L1C_ADDR_WIDTH : integer := clogb2(L1_CACHE_SIZE);
 	-- Number of bits needed to address all blocks inside the cache
-		constant L1C_INDEX_AWIDTH : integer := L1C_AWIDTH - BLOCK_AWIDTH;
+		constant L1C_INDEX_WIDTH : integer := L1C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant L1C_TAG_AWIDTH : integer := 32 - L1C_AWIDTH;
+		constant L1C_TAG_WIDTH : integer := 32 - L1C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant L1C_BKK_AWIDTH : integer := 2;
+		constant L1C_BKK_WIDTH : integer := 2;
 
 
 	-- Basic L2 cache parameters:
@@ -42,13 +42,13 @@ package ram_pkg is
 		constant L2C_NUM_COL : integer := 4; -- fixed, word is 4 bytes
 		constant L2C_COL_WIDTH : integer := 8; -- fixed, byte is 8 bits
 	-- Number of bits needed to address all bytes inside the cache
-		constant L2C_AWIDTH : integer := clogb2(L2_CACHE_SIZE);
+		constant L2C_ADDR_WIDTH : integer := clogb2(L2_CACHE_SIZE);
 	-- Number of bits needed to address all blocks inside the cache
-		constant L2C_INDEX_AWIDTH : integer := L2C_AWIDTH - BLOCK_AWIDTH;
+		constant L2C_INDEX_WIDTH : integer := L2C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant L2C_TAG_AWIDTH : integer := 32 - L2C_AWIDTH;
+		constant L2C_TAG_WIDTH : integer := 32 - L2C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant L2C_BKK_AWIDTH : integer := 2;
+		constant L2C_BKK_WIDTH : integer := 2;
 
 end ram_pkg;
 

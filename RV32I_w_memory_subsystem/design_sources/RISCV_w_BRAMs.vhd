@@ -36,8 +36,8 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal regce_instr_cache_s : std_logic;
 
 	-- Instruction cache tag store singals
-		signal din_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
-		signal dout_instr_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dwrite_instr_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
+		signal dread_instr_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
 		signal addr_instr_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
 		signal en_instr_tag_s : std_logic;
 		signal regce_instr_tag_s : std_logic;
@@ -60,8 +60,8 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal regce_data_cache_s : std_logic;
 
 	-- Data cache tag store singals
-		signal din_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
-		signal dout_data_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dwrite_data_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
+		signal dread_data_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
 		signal addr_data_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
 		signal en_data_tag_s : std_logic;
 		signal regce_data_tag_s : std_logic;
@@ -80,8 +80,8 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal regce_l2_cache_s : std_logic;
 
 	-- Level 2 cache tag store singnals
-		signal din_l2_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
-		signal dout_l2_tag_s : std_logic_vector(L1C_TAG_AWIDTH + L1C_BKK_AWIDTH - 1 downto 0);
+		signal dwrite_l2_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
+		signal dread_l2_tag_s : std_logic_vector(L1C_TAG_WIDTH + L1C_BKK_WIDTH - 1 downto 0);
 		signal addr_l2_tag_s : std_logic_vector(clogb2(L1C_NB_BLOCKS)-1 downto 0);
 		signal en_l2_tag_s : std_logic;
 		signal regce_l2_tag_s : std_logic;
@@ -131,11 +131,11 @@ begin
 			we_instr_i => we_instr_contr_s,
 			we_instr_o => we_instr_cache_s,
 			-- Instruction tag store and bookkeeping
-			addra_instr_tag_o =>  addr_instr_tag_s,
-			dina_instr_tag_o => din_instr_tag_s,
-			wea_instr_tag_o => we_instr_tag_s,
-			ena_instr_tag_o => en_instr_tag_s,
-			douta_instr_tag_i => dout_instr_tag_s,
+			addr_instr_tag_o =>  addr_instr_tag_s,
+			dwrite_instr_tag_o => dwrite_instr_tag_s,
+			we_instr_tag_o => we_instr_tag_s,
+			en_instr_tag_o => en_instr_tag_s,
+			dread_instr_tag_i => dread_instr_tag_s,
 			-- Data cache
 			dread_data_i => dread_data_contr_s,
 			dread_data_o => dread_data_cache_s,
@@ -144,22 +144,22 @@ begin
 			addr_data_i => addr_data_32_cache_s,
 			we_data_i => we_data_contr_s,
 			-- Data tag store and bookkeeping
-			addra_data_tag_o => addr_data_tag_s,
-			dina_data_tag_o => din_data_tag_s,
-			wea_data_tag_o => we_data_tag_s,
-			ena_data_tag_o => en_data_tag_s,
-			douta_data_tag_i => dout_data_tag_s,
+			addr_data_tag_o => addr_data_tag_s,
+			dwrite_data_tag_o => dwrite_data_tag_s,
+			we_data_tag_o => we_data_tag_s,
+			en_data_tag_o => en_data_tag_s,
+			dread_data_tag_i => dread_data_tag_s,
 			-- Level 2 cache
 			dread_l2_i => dread_l2_cache_s,
 			dwrite_l2_o => dwrite_l2_cache_s,
-			addr_l2_i => addr_l2_cache_s,
+			addr_l2_o => addr_l2_cache_s,
 			we_l2_o => we_l2_cache_s,
 			-- Level 2 tag store and bookkeeping
-			addra_l2_tag_o => addr_l2_tag_s,
-			dina_l2_tag_o => din_l2_tag_s,
-			wea_l2_tag_o => we_l2_tag_s,
-			ena_l2_tag_o => en_l2_tag_s,
-			douta_l2_tag_i => dout_l2_tag_s
+			addr_l2_tag_o => addr_l2_tag_s,
+			dwrite_l2_tag_o => dwrite_l2_tag_s,
+			we_l2_tag_o => we_l2_tag_s,
+			en_l2_tag_o => en_l2_tag_s,
+			dread_l2_tag_i => dread_l2_tag_s
 		);
 
 
@@ -199,17 +199,17 @@ begin
 	--instantiation of tag store
 	instruction_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
-			RAM_WIDTH => L1C_TAG_AWIDTH + L1C_BKK_AWIDTH,
+			RAM_WIDTH => L1C_TAG_WIDTH + L1C_BKK_WIDTH,
 			RAM_DEPTH => L1C_NB_BLOCKS
 		)
 		port map(
 			addra => addr_instr_tag_s,
-			dina => din_instr_tag_s,
+			dina => dwrite_instr_tag_s,
 			clka => clk_instr_tag_s,
 			ena => en_instr_tag_s,
 			rsta => rst_instr_tag_s,
 			regcea => regce_instr_tag_s,
-			douta => dout_instr_tag_s,
+			douta => dread_instr_tag_s,
 			wea => we_instr_tag_s
 		);
 
@@ -250,17 +250,17 @@ begin
 	-- Instantiation of tag store
 	data_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
-			RAM_WIDTH => L1C_TAG_AWIDTH + L1C_BKK_AWIDTH,
+			RAM_WIDTH => L1C_TAG_WIDTH + L1C_BKK_WIDTH,
 			RAM_DEPTH => L1C_NB_BLOCKS
 		)
 		port map(
 			addra => addr_data_tag_s,
-			dina => din_data_tag_s,
+			dina => dwrite_data_tag_s,
 			clka => clk_data_tag_s,
 			ena => en_data_tag_s,
 			rsta => rst_data_tag_s,
 			regcea => regce_data_tag_s,
-			douta => dout_data_tag_s,
+			douta => dread_data_tag_s,
 			wea => we_data_tag_s
 		);
 
@@ -302,17 +302,17 @@ begin
 	-- tag store for Level 2 cache
 	level_2_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
-			 RAM_WIDTH => L2C_TAG_AWIDTH + L2C_BKK_AWIDTH,
+			 RAM_WIDTH => L2C_TAG_WIDTH + L2C_BKK_WIDTH,
 			 RAM_DEPTH => L2C_NB_BLOCKS
 		)
 		port map(
 			addra => addr_l2_tag_s,
-			dina => din_l2_tag_s,
+			dina => dwrite_l2_tag_s,
 			clka => clk_l2_tag_s,
 			ena => en_l2_tag_s,
 			rsta => rst_l2_tag_s,
 			regcea => regce_l2_tag_s,
-			douta => dout_l2_tag_s,
+			douta => dread_l2_tag_s,
 			wea => we_l2_tag_s
 		);
 
