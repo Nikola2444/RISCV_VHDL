@@ -7,7 +7,8 @@ entity TOP_RISCV is
    port(
       -- Synchronization ports
       clk                 : in  std_logic;
-      ce                  : in  std_logic;
+      instr_ready_i   : in  std_logic;
+      data_ready_i    : in  std_logic;
       reset               : in  std_logic;
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
@@ -18,10 +19,12 @@ entity TOP_RISCV is
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_read_i     : in  std_logic_vector(31 downto 0);
       data_mem_write_o    : out std_logic_vector(31 downto 0);
-      data_mem_we_o       : out std_logic_vector(3 downto 0));  
+      data_mem_we_o       : out std_logic_vector(3 downto 0);  
+      data_mem_re_o       : out std_logic);
 end entity;
 
 architecture structural of TOP_RISCV is
+
    signal set_a_zero_s       : std_logic;
    signal mem_to_reg_s       : std_logic_vector(1 downto 0);
    signal load_type_s        : std_logic_vector(2 downto 0);
@@ -49,7 +52,8 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
-         ce                  => ce,
+         instr_ready_i   => instr_ready_i,
+         data_ready_i    => data_ready_i,
          reset               => reset,
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
@@ -89,7 +93,8 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
-         ce                  => ce,
+         instr_ready_i   => instr_ready_i,
+         data_ready_i    => data_ready_i,
          reset               => reset,
          -- instruction is read from memory
          instruction_i       => instr_mem_read_i,
@@ -113,7 +118,8 @@ begin
          id_ex_flush_o       => id_ex_flush_s,
          -- control signals for stalling
          pc_en_o             => pc_en_s,
-         if_id_en_o          => if_id_en_s);
+         if_id_en_o          => if_id_en_s,
+			data_mem_re_o 		  => data_mem_re_o);
    
    -- stall currnet instruction
    instr_mem_en_o <= if_id_en_s;

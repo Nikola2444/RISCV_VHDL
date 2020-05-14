@@ -9,7 +9,8 @@ entity data_path is
    port(
       -- global synchronization ports
       clk                 : in  std_logic;
-      ce                  : in  std_logic;
+      instr_ready_i   		: in  std_logic;
+      data_ready_i    : in  std_logic;
       reset               : in  std_logic;
       -- instruction memory interface
       instr_mem_address_o : out std_logic_vector (31 downto 0);
@@ -93,10 +94,10 @@ begin
    --Program Counter
    pc_proc : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
+      if (rising_edge(clk)) then
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
-         elsif (pc_en_i = '1') then
+         elsif (pc_en_i = '1' and instr_ready_i = '1' and data_ready_i = '1') then
             pc_reg_if_s <= pc_next_if_s;
          end if;
       end if;
@@ -105,12 +106,12 @@ begin
    --IF/ID register
    if_id : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if(if_id_en_i = '1')then
+      if (rising_edge(clk)) then
+         if(if_id_en_i = '1' or instr_ready_i ='0')then
             if (reset = '0' or if_id_flush_i = '1')then
                pc_reg_id_s   <= (others => '0');
                pc_adder_id_s <= (others => '0');
-            else
+            elsif(data_ready_i = '1')then
                pc_reg_id_s   <= pc_reg_if_s;
                pc_adder_id_s <= pc_adder_if_s;
             end if;
@@ -121,14 +122,14 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
+      if (rising_edge(clk)) then
          if (reset = '0' or id_ex_flush_i = '1')then
             pc_adder_ex_s           <= (others => '0');
             rs1_data_ex_s           <= (others => '0');
             rs2_data_ex_s           <= (others => '0');
             immediate_extended_ex_s <= (others => '0');
             rd_address_ex_s         <= (others => '0');
-         else
+			elsif(data_ready_i = '1')then
             pc_adder_ex_s           <= pc_adder_id_s;
             rs1_data_ex_s           <= rs1_data_id_s;
             rs2_data_ex_s           <= rs2_data_id_s;
@@ -141,14 +142,14 @@ begin
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
+      if (rising_edge(clk)) then
          if (reset = '0')then
             alu_result_mem_s <= (others => '0');
             rs2_data_mem_s   <= (others => '0');
             pc_adder_mem_s   <= (others => '0');
             rd_address_mem_s <= (others => '0');
             pc_reg_ex_s      <= (others => '0');
-         else
+			elsif(data_ready_i = '1')then
             alu_result_mem_s <= alu_result_ex_s;
             rs2_data_mem_s   <= alu_forward_b_ex_s;
             pc_adder_mem_s   <= pc_adder_ex_s;
@@ -161,8 +162,8 @@ begin
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if (reset = '0')then
+      if (rising_edge(clk)) then
+         if (reset = '0' or data_ready_i = '0')then
             alu_result_wb_s <= (others => '0');
             pc_adder_wb_s   <= (others => '0');
             rd_address_wb_s <= (others => '0');
@@ -240,7 +241,6 @@ begin
          WIDTH => 32)
       port map (
          clk           => clk,
-         ce            => ce,
          reset         => reset,
          rd_we_i       => rd_we_i,
          rs1_address_i => rs1_address_id_s,

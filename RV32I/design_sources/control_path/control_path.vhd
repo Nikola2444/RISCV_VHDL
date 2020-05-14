@@ -8,7 +8,8 @@ entity control_path is
    port (
       -- global synchronization signals
       clk                : in  std_logic;
-      ce                 : in  std_logic;
+      instr_ready_i  : in  std_logic;
+      data_ready_i   : in  std_logic;
       reset              : in  std_logic;
       -- instruction is read from memory
       instruction_i      : in  std_logic_vector (31 downto 0);
@@ -33,7 +34,9 @@ entity control_path is
       id_ex_flush_o      : out std_logic;
       -- control signals for stalling
       pc_en_o            : out std_logic;
-      if_id_en_o         : out std_logic
+      if_id_en_o         : out std_logic;
+		-- detect read from data memory
+      data_mem_re_o         : out std_logic
       );
 end entity;
 
@@ -65,8 +68,7 @@ architecture behavioral of control_path is
    signal rs2_address_id_s  : std_logic_vector (4 downto 0);
    signal rd_address_id_s   : std_logic_vector (4 downto 0);
    --*********       EXECUTE       **************
-
-   signal branch_type_ex_s  : std_logic_vector(1 downto 0);
+signal branch_type_ex_s  : std_logic_vector(1 downto 0);
    signal funct3_ex_s       : std_logic_vector(2 downto 0);
    signal funct7_ex_s       : std_logic_vector(6 downto 0);
    signal alu_2bit_op_ex_s  : std_logic_vector(1 downto 0);
@@ -155,7 +157,7 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
+      if (rising_edge(clk)) then
          if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
             branch_type_ex_s <= (others => '0');
             funct3_ex_s      <= (others => '0');
@@ -170,7 +172,7 @@ begin
             rd_address_ex_s  <= (others => '0');
             rd_we_ex_s       <= '0';
             data_mem_we_ex_s <= '0';
-         else
+         elsif (data_ready_i = '1')then
             branch_type_ex_s <= branch_type_id_s;
             funct7_ex_s      <= funct7_id_s;
             funct3_ex_s      <= funct3_id_s;
@@ -191,14 +193,14 @@ begin
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
+      if (rising_edge(clk)) then
          if (reset = '0')then
             funct3_mem_s      <= (others => '0');
             data_mem_we_mem_s <= '0';
             rd_we_mem_s       <= '0';
             mem_to_reg_mem_s  <= (others => '0');
             rd_address_mem_s  <= (others => '0');
-         else
+         elsif (data_ready_i = '1')then
             funct3_mem_s      <= funct3_ex_s;
             data_mem_we_mem_s <= data_mem_we_ex_s;
             rd_we_mem_s       <= rd_we_ex_s;
@@ -211,8 +213,8 @@ begin
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if (reset = '0')then
+      if (rising_edge(clk)) then
+         if (reset = '0' or data_ready_i = '0')then
             funct3_wb_s     <= (others => '0');
             rd_we_wb_s      <= '0';
             mem_to_reg_wb_s <= (others => '0');
@@ -296,6 +298,9 @@ begin
 
    -- load_type controls which bytes are taken from memory in wb stage
    load_type_o <= funct3_wb_s;
+	-- cache controller needs to know about loads in memory phase
+	-- so it can validate in time that requested data is in data cache
+	data_mem_re_o <= '1' when mem_to_reg_mem_s ="10" else '0';
 
 
 end architecture;

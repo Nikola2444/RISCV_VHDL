@@ -19,7 +19,9 @@ end entity;
 architecture Behavioral of RISCV_w_BRAMs is
 
 	-- Other signals
-		signal ce_s : std_logic;
+		signal instr_ready_s : std_logic;
+		signal data_ready_s : std_logic;
+
 
    -- Instruction cache signals
 		signal clk_instr_cache_s : std_logic;
@@ -55,6 +57,7 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal dread_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
 		signal we_data_contr_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
 		signal we_data_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
+		signal re_data_contr_s : std_logic;
 		signal en_data_cache_s : std_logic; 
 		signal rst_data_cache_s : std_logic; 
 		signal regce_data_cache_s : std_logic;
@@ -71,13 +74,20 @@ architecture Behavioral of RISCV_w_BRAMs is
 
 	-- Level 2 cache signals
 		signal clk_lvl2_cache_s : std_logic;
-		signal addr_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
-		signal dwrite_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
-		signal dread_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
-		signal we_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
-		signal en_lvl2_cache_s : std_logic;
-		signal rst_lvl2_cache_s : std_logic;
-		signal regce_lvl2_cache_s : std_logic;
+		signal addra_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
+		signal dwritea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal dreada_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal wea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
+		signal ena_lvl2_cache_s : std_logic;
+		signal rsta_lvl2_cache_s : std_logic;
+		signal regcea_lvl2_cache_s : std_logic;
+		signal addra_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
+		signal dwritea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal dreada_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal wea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
+		signal ena_lvl2_cache_s : std_logic;
+		signal rsta_lvl2_cache_s : std_logic;
+		signal regcea_lvl2_cache_s : std_logic;
 
 	-- Level 2 cache tag store singnals
 		signal dwrite_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
@@ -95,7 +105,8 @@ begin
    TOP_RISCV_1 : entity work.TOP_RISCV
       port map (
          clk => clk,
-         ce => ce_s,
+         instr_ready_i => instr_ready_s,
+			data_ready_i => data_ready_s,
          reset => reset,
 
          instr_mem_read_i    => dread_instr_contr_s,
@@ -104,6 +115,7 @@ begin
          instr_mem_en_o      => en_instr_cache_s,
 
          data_mem_we_o      => we_data_contr_s,
+         data_mem_re_o      => re_data_contr_s,
          data_mem_address_o => addr_data_32_cache_s,
          data_mem_read_i    => dread_data_contr_s,
          data_mem_write_o   => dwrite_data_contr_s);
@@ -120,7 +132,8 @@ begin
 		)
 		port map(
 			clk => clk,
-			ce_o => ce_s,
+			data_ready_o => data_ready_s,
+			instr_ready_o => instr_ready_s,
 			reset => reset,
 			-- Instruction cache
 			dread_instr_i => dread_instr_contr_s,
@@ -143,6 +156,7 @@ begin
 			dwrite_data_o => dwrite_data_cache_s,
 			addr_data_i => addr_data_32_cache_s,
 			we_data_i => we_data_contr_s,
+			re_data_i => re_data_contr_s,
 			-- Data tag store and bookkeeping
 			addr_data_tag_o => addr_data_tag_s,
 			dwrite_data_tag_o => dwrite_data_tag_s,
@@ -150,10 +164,14 @@ begin
 			en_data_tag_o => en_data_tag_s,
 			dread_data_tag_i => dread_data_tag_s,
 			-- Level 2 cache
-			dread_lvl2_i => dread_lvl2_cache_s,
-			dwrite_lvl2_o => dwrite_lvl2_cache_s,
-			addr_lvl2_o => addr_lvl2_cache_s,
-			we_lvl2_o => we_lvl2_cache_s,
+			dreada_lvl2_i => dreada_lvl2_cache_s,
+			dwritea_lvl2_o => dwritea_lvl2_cache_s,
+			addra_lvl2_o => addra_lvl2_cache_s,
+			wea_lvl2_o => wea_lvl2_cache_s,
+			dreadb_lvl2_i => dreadb_lvl2_cache_s,
+			dwriteb_lvl2_o => dwriteb_lvl2_cache_s,
+			addrb_lvl2_o => addrb_lvl2_cache_s,
+			web_lvl2_o => web_lvl2_cache_s,
 			-- Level 2 tag store and bookkeeping
 			addr_lvl2_tag_o => addr_lvl2_tag_s,
 			dwrite_lvl2_tag_o => dwrite_lvl2_tag_s,
@@ -275,12 +293,15 @@ begin
 	--********** LEVEL 2 CACHE  **************
 	-- Port A signals
 	clk_lvl2_cache_s <= clk;
-	rst_lvl2_cache_s <= reset;
-	en_lvl2_cache_s <= '1';
-	regce_lvl2_cache_s <= '0';
+	rsta_lvl2_cache_s <= reset;
+	rstb_lvl2_cache_s <= reset;
+	ena_lvl2_cache_s <= '1';
+	enb_lvl2_cache_s <= '1';
+	regcea_lvl2_cache_s <= '0';
+	regceb_lvl2_cache_s <= '0';
 	-- TODO in this type of bram, 2 LSB bits are removed, implement this here or in cache controller!!!
 	-- Instantiation of level 2 cache
-	level_2_cache : entity work.BRAM_sp_rf_bw(rtl)
+	level_2_cache : entity work.BRAM_tdp_rf_bw(rtl)
 		generic map (
 			NB_COL => LVL2C_NUM_COL,
 			COL_WIDTH => LVL2C_COL_WIDTH,
@@ -289,14 +310,21 @@ begin
 			INIT_FILE => "" 
 		)
 		port map  (
-			addra  => addr_lvl2_cache_s,
-			dina   => dwrite_lvl2_cache_s,
-			clk   => clk_lvl2_cache_s,
-			wea    => we_lvl2_cache_s,
-			ena    => en_lvl2_cache_s,
-			rsta   => rst_lvl2_cache_s,
-			regcea => regce_lvl2_cache_s,
-			douta  => dread_lvl2_cache_s
+			addra  => addra_lvl2_cache_s,
+			addrb  => addrb_lvl2_cache_s,
+			dina   => dwritea_lvl2_cache_s,
+			dinb   => dwriteb_lvl2_cache_s,
+			clk    => clk_lvl2_cache_s,
+			wea    => wea_lvl2_cache_s,
+			web    => web_lvl2_cache_s,
+			ena    => ena_lvl2_cache_s,
+			enb    => enb_lvl2_cache_s,
+			rsta   => rsta_lvl2_cache_s,
+			rstb   => rstb_lvl2_cache_s,
+			regcea => regcea_lvl2_cache_s,
+			regceb => regceb_lvl2_cache_s,
+			douta  => dreada_lvl2_cache_s,
+			doutb  => dreadb_lvl2_cache_s
 		);
 	--dummy for synth
 	dread_lvl2c <= dread_lvl2_cache_s;
