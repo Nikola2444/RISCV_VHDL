@@ -27,6 +27,7 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal clk_instr_cache_s : std_logic;
 		signal addr_instr_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
 		signal addr_instr_32_cache_s : std_logic_vector(31 downto 0);
+		signal addr_instr_32_contr_s : std_logic_vector(31 downto 0);
 		signal dwrite_instr_contr_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dwrite_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dread_instr_contr_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
@@ -51,6 +52,7 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal clk_data_cache_s : std_logic;
 		signal addr_data_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
 		signal addr_data_32_cache_s : std_logic_vector(31 downto 0);
+		signal addr_data_32_contr_s : std_logic_vector(31 downto 0);
 		signal dwrite_data_contr_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dwrite_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dread_data_contr_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
@@ -119,13 +121,13 @@ begin
          reset => reset,
 
          instr_mem_read_i    => dread_instr_contr_s,
-         instr_mem_address_o => addr_instr_32_cache_s,
+         instr_mem_address_o => addr_instr_32_contr_s,
          instr_mem_flush_o   => rst_instr_cache_s,
          instr_mem_en_o      => en_instr_cache_s,
 
          data_mem_we_o      => we_data_contr_s,
          data_mem_re_o      => re_data_contr_s,
-         data_mem_address_o => addr_data_32_cache_s,
+         data_mem_address_o => addr_data_32_contr_s,
          data_mem_read_i    => dread_data_contr_s,
          data_mem_write_o   => dwrite_data_contr_s);
 
@@ -149,7 +151,8 @@ begin
 			dread_instr_o => dread_instr_cache_s,
 			dwrite_instr_i => dwrite_instr_contr_s,
 			dwrite_instr_o => dwrite_instr_cache_s,
-			addr_instr_i => addr_instr_32_cache_s,
+			addr_instr_i => addr_instr_32_contr_s,
+			addr_instr_o => addr_instr_32_cache_s,
 			we_instr_i => we_instr_contr_s,
 			we_instr_o => we_instr_cache_s,
 			-- Instruction tag store and bookkeeping
@@ -163,7 +166,8 @@ begin
 			dread_data_o => dread_data_cache_s,
 			dwrite_data_i => dwrite_data_contr_s,
 			dwrite_data_o => dwrite_data_cache_s,
-			addr_data_i => addr_data_32_cache_s,
+			addr_data_i => addr_data_32_contr_s,
+			addr_data_o => addr_data_32_cache_s,
 			we_data_i => we_data_contr_s,
 			re_data_i => re_data_contr_s,
 			-- Data tag store and bookkeeping
