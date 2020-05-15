@@ -18,8 +18,6 @@ port (
         clka  : in std_logic;                       			  -- Clock
         wea   : in std_logic;                       			  -- Write enable
         ena   : in std_logic;                       			  -- RAM Enable, for additional power savings, disable port when not in use
-        rsta  : in std_logic;                       			  -- Output reset (does not affect memory contents)
-        regcea: in std_logic;                       			  -- Output register enable
         douta : out std_logic_vector(RAM_WIDTH-1 downto 0)   			  -- RAM output data
     );
 

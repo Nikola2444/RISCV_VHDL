@@ -74,6 +74,7 @@ architecture Behavioral of RISCV_w_BRAMs is
 
 	-- Level 2 cache signals
 		signal clk_lvl2_cache_s : std_logic;
+	-- port A
 		signal addra_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
 		signal dwritea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 		signal dreada_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
@@ -81,23 +82,31 @@ architecture Behavioral of RISCV_w_BRAMs is
 		signal ena_lvl2_cache_s : std_logic;
 		signal rsta_lvl2_cache_s : std_logic;
 		signal regcea_lvl2_cache_s : std_logic;
-		signal addra_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
-		signal dwritea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
-		signal dreada_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
-		signal wea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
-		signal ena_lvl2_cache_s : std_logic;
-		signal rsta_lvl2_cache_s : std_logic;
-		signal regcea_lvl2_cache_s : std_logic;
+	-- port B
+		signal addrb_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
+		signal dwriteb_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal dreadb_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
+		signal web_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
+		signal enb_lvl2_cache_s : std_logic;
+		signal rstb_lvl2_cache_s : std_logic;
+		signal regceb_lvl2_cache_s : std_logic;
 
 	-- Level 2 cache tag store singnals
-		signal dwrite_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
-		signal dread_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
-		signal addr_lvl2_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
-		signal en_lvl2_tag_s : std_logic;
-		signal regce_lvl2_tag_s : std_logic;
 		signal clk_lvl2_tag_s : std_logic;
-		signal rst_lvl2_tag_s : std_logic;
-		signal we_lvl2_tag_s : std_logic;
+	-- port A
+		signal dwritea_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
+		signal dreada_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
+		signal addra_lvl2_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
+		signal ena_lvl2_tag_s : std_logic;
+		signal rsta_lvl2_tag_s : std_logic;
+		signal wea_lvl2_tag_s : std_logic;
+	-- port B
+		signal dwriteb_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
+		signal dreadb_lvl2_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1C_BKK_WIDTH - 1 downto 0);
+		signal addrb_lvl2_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
+		signal enb_lvl2_tag_s : std_logic;
+		signal rstb_lvl2_tag_s : std_logic;
+		signal web_lvl2_tag_s : std_logic;
 begin
 
 	--********** PROCESSOR CORE **************
@@ -173,11 +182,16 @@ begin
 			addrb_lvl2_o => addrb_lvl2_cache_s,
 			web_lvl2_o => web_lvl2_cache_s,
 			-- Level 2 tag store and bookkeeping
-			addr_lvl2_tag_o => addr_lvl2_tag_s,
-			dwrite_lvl2_tag_o => dwrite_lvl2_tag_s,
-			we_lvl2_tag_o => we_lvl2_tag_s,
-			en_lvl2_tag_o => en_lvl2_tag_s,
-			dread_lvl2_tag_i => dread_lvl2_tag_s
+			addra_lvl2_tag_o => addra_lvl2_tag_s,
+			dwritea_lvl2_tag_o => dwritea_lvl2_tag_s,
+			wea_lvl2_tag_o => wea_lvl2_tag_s,
+			ena_lvl2_tag_o => ena_lvl2_tag_s,
+			dreada_lvl2_tag_i => dreada_lvl2_tag_s,
+			addrb_lvl2_tag_o => addrb_lvl2_tag_s,
+			dwriteb_lvl2_tag_o => dwriteb_lvl2_tag_s,
+			web_lvl2_tag_o => web_lvl2_tag_s,
+			enb_lvl2_tag_o => enb_lvl2_tag_s,
+			dreadb_lvl2_tag_i => dreadb_lvl2_tag_s
 		);
 
 
@@ -215,8 +229,9 @@ begin
 
 	-- TAG STORE FOR INSTRUCTION CACHE
 	clk_instr_tag_s <= clk;
-	rst_instr_tag_s <= reset;
-	regce_instr_cache_s <='1';
+ -- TODO @ system boot this entire memory needs to be set to 0
+ -- TODO either implement reset and test its timing or make cc handle it @ boot
+--	rst_instr_tag_s <= reset;
 	--instantiation of tag store
 	instruction_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
@@ -228,8 +243,7 @@ begin
 			dina => dwrite_instr_tag_s,
 			clka => clk_instr_tag_s,
 			ena => en_instr_tag_s,
-			rsta => rst_instr_tag_s,
-			regcea => regce_instr_tag_s,
+--			rsta => rst_instr_tag_s,
 			douta => dread_instr_tag_s,
 			wea => we_instr_tag_s
 		);
@@ -269,8 +283,9 @@ begin
 
 	-- TAG STORE FOR DATA CACHE
 	clk_data_tag_s <= clk;
-	rst_data_tag_s <= reset;
-	regce_data_tag_s <= '1';
+ -- TODO @ system boot this entire memory needs to be set to 0
+ -- TODO either implement reset and test its timing or make cc handle it @ boot
+	--rst_data_tag_s <= reset;
 	-- Instantiation of tag store
 	data_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
@@ -282,8 +297,7 @@ begin
 			dina => dwrite_data_tag_s,
 			clka => clk_data_tag_s,
 			ena => en_data_tag_s,
-			rsta => rst_data_tag_s,
-			regcea => regce_data_tag_s,
+--			rsta => rst_data_tag_s,
 			douta => dread_data_tag_s,
 			wea => we_data_tag_s
 		);
@@ -327,28 +341,31 @@ begin
 			doutb  => dreadb_lvl2_cache_s
 		);
 	--dummy for synth
-	dread_lvl2c <= dread_lvl2_cache_s;
+	dread_lvl2c <= dreada_lvl2_cache_s;
 
 
 
 	clk_lvl2_tag_s <= clk;
-	rst_lvl2_tag_s <= reset;
-	regce_lvl2_tag_s <= '1';
+ -- TODO @ system boot this entire memory needs to be set to 0
+ -- TODO either implement reset and test its timing or make cc handle it @ boot
 	-- tag store for Level 2 cache
-	level_2_tag_store: entity work.ram_sp_ar(rtl)
+	level_2_tag_store: entity work.ram_tdp_ar(rtl)
 		generic map (
 			 RAM_WIDTH => LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH,
 			 RAM_DEPTH => LVL2C_NB_BLOCKS
 		)
 		port map(
-			addra => addr_lvl2_tag_s,
-			dina => dwrite_lvl2_tag_s,
-			clka => clk_lvl2_tag_s,
-			ena => en_lvl2_tag_s,
-			rsta => rst_lvl2_tag_s,
-			regcea => regce_lvl2_tag_s,
-			douta => dread_lvl2_tag_s,
-			wea => we_lvl2_tag_s
+			addra => addra_lvl2_tag_s,
+			addrb => addrb_lvl2_tag_s,
+			dina => dwritea_lvl2_tag_s,
+			dinb => dwriteb_lvl2_tag_s,
+			clk => clk_lvl2_tag_s,
+			ena => ena_lvl2_tag_s,
+			enb => enb_lvl2_tag_s,
+			douta => dreada_lvl2_tag_s,
+			doutb => dreadb_lvl2_tag_s,
+			wea => wea_lvl2_tag_s,
+			web => web_lvl2_tag_s
 		);
 
 

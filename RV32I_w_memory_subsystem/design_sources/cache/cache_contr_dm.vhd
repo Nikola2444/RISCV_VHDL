@@ -44,20 +44,29 @@ generic (BLOCK_SIZE : natural := 64;
 			en_data_tag_o   	: out std_logic;
 			dwrite_data_tag_o	: out std_logic_vector(32-clogb2(LVL1_CACHE_SIZE)+1 downto 0);
 			-- Level 2 cache
+			-- port A
 			dreada_lvl2_i			: in std_logic_vector(31 downto 0);
 			dwritea_lvl2_o 		: out std_logic_vector(31 downto 0);
 			addra_lvl2_o 			: out std_logic_vector(31 downto 0);
          wea_lvl2_o 				: out std_logic_vector(3 downto 0);
+			-- port B
 			dreadb_lvl2_i			: in std_logic_vector(31 downto 0);
 			dwriteb_lvl2_o 		: out std_logic_vector(31 downto 0);
 			addrb_lvl2_o 			: out std_logic_vector(31 downto 0);
          web_lvl2_o 				: out std_logic_vector(3 downto 0);
 			-- Level 2 cache tag store and bookkeeping
-			addr_lvl2_tag_o 		: out std_logic_vector((clogb2(LVL2_CACHE_SIZE/BLOCK_SIZE)-1) downto 0);
-			dread_lvl2_tag_i 	: in std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0);
-			we_lvl2_tag_o   		: out std_logic;
-			en_lvl2_tag_o   		: out std_logic;
-			dwrite_lvl2_tag_o 	: out std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0)
+			-- port A
+			addra_lvl2_tag_o 		: out std_logic_vector((clogb2(LVL2_CACHE_SIZE/BLOCK_SIZE)-1) downto 0);
+			dreada_lvl2_tag_i 	: in std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0);
+			wea_lvl2_tag_o   		: out std_logic;
+			ena_lvl2_tag_o   		: out std_logic;
+			dwritea_lvl2_tag_o 	: out std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0);
+			-- port B
+			addrb_lvl2_tag_o 		: out std_logic_vector((clogb2(LVL2_CACHE_SIZE/BLOCK_SIZE)-1) downto 0);
+			dreadb_lvl2_tag_i 	: in std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0);
+			web_lvl2_tag_o   		: out std_logic;
+			enb_lvl2_tag_o   		: out std_logic;
+			dwriteb_lvl2_tag_o 	: out std_logic_vector((32-clogb2(LVL2_CACHE_SIZE)+1) downto 0)
 			);
 end entity;
 
@@ -112,11 +121,11 @@ architecture Behavioral of cache_contr_dm is
 	-- Cache control state
 	type cc_state is (idle, fetch, flush);
 	-- dcc - data cache controller
-	signal icc_state_reg, cc_state_next: cc_state;
+	signal icc_state_reg, icc_state_next: cc_state;
 	signal dcc_state_reg, dcc_state_next: cc_state;
 	-- icc - instruction cache controller
-	signal icc_counter_reg, icc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
-	signal dcc_counter_reg, dcc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	signal icc_counter_reg, icc_counter_incr, icc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	signal dcc_counter_reg, dcc_counter_incr, dcc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
 
 
 begin
@@ -154,8 +163,12 @@ begin
 	instr_tag_cmp_s <= '1' when instr_c_tag_s = instr_ts_tag_s else '0';
 	
 	-- Cache hit/miss indicator flags => same tag + valid
-	data_c_hit_s <= data_tag_cmp_s and data_ts_bkk(1); 
-	instr_c_hit_s <= instr_tag_cmp_s and instr_ts_bkk(1);
+	data_c_hit_s <= data_tag_cmp_s and data_ts_bkk_s(1); 
+	instr_c_hit_s <= instr_tag_cmp_s and instr_ts_bkk_s(1);
+
+	-- Adders for counters 
+	dcc_counter_incr <= std_logic_vector(unsigned(dcc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
+	icc_counter_incr <= std_logic_vector(unsigned(icc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
 
 	-- Sequential logic - regs
 	regs : process(clk)is
@@ -167,7 +180,7 @@ begin
 				icc_counter_reg <= (others => '0');
 				dcc_counter_reg <= (others => '0');
 			else
-				icc_state_reg <= cc_state_next;
+				icc_state_reg <= icc_state_next;
 				dcc_state_reg <=  dcc_state_next;
 				icc_counter_reg <=  icc_counter_next;
 				dcc_counter_reg <=  dcc_counter_next;
@@ -175,16 +188,27 @@ begin
 		end if;
 	end process;
 
+
+	-- TODO check this: if processor never writes to instr cache, it doesn't need dirty bit
+	-- TODO second to that, level2 cache can leasurly be simple dual port RAM 
+	-- TODO as one port will never change the contents of lvl2 Cache
+	-- TODO check this: if processor never writes to instr cache, it doesnt need flush state
+	-- TODO if this somehow saves logic in end product remove it
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
-	regs : process(clk)is
+	fsm1 : process(icc_state_reg, instr_c_hit_s) is
 	begin
 	icc_state_next <= idle;
+	instr_ready_o <= '0';
 		case (icc_state_reg) is
 			when idle =>
-				if(instr_c_hit_s = '0')then
-					
+				instr_ready_o <= '1';
+				if(instr_c_hit_s = '0') then -- instr cache miss
+					icc_state_next <= fetch; -- fetch required data
 				end if;
-			when fetch =>
+			when fetch => 
+				--if()then 
+					--port
+
 			when flush =>
 		end case;
 	end process;
@@ -200,7 +224,5 @@ begin
 	dread_data_o <= dread_data_i;
 	dwrite_data_o <= dwrite_data_i;
 	we_data_o <= we_data_i;
-	-- Defaults - other signals
-	ce_o <= '1';
 
 end architecture;
