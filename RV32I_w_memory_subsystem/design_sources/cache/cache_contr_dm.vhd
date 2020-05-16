@@ -226,17 +226,19 @@ begin
 	-- TODO check this: if processor never writes to instr cache, it doesnt need flush state
 	-- TODO if this somehow saves logic in end product remove it
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
-	fsm1 : process(icc_state_reg, instr_c_hit_s) is
+	fsm_instr : process(icc_state_reg, instr_c_hit_s) is
 	begin
 	we_instr_tag_o <= '0';
 	dwrite_instr_tag_o <= (others => '0');
+
 	icc_state_next <= idle;
+	icc_counter_next <= (others => '0');
+
 	instr_ready_o <= '0';
 	dread_instr_o <= dread_instr_i;
 	dwrite_instr_o <= dwrite_instr_i;
 	we_instr_o <= we_instr_i;
 	addr_instr_o <= addr_instr_i;
-	icc_counter_next <= (others => '0');
 	addrb_lvl2_o <= lvl2b_c_idx_s & icc_counter_next & "00"; -- index adresses a block in cache, counter & 00 adress 4 bytes at a time
 		case (icc_state_reg) is
 			when idle =>
@@ -267,6 +269,65 @@ begin
 		end case;
 	end process;
 
+	fsm_data : process(icc_state_reg, instr_c_hit_s) is
+	begin
+	we_data_tag_o <= '0';
+	dwrite_data_tag_o <= (others => '0');
+
+	dcc_state_next <= idle;
+	dcc_counter_next <= (others => '0');
+
+	data_ready_o <= '0';
+
+	dread_data_o <= dread_data_i;
+	dwrite_data_o <= dwrite_data_i;
+	we_data_o <= we_data_i;
+	addr_data_o <= addr_data_i;
+	addra_lvl2_o <= lvl2a_c_idx_s & dcc_counter_next & "00"; -- index adresses a block in cache, counter & 00 adress 4 bytes at a time
+		case (dcc_state_reg) is
+			when idle =>
+				data_ready_o <= '1';
+				if(data_c_hit_s = '1') then -- instr cache miss
+					if(we_data_i /= "0000") then
+						we_data_tag_o <= '1';
+						dwrite_data_tag_o <= data_ts_bkk_s(1) & '1' & data_ts_tag_s; -- set dirty
+					end if;
+				else
+					if(lvl2a_c_hit_s = '1')then
+						if(data_ts_bkk(0)='1')then
+							dcc_state_next <= flush;
+						else
+							dcc_state_next <= fetch;
+						end if;
+					else
+						dcc_state_next <= wait4lvl2; -- lvl2 doesn't have data
+					end if;
+				end if;
+			when flush => 
+				if(dcc_counter_reg = dcc_counter_max)then 
+
+					dcc_state_next <= fetch;
+				else
+					dcc_state_next <= flush;
+				end if;
+			when fetch => 
+				addr_data_o <= data_c_idx_s & icc_counter_reg & 00;
+				dwrite_data_o <= dreada_lvl2_i;
+				dcc_counter_next <= dcc_counter_incr;
+				if(dcc_counter_reg = dcc_counter_max)then 
+					-- finished with writing entire block
+					dcc_state_next <= idle;
+					-- write new tag to tag store, set valid, reset dirty
+					dwrite_data_tag_o <= "10" & data_c_tag_s;
+					we_data_tag_o <= '1';
+				else
+					dcc_state_next <= fetch;
+				end if;
+			when wait4lvl2 =>
+				--TODO implement logic
+				-- fuck me why did i have to start this
+		end case;
+	end process;
 
 
 	-- DEFAULTS, TEMPORARY, TODO WRITE CC LOGIC
