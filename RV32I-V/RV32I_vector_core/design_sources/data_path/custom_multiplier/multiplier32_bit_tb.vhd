@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
-
+use ieee.numeric_std.all;
 
 entity multiplier32_bit_tb is
      generic (DATA_WIDTH : natural := 32);
@@ -13,7 +13,8 @@ architecture beh of multiplier32_bit_tb is
    signal reset_s : std_logic;
    signal a       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others =>'0');
    signal b       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others =>'0');
-   signal c       : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others =>'0');
+   signal c       : std_logic_vector(2*DATA_WIDTH - 1 downto 0) := (others =>'0');
+   signal c_2_comp_s : std_logic_vector(2*DATA_WIDTH - 1 downto 0) := (others =>'0');
 begin
    multiplier32_bit_1: entity work.multiplier32_bit
       generic map (
@@ -25,9 +26,11 @@ begin
          b       => b,
          c       => c);
 
-
-   a <= x"1000"&x"0000", x"8100"&x"0000" after 500 ns;
+   
+   a <= x"0000"&x"0002";
    b<= x"0000"&x"0002";
+
+   c_2_comp_s <= std_logic_vector(unsigned(not c) + to_unsigned(1, 64));
    reset_s <= '0', '1' after 300 ns;
    clk_gen: process
    begin
