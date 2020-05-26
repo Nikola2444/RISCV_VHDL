@@ -22,6 +22,7 @@ ARCHITECTURE behavioral OF ALU IS
    constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
    signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal custom_mul32_res_s:std_logic_vector(WIDTH - 1 downto 0);
    --signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    --signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
    --signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
@@ -53,6 +54,16 @@ BEGin
    srl_res <= std_logic_vector(shift_right(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
    sra_res <= std_logic_vector(shift_right(signed(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
    --multiplication
+   multiplier32_bit_1: entity work.multiplier32_bit
+      generic map (
+         DATA_WIDTH => DATA_WIDTH)
+      port map (
+         clk   => clk,
+         reset => reset,
+         a     => a_i,
+         b     => b_i,
+         c     => custom_mul32_res_s);
+
    --muls_res <= std_logic_vector(signed(a_i)*signed(b_i));
    --mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); 
    --mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));

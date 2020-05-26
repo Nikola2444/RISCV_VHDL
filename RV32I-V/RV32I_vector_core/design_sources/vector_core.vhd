@@ -7,7 +7,7 @@ use work.custom_functions_pkg.all;
 entity vector_core is
    generic (DATA_WIDTH        : natural := 32;
             MAX_VECTOR_LENGTH : natural := 64;
-            NUM_OF_LANES      : natural := 4
+            NUM_OF_LANES      : natural := 1
             );
 
    port(clk   : in std_logic;
