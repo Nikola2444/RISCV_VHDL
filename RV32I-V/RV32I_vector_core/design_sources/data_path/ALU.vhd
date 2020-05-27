@@ -21,15 +21,29 @@ ARCHITECTURE behavioral OF ALU IS
 
    constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
    signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+
    signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    signal custom_mul32_res_s:std_logic_vector(WIDTH - 1 downto 0);
    --signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   --signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
-   --signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
-
+   signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
+   signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
+   
    
 BEGin
 
+   -- Because multiplier is a unsigned one, if there is a need for signed multiplication
+   -- operand need to be complemented.
+   multiplier32_bit_1: entity work.multiplier32_bit
+      generic map (
+         DATA_WIDTH => DATA_WIDTH)
+      port map (
+         clk   => clk,
+         reset => reset,
+         op => op_i,
+         a     => a_s,
+         b     => b_s,
+         c     => c_s);
+   
    -- addition
    add_res <= std_logic_vector(unsigned(a_i) + unsigned(b_i));
    -- subtraction
@@ -54,19 +68,10 @@ BEGin
    srl_res <= std_logic_vector(shift_right(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
    sra_res <= std_logic_vector(shift_right(signed(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
    --multiplication
-   multiplier32_bit_1: entity work.multiplier32_bit
-      generic map (
-         DATA_WIDTH => DATA_WIDTH)
-      port map (
-         clk   => clk,
-         reset => reset,
-         a     => a_i,
-         b     => b_i,
-         c     => custom_mul32_res_s);
-
-   --muls_res <= std_logic_vector(signed(a_i)*signed(b_i));
-   --mulsu_res <= std_logic_vector(signed(a_i(WIDTH-1) & a_i)*signed('0' & b_i)); 
-   --mulu_res <= std_logic_vector(unsigned(a_i)*unsigned(b_i));
+   
+   muls_res <= c_s;
+   mulsu_res <= c_s;
+   mulu_res <= c_s;
    --division
    --divs_res <= std_logic_vector(signed(a_i)/signed(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
    --            (others => '1');
@@ -92,10 +97,10 @@ BEGin
       sll_res when sll_op, -- shift left logic
       srl_res when srl_op, -- shift right logic
       sra_res when sra_op, -- shift right arithmetic
-      --mulu_res(WIDTH-1 downto 0) when mulu_op, -- multiply lower
-      --muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
-      --mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
-      --mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
+      mulu_res(WIDTH-1 downto 0) when mulu_op, -- multiply lower
+      muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
+      mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
+      mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
       --divu_res when divu_op, -- divide unsigned
       --divs_res when divs_op, -- divide signed
       --remu_res when remu_op, -- reminder signed

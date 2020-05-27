@@ -39,7 +39,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
-
+use ieee.numeric_std.all;
+use work.alu_ops_pkg.all;
 library UNISIM;
 use UNISIM.vcomponents.all;
 
@@ -48,6 +49,7 @@ entity multiplier32_bit is
    port (
       clk   : in  std_logic;
       reset : in  std_logic;
+      op   : in STD_LOGIC_VECTOR(4 DOWNTO 0); --operation Selection
       a     : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
       b     : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
       c     : out std_logic_vector(2*DATA_WIDTH - 1 downto 0));
@@ -56,7 +58,6 @@ end entity;
 architecture beh of multiplier32_bit is
 
    constant zero_14bit_c : std_logic_vector(13 downto 0) := "0000"&"0000"&"0000"&"00";
-
      
    signal reset_s : std_logic;
    
@@ -66,7 +67,18 @@ architecture beh of multiplier32_bit is
    signal X0_s : std_logic_vector(29 downto 0);
    signal Y0_s : std_logic_vector(17 downto 0);
      
+   -- logic needed to check whether the input are signed or unsigned
+   --output sign needs to be propagated trough all the multiply stages
+   signal output_sign_clk0_s, output_sign_clk1_s, output_sign_clk2_s, output_sign_clk3_s, output_sign_clk4_s : std_logic;
+   
+   signal a_signed_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal b_signed_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal a_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal b_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal c_s: std_logic_vector(2 * DATA_WIDTH - 1 downto 0);
+   signal c_complemented_s: std_logic_vector (2 * DATA_WIDTH -1 downto 0);
 
+   
    signal X1Y1_shifted_s_16_bits_s: std_logic_vector (47 downto 0);   
 
    signal dsp1_over_flow_s  : std_logic;
@@ -103,28 +115,96 @@ architecture beh of multiplier32_bit is
    signal dsp6_a_input_s    : std_logic_vector(29 downto 0);
    signal dsp6_b_input_s    : std_logic_vector(17 downto 0);
 
+   
+
 
 begin
    
    --************************Multiplier output**************************************
    --Concatanating dsp6_p_out_s(47:0) with dsp2_p_reg(15 : 0) to get a 64 bit result
-   c <= dsp6_p_out_s(47 downto 0) & dsp2_p_clk2_reg_s;
-
+   c_complemented_s <= std_logic_vector( unsigned(not c_s) + to_unsigned(1, DATA_WIDTH));
+   c_s <= dsp6_p_out_s(47 downto 0) & dsp2_p_clk2_reg_s;
+   c <= c_complemented_s when output_sign_clk4_s = '1' else
+        c_s;
    --******************************************************************************
+
+   --*************************SIGN CHECK LOGIC**************************************
+   
+   a_signed_s <= std_logic_vector(unsigned(not a) + to_unsigned(1, DATA_WIDTH));
+   
+   process (a, op, a_signed_s) is
+   begin
+      if (a(DATA_WIDTH - 1) /= '1') then
+         a_s <= a;
+      else
+         case op is
+            when mulu_op =>
+               a_s <= a_signed_s;
+            when mulhs_op =>
+               a_s <= a_signed_s;
+            when others =>
+               a_s <= a;
+         end case;      
+      end if;      
+   end process;
+   
+   b_signed_s <= std_logic_vector(unsigned(not b) + to_unsigned(1, DATA_WIDTH));
+   
+   process (b, op, b_signed_s) is
+   begin
+      if (b(DATA_WIDTH - 1) /= '1') then
+         b_s <= b;
+      else
+         case op is
+            when mulu_op =>
+               b_s <= b_signed_s;
+            when mulhs_op =>
+               b_s <= b_signed_s;
+            when mulhsu_op =>
+               b_s <= b_signed_s;
+            when others =>
+               b_s <= b;
+         end case;      
+      end if;      
+   end process;
+
+   
+   output_sign_clk0_s <= a(DATA_WIDTH - 1) xor b(DATA_WIDTH - 1);
+   process (clk) is
+   begin
+      if (rising_edge(clk))then
+         if (reset_s = '1') then
+            output_sign_clk1_s <= '0';
+            output_sign_clk2_s <= '0';
+            output_sign_clk3_s <= '0';
+            output_sign_clk4_s <= '0';
+         else
+            
+            output_sign_clk1_s <= output_sign_clk0_s;
+            output_sign_clk2_s <= output_sign_clk1_s;
+            output_sign_clk3_s <= output_sign_clk2_s;
+            output_sign_clk4_s <= output_sign_clk3_s;            
+         end if;
+      end if;
+   end process;
+
+   --**************************************************************************************
+
+   
    -- This was neccesseray because system reset is on '0' but dsp reset is on '1'
    reset_s <= not reset;
    
    -- Because DSP input A a expects a 30 bit input X1 is 30 bits wide
-   X1_s    <= zero_14bit_c & a(31 downto 16);
+   X1_s    <= zero_14bit_c & a_s(31 downto 16);
 
    -- Because DSP input B a expects a 18 bit input Y1 is 18 bits wide
-   Y1_s    <= "00"&b(31 downto 16);                -- upper 15 bits of b input
+   Y1_s    <= "00"&b_s(31 downto 16);                -- upper 15 bits of b input
 
    -- Because DSP input A a expects a 30 bit input X0 is 30 bits wide
-   X0_s <= zero_14bit_c & a(15 downto 0);  -- down 17 bits of a_input
+   X0_s <= zero_14bit_c & a_s(15 downto 0);  -- down 17 bits of a_input
 
    -- Because DSP input B a expects a 18 bit input Y0 is 18 bits wide
-   Y0_s <= "00"&b(15 downto 0);             -- down 17 bits of b input
+   Y0_s <= "00"&b_s(15 downto 0);             -- down 17 bits of b input
 
    
    
