@@ -1,4 +1,4 @@
--- THIS IP realises 64 bit multiplier by using 7 DPS slices. When this
+-- THIS IP realises 64 bit multiplier by using 6 DPS slices on artix fpga. When this
 -- multiplier receives inputs it will give the result after 4 clock cycles.
 
 -- Basic idea is to
@@ -7,7 +7,7 @@
 --                     X*Y = 2^(2k)*X1*Y1 + 2^(2k)(X1Y0 + X0Y1) + X0Y0
 
 -- Here X and Y are 32 bit values.X1, Y1, X0, Y0 should be 16 bit values where
--- X1 containts upper 16 bits of X, Y1 containts upper 16 bits of Y, X0
+-- X1 contains upper 16 bits of X, Y1 containts upper 16 bits of Y, X0
 -- contains lower 16 bits of X nad Y0 contains lower 16 bits of Y.
 -- K has value 16
 
@@ -53,23 +53,11 @@ entity multiplier32_bit is
       c     : out std_logic_vector(2*DATA_WIDTH - 1 downto 0));
 end entity;
 
--- <-----Cut code below this line and paste into the architecture body---->
-
--- DSP48E1: 48-bit Multi-Functional Arithmetic Block
---          Artix-7
--- Xilinx HDL Language Template, version 2019.2
 architecture beh of multiplier32_bit is
 
-   --FSM state signal
-
-   type FSM_state_t is (clk0, clk1, clk2, clk3, clk4);
-   signal FSM_state_reg, FSM_state_next : FSM_state_t;
-
    constant zero_14bit_c : std_logic_vector(13 downto 0) := "0000"&"0000"&"0000"&"00";
-   constant zero_34bit_c : std_logic_vector(33 downto 0) := x"00000000"&"00";
-   constant zero_17bit_c : std_logic_vector(16 downto 0) := x"0000"&"0";
-   
-   
+
+     
    signal reset_s : std_logic;
    
    signal X1_s : std_logic_vector(29 downto 0);
@@ -311,7 +299,7 @@ begin
          BCOUT          => open,        -- 18-bit output: B port cascade output
          CARRYCASCOUT   => open,        -- 1-bit output: Cascade carry output
          MULTSIGNOUT    => open,  -- 1-bit output: Multiplier sign cascade output
-         PCOUT          => dsp2_p_out_s,  -- 48-bit output: Cascade output
+         PCOUT          => open,  -- 48-bit output: Cascade output
          -- Control: 1-bit (each) output: Control Inputs/Status Bits
          OVERFLOW       => dsp2_over_flow_s,  -- 1-bit output: Overflow in add/acc output
          PATTERNBDETECT => open,  -- 1-bit output: Pattern bar detect output
@@ -319,7 +307,7 @@ begin
          UNDERFLOW      => dsp2_under_flow_s,  -- 1-bit output: Underflow in add/acc output
          -- Data: 4-bit (each) output: Data Ports
          CARRYOUT       => open,        -- 4-bit output: Carry output
-         P              => open,        -- 48-bit output: Primary data output
+         P              => dsp2_p_out_s,        -- 48-bit output: Primary data output
          -- Cascade: 30-bit (each) input: Cascade Ports
          ACIN           => (others => '0'),  -- 30-bit input: A cascade data input
          BCIN           => (others => '0'),  -- 18-bit input: B cascade input

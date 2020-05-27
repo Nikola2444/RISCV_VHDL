@@ -27,8 +27,8 @@ begin
          c       => c);
 
    
-   a <= x"0000"&x"0002";
-   b<= x"0000"&x"0002";
+   a <= x"ffff"&x"ffff";
+   b<= x"ffff"&x"ffff";
 
    c_2_comp_s <= std_logic_vector(unsigned(not c) + to_unsigned(1, 64));
    reset_s <= '0', '1' after 300 ns;
