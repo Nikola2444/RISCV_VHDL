@@ -12,6 +12,7 @@ entity vector_register_file is
          -- Control_signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
          vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) -1 downto 0);
+         alu_exe_time_i: std_logic_vector (3 downto 0);
          -- input data
          vs1_address_i : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i : in std_logic_vector(4 downto 0);
@@ -28,6 +29,8 @@ entity vector_register_file is
 end entity;
 
 architecture structural of vector_register_file is
+
+   
    component VRF_BRAM_addr_generator is
       generic(VECTOR_LENGTH : natural := 2048
               );
@@ -36,11 +39,12 @@ architecture structural of vector_register_file is
          reset                : in std_logic;
          -- control signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
+         alu_exe_time_i: std_logic_vector (2 downto 0);
          -- input signals
          vs1_address_i        : in std_logic_vector(4 downto 0);
          vs2_address_i        : in std_logic_vector(4 downto 0);
          vd_address_i         : in std_logic_vector(4 downto 0);
-
+         
          vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
          -- output signals
          bram1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
@@ -82,6 +86,7 @@ begin
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
+         alu_exe_time_i => alu_exe_time_i,
          vs1_address_i        => vs1_address_i,
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,

@@ -6,8 +6,8 @@ use UNIMACRO.vcomponents.all;
 
 
 entity vector_lane is
-   generic (DATA_WIDTH        : natural := 32;
-            VECTOR_LENGTH : natural := 64            
+   generic (DATA_WIDTH    : natural := 32;
+            VECTOR_LENGTH : natural := 64
             );
    port(clk                  : in std_logic;
         reset                : in std_logic;
@@ -51,6 +51,25 @@ entity vector_lane is
 end entity;
 
 architecture structural of vector_lane is
+
+   type ROM_OP_exe_time is array (0 to 4) of std_logic_vector(2 downto 0);
+   -- Each location in this memory contans data that tells VRF how many
+   -- clock cycles is needed for each operation to be executed. If zero clock
+   -- cycles is needed, that means insutruction is not supported. This is hardcoded!
+   signal ROM_OP_exe_time_s : ROM_OP_exe_time :=
+      --and      or      add      xor
+      ("001", "001", "001", "001",
+       --no_op             sub      shr
+       "000", "000", "001", "001",
+       -- shra    mulu  mulhs  mulhsu
+       "001", "100", "100", "100",
+       --mulhu  divu    divs     remu
+       "100", "000", "000", "000",
+       --rems    setLts  setLtu  shl     
+       "000", "000", "000", "001",
+       --seteq
+       "000", others => "000");
+
 --****************************INTERCONNECTIONS*******************************
 --VRF output signals
    signal vs1_data_s, vs2_data_s, vd_data_s : std_logic_vector (DATA_WIDTH - 1 downto 0);
@@ -73,14 +92,16 @@ begin
 
 --****************************INSTANTIATIONS*********************************
 
+   
    vector_register_file_1 : entity work.vector_register_file
       generic map (
-         DATA_WIDTH        => DATA_WIDTH,
+         DATA_WIDTH    => DATA_WIDTH,
          VECTOR_LENGTH => VECTOR_LENGTH)
       port map (
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
+         alu_exe_time_i => ROM_OP_exe_time_s (op_i),
          vector_length_i      => vector_length_c,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
