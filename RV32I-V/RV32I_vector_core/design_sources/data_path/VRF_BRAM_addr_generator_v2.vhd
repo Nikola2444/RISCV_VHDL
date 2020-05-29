@@ -61,7 +61,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
 
 
    signal index_lookup_table_s : lookup_table_of_vr_indexes := init_lookup_table(VECTOR_LENGTH);
-   signal vector_len_shifted_s: std_logic_vector (8 downto 0);
+   signal vector_len_shifted_s: std_logic_vector (clogb2(VECTOR_LENGTH/DATA_WIDTH)  + 3 downto 0);
    signal bram_vs1_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal bram_vs2_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal bram_vd_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
