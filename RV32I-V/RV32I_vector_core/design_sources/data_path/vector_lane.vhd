@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
 library UNIMACRO;
 use UNIMACRO.vcomponents.all;
-
+use ieee.numeric_std.all;
 
 entity vector_lane is
    generic (DATA_WIDTH    : natural := 32;
@@ -52,7 +52,7 @@ end entity;
 
 architecture structural of vector_lane is
 
-   type ROM_OP_exe_time is array (0 to 4) of std_logic_vector(2 downto 0);
+   type ROM_OP_exe_time is array (0 to 31) of std_logic_vector(2 downto 0);
    -- Each location in this memory contans data that tells VRF how many
    -- clock cycles is needed for each operation to be executed. If zero clock
    -- cycles is needed, that means insutruction is not supported. This is hardcoded!
@@ -80,7 +80,7 @@ architecture structural of vector_lane is
 
 
 -- Constants used until CSR registers are implemented
-   constant vector_length_c : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0) := (others => '1');
+   constant vector_length_c : std_logic_vector(clogb2(VECTOR_LENGTH) downto 0) := (others => '1'); --
 begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
@@ -101,7 +101,7 @@ begin
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
-         alu_exe_time_i => ROM_OP_exe_time_s (op_i),
+         alu_exe_time_i => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),
          vector_length_i      => vector_length_c,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),

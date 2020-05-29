@@ -11,8 +11,8 @@ entity vector_register_file is
 
          -- Control_signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) -1 downto 0);
-         alu_exe_time_i: std_logic_vector (3 downto 0);
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH)  downto 0);
+         alu_exe_time_i: std_logic_vector (2 downto 0);
          -- input data
          vs1_address_i : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i : in std_logic_vector(4 downto 0);
@@ -39,23 +39,21 @@ architecture structural of vector_register_file is
          reset                : in std_logic;
          -- control signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
-         alu_exe_time_i: std_logic_vector (2 downto 0);
+         alu_exe_time_i: in std_logic_vector (2 downto 0);
          -- input signals
          vs1_address_i        : in std_logic_vector(4 downto 0);
          vs2_address_i        : in std_logic_vector(4 downto 0);
          vd_address_i         : in std_logic_vector(4 downto 0);
          
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH)  downto 0);
          -- output signals
-         bram1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-         bram1_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-         bram1_we_o        : out std_logic;
-         bram1_re_o        : out std_logic;
+         BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+         
+         BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+         BRAM_we_o        : out std_logic;
+         BRAM_re_o        : out std_logic;
 
-         bram2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-         bram2_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-         bram2_we_o        : out std_logic;
-         bram2_re_o        : out std_logic;
+         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);         
 
          ready_o : out std_logic
          );
@@ -66,15 +64,12 @@ architecture structural of vector_register_file is
    -- input signals 
 
    -- output signals
-   signal bram1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-   signal bram1_w_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-   signal bram1_we_s        : std_logic;
-   signal bram1_re_s        : std_logic;
+   signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+   signal BRAM_w_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+   signal BRAM_we_s        : std_logic;
+   signal BRAM_re_s        : std_logic;
 
-   signal bram2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-   signal bram2_w_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-   signal bram2_we_s        : std_logic;
-   signal bram2_re_s        : std_logic;
+   signal BRAM2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);   
    --*************************************************************************
 
 
@@ -91,14 +86,11 @@ begin
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,
          vector_length_i      => vector_length_i,
-         bram1_r_address_o    => bram1_r_address_s,
-         bram1_w_address_o    => bram1_w_address_s,
-         bram1_we_o           => bram1_we_s,
-         bram1_re_o           => bram1_re_s,
-         bram2_r_address_o    => bram2_r_address_s,
-         bram2_w_address_o    => bram2_w_address_s,
-         bram2_we_o           => bram2_we_s,
-         bram2_re_o           => bram2_re_s,
+         BRAM1_r_address_o    => BRAM1_r_address_s,
+         BRAM_w_address_o    => BRAM_w_address_s,
+         BRAM_we_o           => BRAM_we_s,
+         BRAM_re_o           => BRAM_re_s,
+         BRAM2_r_address_o    => BRAM2_r_address_s,         
          ready_o              => ready_o);
 
 
@@ -110,11 +102,11 @@ begin
          INIT_FILE       => "")
       port map (
          clk             => clk,
-         write_addr_i    => bram1_w_address_s,
-         read_addr_i     => bram1_r_address_s,
+         write_addr_i    => BRAM_w_address_s,
+         read_addr_i     => BRAM1_r_address_s,
          write_data_i    => vd_data_i,
-         we_i            => bram1_we_s,
-         re_i            => bram1_re_s,
+         we_i            => BRAM_we_s,
+         re_i            => BRAM_re_s,
          rst_read_i      => '0',
          output_reg_en_i => '0',
          read_data_o     => vs1_data_o);
@@ -127,11 +119,11 @@ begin
          INIT_FILE       => "")
       port map (
          clk             => clk,
-         write_addr_i    => bram2_w_address_s,
-         read_addr_i     => bram2_r_address_s,
+         write_addr_i    => BRAM_w_address_s,
+         read_addr_i     => BRAM2_r_address_s,
          write_data_i    => vd_data_i,
-         we_i            => bram2_we_s,
-         re_i            => bram2_re_s,
+         we_i            => BRAM_we_s,
+         re_i            => BRAM_re_s,
          rst_read_i      => '0',
          output_reg_en_i => '0',
          read_data_o     => vs2_data_o);

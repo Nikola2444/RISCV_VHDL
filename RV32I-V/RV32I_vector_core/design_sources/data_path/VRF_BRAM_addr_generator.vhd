@@ -11,7 +11,7 @@ use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
 use ieee.numeric_std.all;
 
-entity VRF_BRAM_addr_generator is
+entity VRF_BRAM_addr_generator_2 is
    generic(VECTOR_LENGTH : natural := 64
            );
    port (
@@ -39,7 +39,7 @@ entity VRF_BRAM_addr_generator is
       );
 end entity;
 
-architecture behavioral of VRF_BRAM_addr_generator is
+architecture behavioral of VRF_BRAM_addr_generator_2 is
    
 
    --  This table contains starting addresses of every vector register inside BRAM
