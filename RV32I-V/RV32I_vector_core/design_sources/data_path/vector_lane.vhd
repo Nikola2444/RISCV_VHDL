@@ -7,13 +7,15 @@ use ieee.numeric_std.all;
 
 entity vector_lane is
    generic (DATA_WIDTH    : natural := 32;
-            VECTOR_LENGTH : natural := 64
+            VECTOR_LENGTH : natural := 1024
             );
    port(clk                  : in std_logic;
         reset                : in std_logic;
         -- **************Input data**************************************
         vector_instruction_i : in std_logic_vector(31 downto 0);
         data_from_mem_i      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        vmul_i : in std_logic_vector (1 downto 0);
+        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
         --*************control signals***********************************
         -- from memory control unit        
         load_fifo_we_i       : in std_logic;
@@ -79,8 +81,7 @@ architecture structural of vector_lane is
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 
--- Constants used until CSR registers are implemented
-   constant vector_length_c : std_logic_vector(clogb2(VECTOR_LENGTH) downto 0) := (others => '1'); --
+
 begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
@@ -101,8 +102,9 @@ begin
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
-         alu_exe_time_i => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),
-         vector_length_i      => vector_length_c,
+         alu_exe_time_i => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),      
+         vmul_i => vmul_i,
+         vector_length_i => vector_length_i,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
          vd_address_i         => vector_instruction_i(11 downto 7),

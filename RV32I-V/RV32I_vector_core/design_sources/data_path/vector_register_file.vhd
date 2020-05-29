@@ -4,15 +4,17 @@ use work.custom_functions_pkg.all;
 
 entity vector_register_file is
    generic (DATA_WIDTH        : natural := 32;
-            VECTOR_LENGTH : natural := 64            
+            VECTOR_LENGTH : natural := 1024           
             );
    port (clk   : in std_logic;
          reset : in std_logic;
 
          -- Control_signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH)  downto 0);
+
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
          alu_exe_time_i: std_logic_vector (2 downto 0);
+         vmul_i: std_logic_vector(1 downto 0);
          -- input data
          vs1_address_i : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i : in std_logic_vector(4 downto 0);
@@ -32,7 +34,8 @@ architecture structural of vector_register_file is
 
    
    component VRF_BRAM_addr_generator is
-      generic(VECTOR_LENGTH : natural := 2048
+      generic(VECTOR_LENGTH : natural := 1024;
+               DATA_WIDTH: natural := 32
               );
       port (
          clk                  : in std_logic;
@@ -40,20 +43,21 @@ architecture structural of vector_register_file is
          -- control signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
          alu_exe_time_i: in std_logic_vector (2 downto 0);
+         vmul_i: std_logic_vector(1 downto 0);
          -- input signals
          vs1_address_i        : in std_logic_vector(4 downto 0);
          vs2_address_i        : in std_logic_vector(4 downto 0);
          vd_address_i         : in std_logic_vector(4 downto 0);
          
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH)  downto 0);
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
          -- output signals
-         BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+         BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
          
-         BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+         BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
          BRAM_we_o        : out std_logic;
          BRAM_re_o        : out std_logic;
 
-         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);         
+         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);         
 
          ready_o : out std_logic
          );
@@ -64,24 +68,26 @@ architecture structural of vector_register_file is
    -- input signals 
 
    -- output signals
-   signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
-   signal BRAM_w_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);
+   signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+   signal BRAM_w_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal BRAM_we_s        : std_logic;
    signal BRAM_re_s        : std_logic;
 
-   signal BRAM2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH*32) - 1 downto 0);   
+   signal BRAM2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);   
    --*************************************************************************
 
 
 begin
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator
-      generic map (VECTOR_LENGTH => VECTOR_LENGTH)
+      generic map (VECTOR_LENGTH => VECTOR_LENGTH,
+                   DATA_WIDTH => DATA_WIDTH)
       port map (
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
          alu_exe_time_i => alu_exe_time_i,
+         vmul_i => vmul_i,
          vs1_address_i        => vs1_address_i,
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,
@@ -97,7 +103,7 @@ begin
    BRAM_18KB_1 : entity work.BRAM_18KB
       generic map (
          RAM_WIDTH       => DATA_WIDTH,
-         RAM_DEPTH       => VECTOR_LENGTH * 32,
+         RAM_DEPTH       => VECTOR_LENGTH,
          RAM_PERFORMANCE => "LOW_LATENCY",
          INIT_FILE       => "")
       port map (
@@ -114,7 +120,7 @@ begin
    BRAM_18KB_2 : entity work.BRAM_18KB
       generic map (
          RAM_WIDTH       => DATA_WIDTH,
-         RAM_DEPTH       => VECTOR_LENGTH * 32,
+         RAM_DEPTH       => VECTOR_LENGTH,
          RAM_PERFORMANCE => "LOW_LATENCY",
          INIT_FILE       => "")
       port map (
