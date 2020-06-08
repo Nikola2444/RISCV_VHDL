@@ -33,7 +33,7 @@ constant C_INIT_FILE : string := INIT_FILE;
 type ram_type is array (C_RAM_DEPTH-1 downto 0) of std_logic_vector (C_RAM_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
 
 -- The folowing code either initializes the memory values to a specified file or to all zeros to match hardware
-function initramfromfile (ramfilename : in string) return ram_type is
+impure function initramfromfile (ramfilename : in string) return ram_type is
 file ramfile	: text is in ramfilename;
 variable ramfileline : line;
 variable ram_s	: ram_type;
@@ -47,7 +47,7 @@ begin
     return ram_s;
 end function;
 
-function init_from_file_or_zeroes(ramfile : string) return ram_type is
+impure function init_from_file_or_zeroes(ramfile : string) return ram_type is
 begin
     if ramfile = "RAM_INIT.dat" then
         return InitRamFromFile("RAM_INIT.dat") ;
@@ -55,10 +55,10 @@ begin
         return (others => (others => '0'));
     end if;
 end;
-
+attribute ram_style : string;
 -- Following code defines RAM
 signal ram_s : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
-
+attribute ram_style of ram_s : signal is "distributed";
 begin
 
 process(clka)

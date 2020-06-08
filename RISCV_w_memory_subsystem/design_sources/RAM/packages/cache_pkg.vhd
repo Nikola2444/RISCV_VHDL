@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 
 -- TODO RAM initialization functions need to be defined in this package
 -- TODO Paths in RAM initialization function need to be relative, so tcl scripting will work
-package ram_pkg is
+package cache_pkg is
     function clogb2 (depth: in natural) return integer;
 
 	-- Block size is 64 bytes, this can be changed, as long as it is power of 2
@@ -28,7 +28,8 @@ package ram_pkg is
 	-- Number of bits needed to represent which block is currently in cache
 		constant LVL1C_TAG_WIDTH : integer := 32 - LVL1C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant LVL1C_BKK_WIDTH : integer := 2;
+		constant LVL1DC_BKK_WIDTH : integer := 2;
+		constant LVL1IC_BKK_WIDTH : integer := 2;
 
 
 	-- Basic LVL2 cache parameters:
@@ -50,9 +51,9 @@ package ram_pkg is
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
 		constant LVL2C_BKK_WIDTH : integer := 2;
 
-end ram_pkg;
+end cache_pkg;
 
-package body ram_pkg is
+package body cache_pkg is
 
 	function clogb2 (depth: in natural) return integer is
 	variable temp    : integer := depth;
@@ -65,4 +66,4 @@ package body ram_pkg is
 		 return ret_val;
 	end function;
 
-end package body ram_pkg;
+end package body cache_pkg;

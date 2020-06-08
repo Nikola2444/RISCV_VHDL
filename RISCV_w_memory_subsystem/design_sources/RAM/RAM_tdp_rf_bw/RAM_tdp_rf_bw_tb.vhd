@@ -48,7 +48,7 @@ constant RAM_DEPTH : integer := 1024;
 constant NB_COL : integer := 4;
 constant COL_WIDTH : integer := 8;
 		  
-component BRAM_tdp_rf_bw is
+component RAM_tdp_rf_bw is
 generic (
 		NB_COL : integer;
 		COL_WIDTH : integer;
@@ -94,7 +94,7 @@ end component;
 begin
 -- Instantiation
 -- Uncomment the instantiation below when using
-bram : BRAM_tdp_rf_bw
+bram : RAM_tdp_rf_bw
 generic map (
 		NB_COL => NB_COL,
 		COL_WIDTH => COL_WIDTH,

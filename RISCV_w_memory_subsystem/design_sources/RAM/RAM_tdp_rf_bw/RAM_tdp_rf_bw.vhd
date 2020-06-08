@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 use work.ram_pkg.all;
 USE std.textio.all;
 
-entity BRAM_tdp_rf_bw is
+entity RAM_tdp_rf_bw is
 generic (
     NB_COL    : integer := 4;                       -- Specify number of columns (number of bytes)
     COL_WIDTH : integer := 8;                       -- Specify column width (byte width, typically 8 or 9)
@@ -41,9 +41,9 @@ port (
         doutb : out std_logic_vector(NB_COL*COL_WIDTH-1 downto 0)   	--  Port B RAM output data
     );
 
-end BRAM_tdp_rf_bw;
+end RAM_tdp_rf_bw;
 
-architecture rtl of BRAM_tdp_rf_bw is
+architecture rtl of RAM_tdp_rf_bw is
 
 constant C_NB_COL    : integer := NB_COL;
 constant C_COL_WIDTH : integer := COL_WIDTH;

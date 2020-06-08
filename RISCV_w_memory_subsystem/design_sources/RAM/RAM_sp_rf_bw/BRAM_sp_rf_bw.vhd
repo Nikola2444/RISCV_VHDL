@@ -19,7 +19,7 @@ entity BRAM_sp_rf_bw is
 generic (
     NB_COL    : integer := 4;                       -- Specify number of columns (number of bytes)
     COL_WIDTH : integer := 8;                       -- Specify column width (byte width, typically 8 or 9)
-    RAM_DEPTH : integer := 1024;                    -- Specify RAM depth (number of entries)
+    RAM_DEPTH : integer := 32;                    -- Specify RAM depth (number of entries)
     RAM_PERFORMANCE : string := "LOW_LATENCY";      -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
     INIT_FILE : string := ""            -- Specify name/location of RAM initialization file if using one (leave blank if not)
     );
@@ -51,7 +51,7 @@ signal douta_reg : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) := (others 
 type ram_type is array (C_RAM_DEPTH-1 downto 0) of std_logic_vector (C_NB_COL*C_COL_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
 
 signal ram_data_a : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) ;
-
+attribute ram_style : string;
 -- The folowing code either initializes the memory values to a specified file or to all zeros to match hardware
 
 impure function initramfromfile (ramfilename : in string) return ram_type is
@@ -80,9 +80,17 @@ begin
         return (others => (others => '0'));
     end if;
 end;
--- Following code defines RAM
 
+
+
+
+-- Following code defines RAM
 signal ram_array : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
+attribute ram_style of ram_array : signal is "distributed";
+
+
+
+
 
 begin
 
@@ -91,7 +99,7 @@ begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
-			  	if(rsta = '0')then -- +
+			  	if(rsta = '1')then -- +
 					ram_data_a <= ram_array(to_integer(unsigned(addra)));
 				else -- +
 					ram_data_a <= (others => '0'); -- +
