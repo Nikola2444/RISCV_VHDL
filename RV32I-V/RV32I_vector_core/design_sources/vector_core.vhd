@@ -6,7 +6,7 @@ use work.custom_functions_pkg.all;
 
 entity vector_core is
    generic (DATA_WIDTH        : natural := 32;
-            MAX_VECTOR_LENGTH : natural := 64;
+            VECTOR_LENGTH : natural := 1024;
             NUM_OF_LANES      : natural := 1
             );
 
@@ -15,9 +15,10 @@ entity vector_core is
 
         --input data
         instruction_i : in std_logic_vector(31 downto 0);
-
+        vmul_i : in std_logic_vector (1 downto 0);
         --output data        
-        vector_stall_o : out std_logic
+        vector_stall_o : out std_logic;
+        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0)
         --TODO: memory interface to be added
         );
 
@@ -74,12 +75,14 @@ begin
       vector_lane_1 : entity work.vector_lane
          generic map (
             DATA_WIDTH        => DATA_WIDTH,
-            VECTOR_LENGTH => MAX_VECTOR_LENGTH/NUM_OF_LANES)
+            VECTOR_LENGTH => VECTOR_LENGTH/NUM_OF_LANES)
          port map (
             clk                     => clk,
             reset                   => reset,
             vector_instruction_i    => instruction_i,
             data_from_mem_i         => data_from_mem_s,
+            vmul_i => vmul_i,
+            vector_length_i => vector_length_i,
             --Control singnals from M_CU
             load_fifo_we_i          => M_CU_load_fifo_we_s,
             store_fifo_re_i         => M_CU_store_fifo_re_s,

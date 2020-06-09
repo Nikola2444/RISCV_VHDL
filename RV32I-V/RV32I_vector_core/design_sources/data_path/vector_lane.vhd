@@ -104,6 +104,7 @@ begin
          vrf_type_of_access_i => vrf_type_of_access_i,
          alu_exe_time_i => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),      
          vmul_i => vmul_i,
+         vm_i => vector_instruction_i(25),
          vector_length_i => vector_length_i,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
