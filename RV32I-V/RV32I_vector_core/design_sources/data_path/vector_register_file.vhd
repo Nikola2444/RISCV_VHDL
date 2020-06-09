@@ -119,8 +119,8 @@ begin
          INIT_FILE       => "")
       port map (
          clk             => clk,
-         write_addr_i(7 downto 0)    => BRAM_w_address_s (7 downto 0),
-         read_addr_i(7 downto 0)     => mask_BRAM_r_address_s(7 downto 0),      
+         write_addr_i(clogb2(VECTOR_LENGTH/DATA_WIDTH * 8) - 1 downto 0)    => BRAM_w_address_s (clogb2(VECTOR_LENGTH/DATA_WIDTH * 8) - 1 downto 0),
+         read_addr_i(clogb2(VECTOR_LENGTH/DATA_WIDTH * 8) - 1 downto 0)     => mask_BRAM_r_address_s(clogb2(VECTOR_LENGTH/DATA_WIDTH * 8) - 1 downto 0),      
          write_data_i(0)    => vd_data_i(0),
          we_i            => mask_BRAM_we_s,
          re_i            => mask_BRAM_re_s,

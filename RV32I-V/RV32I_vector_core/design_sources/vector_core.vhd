@@ -7,7 +7,7 @@ use work.custom_functions_pkg.all;
 entity vector_core is
    generic (DATA_WIDTH        : natural := 32;
             VECTOR_LENGTH : natural := 1024;
-            NUM_OF_LANES      : natural := 1
+            NUM_OF_LANES      : natural := 4
             );
 
    port(clk   : in std_logic;
@@ -18,7 +18,7 @@ entity vector_core is
         vmul_i : in std_logic_vector (1 downto 0);
         --output data        
         vector_stall_o : out std_logic;
-        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0)
+        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/NUM_OF_LANES/DATA_WIDTH) downto 0)
         --TODO: memory interface to be added
         );
 
