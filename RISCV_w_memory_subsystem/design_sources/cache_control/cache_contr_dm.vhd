@@ -5,7 +5,8 @@ use std.textio.all;
 use work.cache_pkg.all;
 
 entity cache_contr_dm is
-generic (BLOCK_SIZE : natural := 64;
+generic (PHY_ADDR_SPACE : natural := 512*1024*1024; -- 512 MB
+			BLOCK_SIZE : natural := 64;
 			LVL1_CACHE_SIZE : natural := 1048;
 			LVL2_CACHE_SIZE : natural := 4096);
 	port (clk : in std_logic;
@@ -17,10 +18,10 @@ generic (BLOCK_SIZE : natural := 64;
 			-- Instruction cache
 			rst_instr_cache_i : in std_logic;
 			en_instr_cache_i  : in std_logic;
-			addr_instr_i 		: in std_logic_vector(31 downto 0);
+			addr_instr_i 		: in std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
 			dread_instr_o 		: out std_logic_vector(31 downto 0);
 			-- Data cache
-			addr_data_i			: in std_logic_vector(31 downto 0);
+			addr_data_i			: in std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
 			dread_data_o 		: out std_logic_vector(31 downto 0);
 			dwrite_data_i		: in std_logic_vector(31 downto 0);
          we_data_i			: in std_logic_vector(3 downto 0);
@@ -31,15 +32,16 @@ end entity;
 architecture Behavioral of cache_contr_dm is
 
 	-- DERIVE 2nd ORDER CONSTANTS
+	constant PHY_ADDR_WIDTH : integer := clogb2(PHY_ADDR_SPACE);
 	constant BLOCK_ADDR_WIDTH : integer := clogb2(BLOCK_SIZE);
 	constant LVL1C_ADDR_WIDTH : integer := clogb2(LVL1_CACHE_SIZE);
 	constant LVL1C_INDEX_WIDTH : integer := LVL1C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
-	constant LVL1C_TAG_WIDTH : integer := 32 - LVL1C_ADDR_WIDTH;
+	constant LVL1C_TAG_WIDTH : integer := PHY_ADDR_WIDTH - LVL1C_ADDR_WIDTH;
 	constant LVL1DC_BKK_WIDTH : integer := 2;
-	constant LVL1IC_BKK_WIDTH : integer := 1;
+	constant LVL1IC_BKK_WIDTH : integer := 2;
 	constant LVL2C_ADDR_WIDTH : integer := clogb2(LVL2_CACHE_SIZE);
 	constant LVL2C_INDEX_WIDTH : integer := LVL2C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
-	constant LVL2C_TAG_WIDTH : integer := 32 - LVL2C_ADDR_WIDTH;
+	constant LVL2C_TAG_WIDTH : integer := PHY_ADDR_WIDTH - LVL2C_ADDR_WIDTH;
 	constant LVL2C_BKK_WIDTH : integer := 2;
 
 
@@ -169,10 +171,10 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2b_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
 	signal lvl2b_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
 	signal lvl2b_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
-	-- 'tag' and 'bookkeeping bits: MSB - valid, LSB -dirty' fields from level 2 tag store
+	-- 'tag' and 'bookkeeping bits: MSB - dirty, LSB - valid' fields from level 2 tag store
 	signal lvl2a_ts_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2a_ts_bkk_s : std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
-	-- 'tag' and 'bookkeeping bits: MSB - valid, LSB -dirty' fields from level 2 tag store
+	-- 'tag' and 'bookkeeping bits: MSB - dirty, LSB - valid' fields from level 2 tag store
 	signal lvl2b_ts_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2b_ts_bkk_s : std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
 
@@ -191,16 +193,13 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2_c_hit_s  : std_logic; -- hit in lvl 2 cache
 
 
-	-- TODO everything below this magical line is hot garbage and needs to be double checked and/or reworked ***************************************
 
-	-- Cache control state
+	-- Cache controler state
 	type cc_state is (idle, fetch, flush, wait4lvl2);
-	-- dcc - data cache controller
-	signal icc_state_reg, icc_state_next: cc_state;
-	signal dcc_state_reg, dcc_state_next: cc_state;
-	-- icc - instruction cache controller
-	signal icc_counter_reg, icc_counter_incr, icc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
-	signal dcc_counter_reg, dcc_counter_incr, dcc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
+	-- cc -  cache controller fsm
+	signal cc_state_reg, cc_state_next: cc_state;
+	-- cc -  cache controller counter
+	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	constant counter_max : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
 
 
@@ -208,78 +207,92 @@ begin
 
 	-- Separate input ports into fields for easier menagment
 	-- From data cache
-	lvl1d_c_tag_s <= addr_data_i(31 downto LVL1C_ADDR_WIDTH);
+	lvl1d_c_tag_s <= addr_data_i(PHY_ADDR_WIDTH-1 downto LVL1C_ADDR_WIDTH);
 	lvl1d_c_idx_s <= addr_data_i(LVL1C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
 	lvl1d_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl1d_c_addr_s <= addr_data_i(LVL1C_ADDR_WIDTH-1 downto 0);
 	-- From instruction cache
-	lvl1i_c_tag_s <= addr_instr_i(31 downto LVL1C_ADDR_WIDTH);
+	lvl1i_c_tag_s <= addr_instr_i(PHY_ADDR_WIDTH-1 downto LVL1C_ADDR_WIDTH);
 	lvl1i_c_idx_s <= addr_instr_i(LVL1C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
 	lvl1i_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl1i_c_addr_s <= addr_instr_i(LVL1C_ADDR_WIDTH-1 downto 0);
-	-- From data cache
-	lvl2a_c_tag_s <= addr_data_i(31 downto LVL2C_ADDR_WIDTH);
-	lvl2a_c_idx_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
-	lvl2a_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
-	lvl2a_c_addr_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto 0);
-	-- From instruction cache
-	lvl2b_c_tag_s <= addr_instr_i(31 downto LVL2C_ADDR_WIDTH);
-	lvl2b_c_idx_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
-	lvl2b_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
-	lvl2b_c_addr_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto 0);
+	-- TODO this will be controlled by FSM
+	-- From level1
+	--lvl2a_c_tag_s <= addr_data_i(PHY_ADDR_WIDTH-1 downto LVL2C_ADDR_WIDTH);
+	--lvl2a_c_idx_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
+	--lvl2a_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
+	--lvl2a_c_addr_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto 0);
+	-- TODO this will be controlled by interprocessor module
+	--lvl2b_c_tag_s <= addr_instr_i(PHY_ADDR_WIDTH-1 downto LVL2C_ADDR_WIDTH);
+	--lvl2b_c_idx_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
+	--lvl2b_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
+	--lvl2b_c_addr_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto 0);
 
 	-- Forward address and get tag + bookkeeping bits from tag store
-	-- Data tag store
-	addr_data_tag_o <= data_c_idx_s;
-	data_ts_tag_s <= dread_data_tag_i(LVL1C_TAG_WIDTH-1 downto 0);
-	data_ts_bkk_s <= dread_data_tag_i(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
-	-- Instruction tag store
-	addr_instr_tag_o <= instr_c_idx_s;
-	instr_ts_tag_s <= dread_instr_tag_i(LVL1C_TAG_WIDTH-1 downto 0);
-	instr_ts_bkk_s <= dread_instr_tag_i(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	-- Data tag store port A - data address
+	addra_data_tag_s <= lvl1d_c_idx_s;
+	lvl1da_ts_tag_s <= dreada_data_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	lvl1da_ts_bkk_s <= dreada_data_tag_s(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	-- Data tag store port B - instruction address
+	addrb_data_tag_s <= lvl1i_c_idx_s;
+	lvl1db_ts_tag_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	lvl1db_ts_bkk_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+
+	-- Instruction tag store port A - instruction address
+	addra_instr_tag_s <= lvl1i_c_idx_s;
+	lvl1ia_ts_tag_s <= dread_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	lvl1ia_ts_bkk_s <= dread_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	-- Instruction tag store port B  - data address
+	addrb_instr_tag_s <= lvl1d_c_idx_s;
+	lvl1ib_ts_tag_s <= dread_data_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	lvl1ib_ts_bkk_s <= dread_data_tag_s(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+
 	-- lvl2 tag store, for LVL1
-	addra_lvl2_tag_o <= lvl2a_c_idx_s;
+	--addra_lvl2_tag_s <= lvl2a_c_idx_s; -- TODO set either data or instruction cache address in FSM  (the one that missed)
 	lvl2a_ts_tag_s <= dreada_lvl2_tag_i(LVL2C_TAG_WIDTH-1 downto 0);
 	lvl2a_ts_bkk_s <= dreada_lvl2_tag_i(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH);
-	-- lvl2 tag store, for intercone
-	addrb_lvl2_tag_o <= lvl2b_c_idx_s;
-	lvl2b_ts_tag_s <= dreadb_lvl2_tag_i(LVL2C_TAG_WIDTH-1 downto 0);
-	lvl2b_ts_bkk_s <= dreadb_lvl2_tag_i(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH);
+
+	-- lvl2 tag store, for interconect
+	--addrb_lvl2_tag_o <= lvl2b_c_idx_s;
+	--lvl2b_ts_tag_s <= dreadb_lvl2_tag_i(LVL2C_TAG_WIDTH-1 downto 0);
+	--lvl2b_ts_bkk_s <= dreadb_lvl2_tag_i(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH);
 
 	
 	-- Compare tags
-	data_tag_cmp_s <= '1' when data_c_tag_s = data_ts_tag_s else '0';
-	instr_tag_cmp_s <= '1' when instr_c_tag_s = instr_ts_tag_s else '0';
+	lvl1dd_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1da_ts_tag_s else '0';
+	lvl1di_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1ib_ts_tag_s else '0';
+	lvl1ii_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1ia_ts_tag_s else '0';
+	lvl1id_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1db_ts_tag_s else '0';
 	lvl2a_tag_cmp_s <= '1' when lvl2a_c_tag_s = lvl2a_ts_tag_s else '0'; 
-	lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
+	--lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
 	
 	-- Cache hit/miss indicator flags => same tag + valid
-	lvl1d_c_hit_s <= data_tag_cmp_s and data_ts_bkk_s(1); 
-	lvl1i_c_hit_s <= instr_tag_cmp_s and instr_ts_bkk_s(1);
-	lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(1); 
-	lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(1);
+	lvl1d_c_hit_s <= lvl1dd_tag_cmp_s and lvl1da_ts_bkk_s(0); 
+	lvl1i_c_hit_s <= lvl1ii_tag_cmp_s and lvl1ia_ts_bkk_s(0);
+	lvl1d_c_dup_s <= lvl1di_tag_cmp_s and lvl1ib_ts_bkk_s(0);
+	lvl1i_c_dup_s <= lvl1id_tag_cmp_s and lvl1db_ts_bkk_s(0);
+	lvl1i_c_haz_s <= lvl1i_c_dup_s and lvl1db_ts_bkk_s(1);
+	lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
+	--lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(1);
 
-	-- Adders for counters 
-	dcc_counter_incr <= std_logic_vector(unsigned(dcc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
-	icc_counter_incr <= std_logic_vector(unsigned(icc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
+	-- Adder for counters 
+	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
 
 	-- Sequential logic - regs
 	regs : process(clk)is
 	begin
 		if(rising_edge(clk))then
 			if(reset= '0')then
-				icc_state_reg <= idle;
-				dcc_state_reg <= idle;
-				icc_counter_reg <= (others => '0');
-				dcc_counter_reg <= (others => '0');
+				cc_state_reg <= idle;
+				cc_counter_reg <= (others => '0');
 			else
-				icc_state_reg <= icc_state_next;
-				dcc_state_reg <=  dcc_state_next;
-				icc_counter_reg <=  icc_counter_next;
-				dcc_counter_reg <=  dcc_counter_next;
+				cc_state_reg <= cc_state_next;
+				cc_counter_reg <=  cc_counter_next;
 			end if;
 		end if;
 	end process;
+
+	-- TODO everything below this magical line is hot garbage and needs to be double checked and/or reworked ***************************************
 
 
 	-- TODO check this: if processor never writes to instr cache, it doesn't need dirty bit

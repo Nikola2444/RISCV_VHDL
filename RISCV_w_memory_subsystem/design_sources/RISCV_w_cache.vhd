@@ -22,7 +22,7 @@ architecture Behavioral of RISCV_w_cache is
 
 
    -- Instruction cache signals
-		signal addr_instr_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+		signal addr_instr_cache_s : std_logic_vector((PHY_ADDR_WIDTH-1) downto 0);
 		signal addr_instr_cache_32_s : std_logic_vector(31 downto 0);
 		signal dread_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal en_instr_cache_s : std_logic;
@@ -30,7 +30,7 @@ architecture Behavioral of RISCV_w_cache is
 
 
 	-- Data cache signals
-		signal addr_data_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+		signal addr_data_cache_s : std_logic_vector((PHY_ADDR_WIDTH-1) downto 0);
 		signal addr_data_cache_32_s : std_logic_vector(31 downto 0);
 		signal dwrite_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dread_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
@@ -65,8 +65,8 @@ begin
 
 
 	-- Convert 32 bit adress to exact size based on CACHE SIZE parameter
-	addr_data_cache_s <= addr_data_cache_32_s((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
-	addr_instr_cache_s <= addr_instr_cache_32_s((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+	addr_data_cache_s <= addr_data_cache_32_s((PHY_ADDR_WIDTH-1) downto 0);
+	addr_instr_cache_s <= addr_instr_cache_32_s((PHY_ADDR_WIDTH-1) downto 0);
 
 	--********** Cache controller **************
 	cc_directly_mapped: entity work.cache_contr_dm(behavioral)
