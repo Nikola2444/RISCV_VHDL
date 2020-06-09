@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
-
+use ieee.numeric_std.all;
 entity vector_register_file is
    generic (DATA_WIDTH    : natural := 32;
             VECTOR_LENGTH : natural := 1024
@@ -54,14 +54,16 @@ architecture structural of vector_register_file is
          vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
          -- output signals
          BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+         BRAM_re_o        : out std_logic;
+
+         mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+         mask_BRAM_re_o        : out std_logic;
          
          BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
          BRAM_we_o        : out std_logic;
-         BRAM_re_o        : out std_logic;
 
-         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-
-         BRAMV0_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+         
          ready_o : out std_logic
 
          
@@ -75,20 +77,21 @@ architecture structural of vector_register_file is
 
    -- output signals   
    signal BRAM_we_s         : std_logic;
-   signal V0_BRAM_we_s      : std_logic;
-   signal V0_BRAM_re_s      : std_logic;
+   signal mask_BRAM_we_s      : std_logic;
+   signal mask_BRAM_re_s      : std_logic;
    signal BRAM_re_s         : std_logic;
 
    -- Signals coming out of mask BRAM
-
-   mask_s : std_logic;
-
+   signal mask_s : std_logic;
+   signal VRF_mask_BRAM_re_s: std_logic;
+   
+   signal mask_BRAM_write_data_s: std_logic;
    -- Signals coming out of VRF_generator
    signal BRAM2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal mask_BRAM_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal BRAM_w_address_s  : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal VRF_BRAM_we_s      : std_logic;
+   signal VRF_mask_BRAM_we_s      : std_logic;
    signal VRF_BRAM_re_s      : std_logic;
    --*************************************************************************
 
@@ -98,13 +101,13 @@ architecture structural of vector_register_file is
 begin
 
    --Generating control signals for mask bram
-   V0_BRAM_we_s <= BRAM_we_s when vd_address_i = "00000" else
+   mask_BRAM_we_s <= VRF_mask_BRAM_we_s when vd_address_i = "00000"  else
                    '0';
-   V0_BRAM_re_s <= BRAM_re_s when vm_i = '0' else
-                   '0';
+   mask_BRAM_re_s <= VRF_mask_BRAM_re_s when vm_i = '0' else
+                     '0';
 
    -- Generating control signals for vector BRAM's
-   BRAM_we_s <= VRF_BRAM_we_s when mask_s = '1' else
+   BRAM_we_s <= VRF_mask_BRAM_we_s when mask_s = '1' and vm_i = '1' else
                 '0';
    
    mask_reg : entity work.BRAM_18KB
@@ -116,14 +119,14 @@ begin
          INIT_FILE       => "")
       port map (
          clk             => clk,
-         write_addr_i    => BRAM_w_address_s,
-         read_addr_i     => mask_BRAM_r_address_s,
-         write_data_i    => vd_data_i,
-         we_i            => V0_BRAM_we_s,
-         re_i            => V0_BRAM_re_s,
+         write_addr_i(7 downto 0)    => BRAM_w_address_s (7 downto 0),
+         read_addr_i(7 downto 0)     => mask_BRAM_r_address_s(7 downto 0),      
+         write_data_i(0)    => vd_data_i(0),
+         we_i            => mask_BRAM_we_s,
+         re_i            => mask_BRAM_re_s,
          rst_read_i      => '0',
          output_reg_en_i => '0',
-         read_data_o     => mask_s);
+         read_data_o(0)     => mask_s);
 
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator
@@ -140,11 +143,14 @@ begin
          vd_address_i         => vd_address_i,
          vector_length_i      => vector_length_i,
          BRAM1_r_address_o    => BRAM1_r_address_s,
-         BRAM_w_address_o     => BRAM_w_address_s,
-         BRAM_we_o            => VRF_BRAM_we_s,
-         BRAM_re_o            => BRAM_re_s,
          BRAM2_r_address_o    => BRAM2_r_address_s,
+         BRAM_re_o            => BRAM_re_s,
+
+         BRAM_w_address_o     => BRAM_w_address_s,
+         BRAM_we_o            => VRF_mask_BRAM_we_s,
+         
          mask_BRAM_r_address_o => mask_BRAM_r_address_s,
+         mask_BRAM_re_o => VRF_mask_BRAM_re_s,
          ready_o              => ready_o);
 
 

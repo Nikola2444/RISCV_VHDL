@@ -14,23 +14,26 @@ entity VRF_BRAM_addr_generator is
 
       vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
       alu_exe_time_i       : in std_logic_vector(2 downto 0);
+      vmul_i : in std_logic_vector (1 downto 0);
       -- input signals
       vs1_address_i        : in std_logic_vector(4 downto 0);
       vs2_address_i        : in std_logic_vector(4 downto 0);
       vd_address_i         : in std_logic_vector(4 downto 0);
 
-      vmul_i : in std_logic_vector (1 downto 0);
+      
       --vector_length_i tells us how many elements there are per vector register
       vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
       -- output signals
       BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
       BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+      BRAM_re_o        : out std_logic;
+
       mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+      mask_BRAM_re_o        : out std_logic;
 
       BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-      mask_BRAM_we_o        : out std_logic;
       BRAM_we_o        : out std_logic;
-      BRAM_re_o        : out std_logic;
+
 
       ready_o : out std_logic
       );
@@ -72,7 +75,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
    -- Widened vd_address_i
    signal vd_address_extened_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    -- write enable for mask register
-   signal mask_BRAM_we_s: std_logic;
+   signal mask_BRAM_re_s: std_logic;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 
    signal index_lookup_table_s : lookup_table_of_vr_indexes := init_lookup_table(VECTOR_LENGTH);
@@ -110,7 +113,7 @@ begin
          else
             counter1_reg_s <= counter1_next_s;
             counter2_reg_s <= counter2_next_s;            
-            BRAM_we_s  <= mask_BRAM_we_s;            
+            BRAM_we_s  <= mask_BRAM_re_s;            
          end if;
       end if;
    end process;
@@ -185,18 +188,18 @@ begin
       end if;
    end process;
 
-   --write_en logic
+   --mask read en logic
    mask_reg_we_gen_proc: process (counter1_next_s, vrf_type_of_access_i, alu_exe_time_i) is
    begin
-      mask_BRAM_we_s <= '0';
+      mask_BRAM_re_s <= '0';
       if (vrf_type_of_access_i = read_and_write_c) then
          if (counter1_next_s > concat_bits&alu_exe_time_i) then
-            mask_BRAM_we_s <= '1';
+            mask_BRAM_re_s <= '1';
          else
-            mask_BRAM_we_s <= '0';
+            mask_BRAM_re_s <= '0';
          end if;
       elsif (vrf_type_of_access_i = only_write_c) then         
-         mask_BRAM_we_s <= '1';
+         mask_BRAM_re_s <= '1';
       end if;      
    end process;
    
@@ -264,7 +267,7 @@ begin
    -- register addresses and mask register write enable start one clock cycle
    -- before BRAM write enable.
    mask_BRAM_r_address_o <= std_logic_vector(unsigned(vd_address_extened_s) + unsigned(counter2_next_s));
-   mask_BRAM_we_o <= mask_BRAM_we_s;
+   mask_BRAM_re_o <= mask_BRAM_re_s;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -276,11 +279,12 @@ begin
       std_logic_vector(unsigned(bram_vd_index_vmul_shifted_s) + unsigned(counter2_reg_s)) when vrf_type_of_access_i = only_write_c else
       std_logic_vector(unsigned(bram_vd_index_vmul_shifted_s) + unsigned(counter1_reg_s));
    
-   -- Same goes for write enable
+   -- Write enable is one clk behind mask bram read enable when there is a
+   -- write into VRF.
    BRAM_we_o <=
       '0' when counter1_reg_s = counter1_eq_zero else
       BRAM_we_s when  vrf_type_of_access_i = read_and_write_c or vrf_type_of_access_i = only_write_c else
-      mask_BRAM_we_s;
+      mask_BRAM_re_s;
 
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 end behavioral;
