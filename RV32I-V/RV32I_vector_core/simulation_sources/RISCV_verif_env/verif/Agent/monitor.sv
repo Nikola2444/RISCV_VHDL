@@ -4,7 +4,7 @@ class calc_monitor extends uvm_monitor;
    bit checks_enable = 1;
    bit coverage_enable = 1;
 
-   uvm_analysis_port #(calc_seq_item) item_collected_port;
+   uvm_analysis_port #(control_seq_item) item_collected_port;
 
    `uvm_component_utils_begin(calc_monitor)
       `uvm_field_int(checks_enable, UVM_DEFAULT)
@@ -12,10 +12,10 @@ class calc_monitor extends uvm_monitor;
    `uvm_component_utils_end
 
    // The virtual interface used to drive and view HDL signals.
-   virtual interface calc_if vif;
+   virtual interface v_lane_if vif;
 
    // current transaction
-   calc_seq_item curr_it;
+   control_seq_item curr_it;
 
    // coverage can go here
    // ...
@@ -27,13 +27,13 @@ class calc_monitor extends uvm_monitor;
 
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-      if (!uvm_config_db#(virtual calc_if)::get(this, "", "calc_if", vif))
+      if (!uvm_config_db#(virtual v_lane_if)::get(this, "", "v_lane_if", vif))
         `uvm_fatal("NOVIF",{"virtual interface must be set:",get_full_name(),".vif"})
    endfunction : connect_phase
 
    task main_phase(uvm_phase phase);
       // forever begin
-      // curr_it = calc_seq_item::type_id::create("curr_it", this);
+      // curr_it = control_seq_item::type_id::create("curr_it", this);
       // ...
       // collect transactions
       // ...

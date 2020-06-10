@@ -91,7 +91,7 @@ architecture structural of vector_register_file is
    signal mask_BRAM_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    signal BRAM_w_address_s  : std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal VRF_mask_BRAM_we_s      : std_logic;
+   signal VRF_BRAM_we_s      : std_logic;
    signal VRF_BRAM_re_s      : std_logic;
    --*************************************************************************
 
@@ -101,13 +101,14 @@ architecture structural of vector_register_file is
 begin
 
    --Generating control signals for mask bram
-   mask_BRAM_we_s <= VRF_mask_BRAM_we_s when vd_address_i = "00000"  else
+   mask_BRAM_we_s <= VRF_BRAM_we_s when vd_address_i = "00000"  else
                    '0';
    mask_BRAM_re_s <= VRF_mask_BRAM_re_s when vm_i = '0' else
                      '0';
 
    -- Generating control signals for vector BRAM's
-   BRAM_we_s <= VRF_mask_BRAM_we_s when mask_s = '1' and vm_i = '1' else
+   BRAM_we_s <= VRF_BRAM_we_s  when vm_i = '1' else
+                VRF_BRAM_we_s when mask_s = '1' and vm_i = '0' else
                 '0';
    
    mask_reg : entity work.BRAM_18KB
@@ -124,7 +125,7 @@ begin
          write_data_i(0)    => vd_data_i(0),
          we_i            => mask_BRAM_we_s,
          re_i            => mask_BRAM_re_s,
-         rst_read_i      => '0',
+         rst_read_i      => vm_i,
          output_reg_en_i => '0',
          read_data_o(0)     => mask_s);
 
@@ -147,7 +148,7 @@ begin
          BRAM_re_o            => BRAM_re_s,
 
          BRAM_w_address_o     => BRAM_w_address_s,
-         BRAM_we_o            => VRF_mask_BRAM_we_s,
+         BRAM_we_o            => VRF_BRAM_we_s,
          
          mask_BRAM_r_address_o => mask_BRAM_r_address_s,
          mask_BRAM_re_o => VRF_mask_BRAM_re_s,

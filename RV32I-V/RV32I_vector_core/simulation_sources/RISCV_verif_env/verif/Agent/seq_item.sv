@@ -2,20 +2,24 @@
  `define CALC_SEQ_ITEM_SV
 
 parameter DATA_WIDTH = 32;
-parameter RESP_WIDTH = 2;
-parameter CMD_WIDTH = 4;
+parameter VECTOR_LENGTH = 1024;
 
-class calc_seq_item extends uvm_sequence_item;
+class control_seq_item extends uvm_sequence_item;
 
-      
-
-   `uvm_object_utils_begin(calc_seq_item)
+   rand logic [31 : 0] vector_instruction_i;  
+    rand logic [1 : 0]  vmul_i;   
+    rand logic [$clog2(VECTOR_LENGTH/DATA_WIDTH) : 0] vector_length_i ; 
+    
+   `uvm_object_utils_begin(control_seq_item)
+       `uvm_field_int(vmul_i, UVM_DEFAULT)
+       `uvm_field_int(vector_length_i, UVM_DEFAULT)
+      `uvm_field_int(vector_instruction_i, UVM_DEFAULT)
    `uvm_object_utils_end
 
-   function new (string name = "calc_seq_item");
+   function new (string name = "control_seq_item");
       super.new(name);
    endfunction // new
 
-endclass : calc_seq_item
+endclass : control_seq_item
 
 `endif

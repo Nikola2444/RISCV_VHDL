@@ -51,7 +51,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
       variable lookup_table_v : lookup_table_of_vr_indexes;
    begin
       for i in lookup_table_of_vr_indexes'range loop
-         lookup_table_v(i) := std_logic_vector(to_unsigned(i * VECTOR_LENGTH, clogb2(VECTOR_LENGTH)));
+         lookup_table_v(i) := std_logic_vector(to_unsigned(i * VECTOR_LENGTH/DATA_WIDTH, clogb2(VECTOR_LENGTH)));
       end loop;
       return lookup_table_v;
    end function;

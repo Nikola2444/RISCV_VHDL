@@ -1,35 +1,107 @@
 `ifndef CALC_DRIVER_SV
  `define CALC_DRIVER_SV
-class calc_driver extends uvm_driver#(calc_seq_item);
+class calc_driver extends uvm_driver#(control_seq_item);
 
-   `uvm_component_utils(calc_driver)
+    `uvm_component_utils(calc_driver)
    
-   virtual interface calc_if vif;
+   virtual interface v_lane_if vif;
+
+   typedef enum {wait_for_ready, send_control_signals} driving_stages;
+   driving_stages v_lane_dr_stages = wait_for_ready;
+
+   
+   const logic [6 : 0] arith_opcode = 7'b1010111;
+
+   const logic [5 : 0] v_add_funct6 = 6'b000000;
+   const logic [5 : 0] v_sub_funct6 = 6'b000010;
+   const logic [5 : 0] v_and_funct6 = 6'b001001;
+   const logic [5 : 0] v_or_funct6 = 6'b001010;
+   const logic [5 : 0] v_xor_funct6 = 6'b001011;
+   
+
+   const logic [1 : 0] vrf_read_write = 2'b00;
+   const logic [1 : 0] vrf_no_access = 2'b11;
+   
    
    function new(string name = "calc_driver", uvm_component parent = null);
-      super.new(name,parent);
-      if (!uvm_config_db#(virtual calc_if)::get(this, "", "calc_if", vif))
-        `uvm_fatal("NOVIF",{"virtual interface must be set:",get_full_name(),".vif"})
+       super.new(name,parent);
+       
    endfunction
 
+   function void build_phase(uvm_phase phase);
+       super.build_phase(phase);
+       if (!uvm_config_db#(virtual v_lane_if)::get(this, "", "v_lane_if", vif))
+         `uvm_fatal("NOVIF",{"virtual interface must be set:",get_full_name(),".vif"})
+   endfunction: build_phase
    function void connect_phase(uvm_phase phase);
-      super.connect_phase(phase);
-      if (!uvm_config_db#(virtual calc_if)::get(this, "", "calc_if", vif))
-        `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"})
+       super.connect_phase(phase);
+
    endfunction : connect_phase
 
    
    task main_phase(uvm_phase phase);
-      forever begin
-         seq_item_port.get_next_item(req);
-         `uvm_info(get_type_name(),
-                   $sformatf("Driver sending...\n%s", req.sprint()),
-                   UVM_HIGH)
-         // do actual driving here
-			   /* TODO */
-         seq_item_port.item_done();
-      end
+       vif.vrf_type_of_access_i = vrf_no_access;      
+       forever begin
+           @(posedge(vif.clk));
+	   #1ns;		       			   
+	   if (vif.reset) begin
+	       case (v_lane_dr_stages)
+		   wait_for_ready: begin
+
+		       if (vif.ready_o)
+			 v_lane_dr_stages = send_control_signals ;		       		       
+		   end
+		   send_control_signals: begin
+		       seq_item_port.get_next_item(req);
+		       `uvm_info(get_type_name(),
+				 $sformatf("Driver sending...\n%s", req.sprint()),
+				 UVM_LOW)
+		       vif.vector_instruction_i = req.vector_instruction_i;
+		       vif.vector_length_i = req.vector_length_i;
+		       vif.vmul_i = req.vmul_i;
+		       generate_control_signals (vif, req.vector_instruction_i);
+		       seq_item_port.item_done();
+		       v_lane_dr_stages = wait_for_ready;		       
+		   end
+	       endcase; // case (v_lane_dr_stages)
+	   end // if (vif.reset)
+	   
+           
+       end
    endtask : main_phase
+
+
+   function void generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
+      logic [6 : 0] opcode = req.vector_instruction_i [6 : 0];
+      logic [5 : 0] funct6 = req.vector_instruction_i[31 : 26];
+       
+       
+       case (opcode)
+	   arith_opcode: begin
+	       vif.vrf_type_of_access_i = vrf_read_write;
+	       
+	       case (funct6)
+		   v_add_funct6: begin
+		       $display("sending add_op");		       
+		       vif.alu_op_i = add_op;
+		   end
+		   v_sub_funct6: begin
+		       vif.alu_op_i = sub_op;
+		   end
+		   v_and_funct6: begin
+		       vif.alu_op_i = and_op;
+		   end
+		   v_or_funct6: begin
+		       vif.alu_op_i = or_op;
+		   end
+		   v_xor_funct6: begin
+		       vif.alu_op_i = xor_op;
+		   end		    
+	       endcase; // case funct6	       
+	   end // case: arith_opcode
+	   
+       endcase; // case req.vector_instruction_i[31              	          
+   endfunction: generate_control_signals
 
 endclass : calc_driver
 

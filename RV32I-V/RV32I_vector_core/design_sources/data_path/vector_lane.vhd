@@ -32,7 +32,7 @@ entity vector_lane is
         data_to_mem_o          : out std_logic_vector (DATA_WIDTH - 1 downto 0);
         -- status signals
         ready_o                : out std_logic;
-        load_fifo_almostmpty_o : out std_logic;
+        load_fifo_almostempty_o : out std_logic;
         load_fifo_almostfull_o : out std_logic;
         load_fifo_empty_o      : out std_logic;
         load_fifo_full_o       : out std_logic;
@@ -41,7 +41,7 @@ entity vector_lane is
         load_fifo_wrcount_o    : out std_logic_vector(8 downto 0);
         load_fifo_wrerr_o      : out std_logic;
 
-        store_fifo_almostmpty_o : out std_logic;
+        store_fifo_almostempty_o : out std_logic;
         store_fifo_almostfull_o : out std_logic;
         store_fifo_empty_o      : out std_logic;
         store_fifo_full_o       : out std_logic;
@@ -60,9 +60,9 @@ architecture structural of vector_lane is
    -- cycles is needed, that means insutruction is not supported. This is hardcoded!
    signal ROM_OP_exe_time_s : ROM_OP_exe_time :=
       --and      or      add      xor
-      ("001", "001", "001", "001",
+      ("000", "000", "000", "000",
        --no_op             sub      shr
-       "000", "000", "001", "001",
+       "000", "000", "000", "000",
        -- shra    mulu  mulhs  mulhsu
        "001", "100", "100", "100",
        --mulhu  divu    divs     remu
@@ -129,7 +129,7 @@ begin
          DATA_WIDTH          => DATA_WIDTH,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")   -- Target BRAM, "18Kb" or "36Kb" 
       port map (
-         ALMOSTEMPTY => load_fifo_almostmpty_o,  -- 1-bit output almost empty
+         ALMOSTEMPTY => load_fifo_almostempty_o,  -- 1-bit output almost empty
          ALMOSTFULL  => load_fifo_almostfull_o,  -- 1-bit output almost full
          DO          => fifo_data_output_s,  -- Output data, width defined by DATA_WIDTH parameter
          EMPTY       => load_fifo_empty_o,  -- 1-bit output empty
@@ -141,7 +141,7 @@ begin
          CLK         => clk,            -- 1-bit input clock
          DI          => data_from_mem_i,  -- Input data, width defined by DATA_WIDTH parameter
          RDEN        => load_fifo_re_i,   -- 1-bit input read enable
-         RST         => reset,          -- 1-bit input reset
+         RST         => not(reset),          -- 1-bit input reset
          WREN        => load_fifo_we_i  -- 1-bit input write enable
          );
 
@@ -153,7 +153,7 @@ begin
          DATA_WIDTH          => DATA_WIDTH,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")     -- Target BRAM, "18Kb" or "36Kb" 
       port map (
-         ALMOSTEMPTY => store_fifo_almostmpty_o,  -- 1-bit output almost empty
+         ALMOSTEMPTY => store_fifo_almostempty_o,  -- 1-bit output almost empty
          ALMOSTFULL  => store_fifo_almostfull_o,  -- 1-bit output almost full
          DO          => data_to_mem_o,  -- Output data, width defined by DATA_WIDTH parameter
          EMPTY       => store_fifo_empty_o,  -- 1-bit output empty
@@ -165,7 +165,7 @@ begin
          CLK         => CLK,            -- 1-bit input clock
          DI          => vs2_data_s,  -- Input data, width defined by DATA_WIDTH parameter
          RDEN        => store_fifo_re_i,    -- 1-bit input read enable
-         RST         => reset,          -- 1-bit input reset
+         RST         => not(reset),          -- 1-bit input reset
          WREN        => store_fifo_we_i     -- 1-bit input write enable
          );
 

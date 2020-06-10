@@ -1,10 +1,10 @@
 `ifndef CALC_BASE_SEQ_SV
  `define CALC_BASE_SEQ_SV
 
-class calc_base_seq extends uvm_sequence#(calc_seq_item);
+class calc_base_seq extends uvm_sequence#(control_seq_item);
 
    `uvm_object_utils(calc_base_seq)
-   `uvm_declare_p_sequencer(calc_sequencer)
+   `uvm_declare_p_sequencer(control_sequencer)
 
    function new(string name = "calc_base_seq");
       super.new(name);

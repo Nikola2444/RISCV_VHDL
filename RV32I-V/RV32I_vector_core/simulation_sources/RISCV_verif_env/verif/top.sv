@@ -1,52 +1,78 @@
-module calc_verif_top;
+module vector_lane_verif_top;
 
    import uvm_pkg::*;     // import the UVM library
 `include "uvm_macros.svh" // Include the UVM macros
 
-   import calc_test_pkg::*;
+   import test_pkg::*;
 
    logic clk;
-   logic [6 : 0] rst;
+   logic reset;
 
    // interface
-   calc_if calc_vif(clk, rst);
+   v_lane_if v_lane_vif(clk, reset);
 
    // DUT
-   calc_top DUT(
-                .c_clk        ( clk ),
-                .reset        ( rst ),
-                .out_data1    ( calc_vif.out_data1 ),
-                .out_data2    ( calc_vif.out_data2 ),
-                .out_data3    ( calc_vif.out_data3 ),
-                .out_data4    ( calc_vif.out_data4 ),
-                .out_resp1    ( calc_vif.out_resp1 ),
-                .out_resp2    ( calc_vif.out_resp2 ),
-                .out_resp3    ( calc_vif.out_resp3 ),
-                .out_resp4    ( calc_vif.out_resp4 ),
-                .req1_cmd_in  ( calc_vif.req1_cmd_in ),
-                .req1_data_in ( calc_vif.req1_data_in ),
-                .req2_cmd_in  ( calc_vif.req2_cmd_in ),
-                .req2_data_in ( calc_vif.req2_data_in ),
-                .req3_cmd_in  ( calc_vif.req3_cmd_in ),
-                .req3_data_in ( calc_vif.req3_data_in ),
-                .req4_cmd_in  ( calc_vif.req4_cmd_in ),
-                .req4_data_in ( calc_vif.req4_data_in )
-                );
+   vector_lane#(
+		.VECTOR_LENGTH (v_lane_vif.VECTOR_LENGTH),
+		.DATA_WIDTH(32)) 
+   vector_lane_DUT(
+		   .clk(clk),
+		   .reset(reset),
+
+		   .vector_instruction_i(v_lane_vif.vector_instruction_i),
+		   .data_from_mem_i (v_lane_vif.data_from_mem_i),
+		   .vmul_i(v_lane_vif.vmul_i),
+		   .vector_length_i(v_lane_vif.vector_length_i),
+
+		   .load_fifo_we_i(v_lane_vif.load_fifo_we_i),
+		   .store_fifo_re_i(v_lane_vif.store_fifo_re_i),
+
+		   .alu_op_i(v_lane_vif.alu_op_i),
+		   .mem_to_vrf_i(v_lane_vif.mem_to_vrf_i),
+		   .store_fifo_we_i(v_lane_vif.store_fifo_we_i),
+		   .vrf_type_of_access_i(v_lane_vif.vrf_type_of_access_i),
+		   .load_fifo_re_i(v_lane_vif.load_fifo_re_i),
+
+		   .data_to_mem_o(v_lane_vif.data_to_mem_o),
+
+		   .ready_o(v_lane_vif.ready_o),
+
+		   .load_fifo_almostempty_o(v_lane_vif.load_fifo_almostempty_o),
+		   .load_fifo_almostfull_o(v_lane_vif.load_fifo_almostfull_o),
+		   .load_fifo_empty_o(v_lane_vif.load_fifo_empty_o),
+		   .load_fifo_full_o(v_lane_vif.load_fifo_full_o),
+		   .load_fifo_rdcount_o(v_lane_vif.load_fifo_rdcount_o),
+		   .load_fifo_rderr_o(v_lane_vif.load_fifo_rderr_o),
+		   .load_fifo_wrcount_o(v_lane_vif.load_fifo_wrcount_o),
+		   .load_fifo_wrerr_o(v_lane_vif.load_fifo_wrerr_o),
+
+		   .store_fifo_almostempty_o(v_lane_vif.store_fifo_almostempty_o),
+		   .store_fifo_almostfull_o(v_lane_vif.store_fifo_almostfull_o),
+		   .store_fifo_empty_o(v_lane_vif.store_fifo_empty_o),
+		   .store_fifo_full_o(v_lane_vif.store_fifo_full_o),
+		   .store_fifo_rdcount_o(v_lane_vif.store_fifo_rdcount_o),
+		   .store_fifo_rderr_o(v_lane_vif.store_fifo_rderr_o),
+		   .store_fifo_wrcount_o(v_lane_vif.store_fifo_wrcount_o),
+		   .store_fifo_wrerr_o(v_lane_vif.store_fifo_wrerr_o)
+       
+		   );
 
    // run test
    initial begin      
-      uvm_config_db#(virtual calc_if)::set(null, "uvm_test_top.env", "calc_if", calc_vif);
-      run_test();
+       uvm_config_db#(virtual v_lane_if)::set(null, "uvm_test_top.env", "v_lane_if", v_lane_vif);
+       run_test();
    end
 
    // clock and reset init.
    initial begin
-      clk <= 0;
-      rst <= 1;
-      #50 rst <= 0;
+       clk <= 0;       
+       reset <= 0;
+       for (int i = 0; i < 6; i++)
+	 @(posedge(clk));
+       reset <= 1;
    end
 
    // clock generation
    always #50 clk = ~clk;
 
-endmodule : calc_verif_top
+endmodule : vector_lane_verif_top

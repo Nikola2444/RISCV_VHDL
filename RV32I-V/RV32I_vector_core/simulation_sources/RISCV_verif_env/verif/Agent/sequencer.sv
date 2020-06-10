@@ -1,15 +1,15 @@
-`ifndef CALC_SEQUENCER_SV
- `define CALC_SEQUENCER_SV
+`ifndef CONTROL_SEQUENCER_SV
+ `define CONTROL_SEQUENCER_SV
 
-class calc_sequencer extends uvm_sequencer#(calc_seq_item);
+class control_sequencer extends uvm_sequencer#(control_seq_item);
 
-   `uvm_component_utils(calc_sequencer)
+   `uvm_component_utils(control_sequencer)
 
-   function new(string name = "calc_sequencer", uvm_component parent = null);
+   function new(string name = "control_sequencer", uvm_component parent = null);
       super.new(name,parent);
    endfunction
 
-endclass : calc_sequencer
+endclass : control_sequencer
 
 `endif
 
