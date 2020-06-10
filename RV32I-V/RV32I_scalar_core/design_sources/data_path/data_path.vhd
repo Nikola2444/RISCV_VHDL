@@ -5,8 +5,7 @@ use ieee.numeric_std.all;
 
 
 entity data_path is
-   port(
-      -- global synchronization ports
+   port(-- global synchronization ports
       clk                 : in  std_logic;
       reset               : in  std_logic;
       -- instruction memory interface
@@ -43,10 +42,10 @@ end entity;
 
 architecture Behavioral of data_path is
 
-	   --*********  INSTRUCTION FETCH  **************
-   signal pc_reg_if_s             : std_logic_vector (31 downto 0);
-   signal pc_next_if_s            : std_logic_vector (31 downto 0);
-   signal pc_adder_if_s           : std_logic_vector (31 downto 0);
+   --*********  INSTRUCTION FETCH  **************
+   signal pc_reg_if_s   : std_logic_vector (31 downto 0);
+   signal pc_next_if_s  : std_logic_vector (31 downto 0);
+   signal pc_adder_if_s : std_logic_vector (31 downto 0);
 
    --*********  INSTRUCTION DECODE **************
    signal pc_adder_id_s           : std_logic_vector (31 downto 0);
@@ -54,8 +53,8 @@ architecture Behavioral of data_path is
    signal rs1_data_id_s           : std_logic_vector (31 downto 0);
    signal rs2_data_id_s           : std_logic_vector (31 downto 0);
    signal immediate_extended_id_s : std_logic_vector (31 downto 0);
-   signal branch_condition_b_ex_s : std_logic_vector (31 downto 0);   
-   signal branch_condition_a_ex_s : std_logic_vector (31 downto 0);   
+   signal branch_condition_b_ex_s : std_logic_vector (31 downto 0);
+   signal branch_condition_a_ex_s : std_logic_vector (31 downto 0);
    signal branch_adder_id_s       : std_logic_vector (31 downto 0);
    signal instruction_id_s        : std_logic_vector (31 downto 0);
    signal rs1_address_id_s        : std_logic_vector (4 downto 0);
@@ -78,17 +77,17 @@ architecture Behavioral of data_path is
    signal rd_address_ex_s         : std_logic_vector (4 downto 0);
 
    --*********       MEMORY        **************
-   signal pc_adder_mem_s          : std_logic_vector (31 downto 0);
-   signal alu_result_mem_s        : std_logic_vector(31 downto 0);
-   signal rd_address_mem_s        : std_logic_vector (4 downto 0);
-   signal rs2_data_mem_s          : std_logic_vector (31 downto 0);
+   signal pc_adder_mem_s   : std_logic_vector (31 downto 0);
+   signal alu_result_mem_s : std_logic_vector(31 downto 0);
+   signal rd_address_mem_s : std_logic_vector (4 downto 0);
+   signal rs2_data_mem_s   : std_logic_vector (31 downto 0);
 
    --*********      WRITEBACK      **************
-   signal pc_adder_wb_s           : std_logic_vector (31 downto 0);
-   signal alu_result_wb_s         : std_logic_vector(31 downto 0);
-   signal extended_data_wb_s      : std_logic_vector (31 downto 0);
-   signal rd_data_wb_s            : std_logic_vector (31 downto 0);
-   signal rd_address_wb_s         : std_logic_vector (4 downto 0);
+   signal pc_adder_wb_s      : std_logic_vector (31 downto 0);
+   signal alu_result_wb_s    : std_logic_vector(31 downto 0);
+   signal extended_data_wb_s : std_logic_vector (31 downto 0);
+   signal rd_data_wb_s       : std_logic_vector (31 downto 0);
+   signal rd_address_wb_s    : std_logic_vector (4 downto 0);
 
 begin
 
@@ -271,13 +270,13 @@ begin
       generic map (
          WIDTH => 32)
       port map (
-         a_i    => a_ex_s,
-         b_i    => b_ex_s,
-         op_i   => alu_op_i,
-         res_o  => alu_result_ex_s);
-         --zero_o => alu_zero_ex_s,
-         --of_o   => alu_of_ex_s
-	
+         a_i   => a_ex_s,
+         b_i   => b_ex_s,
+         op_i  => alu_op_i,
+         res_o => alu_result_ex_s);
+   --zero_o => alu_zero_ex_s,
+   --of_o   => alu_of_ex_s
+
 
    --***********  Outputs  ***************
    --From instruction memory

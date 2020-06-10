@@ -14,8 +14,8 @@ entity vector_lane is
         -- **************Input data**************************************
         vector_instruction_i : in std_logic_vector(31 downto 0);
         data_from_mem_i      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        vmul_i : in std_logic_vector (1 downto 0);
-        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
+        vmul_i               : in std_logic_vector (1 downto 0);
+        vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
         --*************control signals***********************************
         -- from memory control unit        
         load_fifo_we_i       : in std_logic;
@@ -93,7 +93,7 @@ begin
 
 --****************************INSTANTIATIONS*********************************
 
-   
+
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH    => DATA_WIDTH,
@@ -102,10 +102,10 @@ begin
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
-         alu_exe_time_i => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),      
-         vmul_i => vmul_i,
-         vm_i => vector_instruction_i(25),
-         vector_length_i => vector_length_i,
+         alu_exe_time_i       => ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i))),
+         vmul_i               => vmul_i,
+         vm_i                 => vector_instruction_i(25),
+         vector_length_i      => vector_length_i,
          vs1_address_i        => vector_instruction_i(19 downto 15),
          vs2_address_i        => vector_instruction_i(24 downto 20),
          vd_address_i         => vector_instruction_i(11 downto 7),
