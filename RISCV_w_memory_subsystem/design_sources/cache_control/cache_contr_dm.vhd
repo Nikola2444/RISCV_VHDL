@@ -14,6 +14,11 @@ generic (PHY_ADDR_SPACE : natural := 512*1024*1024; -- 512 MB
 			-- controller drives ce for RISC
 			data_ready_o : out std_logic;
 			instr_ready_o : out std_logic;
+			-- NOTE Just for test bench, to simulate real memory
+			addr_phy_o 			: out std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			dread_phy_i 		: in std_logic_vector(31 downto 0);
+			dwrite_phy_o		: out std_logic_vector(31 downto 0);
+         we_phy_o				: out std_logic_vector(3 downto 0);
 			-- Level 1 caches
 			-- Instruction cache
 			rst_instr_cache_i : in std_logic;
@@ -51,13 +56,13 @@ architecture Behavioral of cache_contr_dm is
 
 
 	-- Instruction cache signals
-	signal addr_instr_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
-	signal dwrite_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
-	signal dread_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
-	signal we_instr_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
-	signal en_instr_cache_s : std_logic;
-	signal rst_instr_cache_s : std_logic;
-	signal regce_instr_cache_s : std_logic;
+	signal addra_instr_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+	signal dwritea_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
+	signal dreada_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
+	signal wea_instr_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
+	signal ena_instr_cache_s : std_logic;
+	signal rsta_instr_cache_s : std_logic;
+	signal regcea_instr_cache_s : std_logic;
 
 	-- Instruction cache tag store singals
 	-- port A
@@ -66,23 +71,23 @@ architecture Behavioral of cache_contr_dm is
 	signal addra_instr_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
 	signal ena_instr_tag_s : std_logic;
 	signal wea_instr_tag_s : std_logic;
-	-- port B
-	signal dwriteb_instr_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1IC_BKK_WIDTH - 1 downto 0);
-	signal dreadb_instr_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1IC_BKK_WIDTH - 1 downto 0);
-	signal addrb_instr_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
-	signal enb_instr_tag_s : std_logic;
-	signal web_instr_tag_s : std_logic;
+	-- port B TODO left here if needed
+	--signal dwriteb_instr_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1IC_BKK_WIDTH - 1 downto 0);
+	--signal dreadb_instr_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1IC_BKK_WIDTH - 1 downto 0);
+	--signal addrb_instr_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
+	--signal enb_instr_tag_s : std_logic;
+	--signal web_instr_tag_s : std_logic;
 
 
 	-- Data cache signals
 	signal clk_data_cache_s : std_logic;
-	signal addr_data_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
-	signal dwrite_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
-	signal dread_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
-	signal we_data_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
-	signal en_data_cache_s : std_logic; 
-	signal rst_data_cache_s : std_logic; 
-	signal regce_data_cache_s : std_logic;
+	signal addra_data_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+	signal dwritea_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
+	signal dreada_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
+	signal wea_data_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
+	signal ena_data_cache_s : std_logic; 
+	signal rsta_data_cache_s : std_logic; 
+	signal regcea_data_cache_s : std_logic;
 
 	-- Data cache tag store singals
 	-- port A
@@ -94,13 +99,13 @@ architecture Behavioral of cache_contr_dm is
 	signal rsta_data_tag_s : std_logic;
 	signal wea_data_tag_s : std_logic;
 	-- port B
-	signal dwriteb_data_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1DC_BKK_WIDTH - 1 downto 0);
-	signal dreadb_data_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1DC_BKK_WIDTH - 1 downto 0);
-	signal addrb_data_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
-	signal enb_data_tag_s : std_logic;
-	signal regceb_data_tag_s : std_logic;
-	signal rstb_data_tag_s : std_logic;
-	signal web_data_tag_s : std_logic;
+	--signal dwriteb_data_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1DC_BKK_WIDTH - 1 downto 0);
+	--signal dreadb_data_tag_s : std_logic_vector(LVL1C_TAG_WIDTH + LVL1DC_BKK_WIDTH - 1 downto 0);
+	--signal addrb_data_tag_s : std_logic_vector(clogb2(LVL1C_NB_BLOCKS)-1 downto 0);
+	--signal enb_data_tag_s : std_logic;
+	--signal regceb_data_tag_s : std_logic;
+	--signal rstb_data_tag_s : std_logic;
+	--signal web_data_tag_s : std_logic;
 
 
 	-- Level 2 cache signals
@@ -148,8 +153,8 @@ architecture Behavioral of cache_contr_dm is
 	-- 'tag' and 'bookkeeping bits: MSB - valid, LSB -dirty' fields from data tag store
 	signal lvl1da_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
 	signal lvl1da_ts_bkk_s : std_logic_vector(LVL1DC_BKK_WIDTH-1 downto 0);
-	signal lvl1db_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
-	signal lvl1db_ts_bkk_s : std_logic_vector(LVL1DC_BKK_WIDTH-1 downto 0);
+	--signal lvl1db_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
+	--signal lvl1db_ts_bkk_s : std_logic_vector(LVL1DC_BKK_WIDTH-1 downto 0);
 	-- 'tag', 'index', 'byte in block' and 'tag store address' fields for instruction cache
 	signal lvl1i_c_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
 	signal lvl1i_c_idx_s : std_logic_vector(LVL1C_INDEX_WIDTH-1 downto 0);
@@ -158,8 +163,8 @@ architecture Behavioral of cache_contr_dm is
 	-- 'tag' and 'bookkeeping bits: MSB - valid, LSB -dirty' fields from instruction tag store
 	signal lvl1ia_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
 	signal lvl1ia_ts_bkk_s : std_logic_vector(LVL1IC_BKK_WIDTH-1 downto 0);
-	signal lvl1ib_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
-	signal lvl1ib_ts_bkk_s : std_logic_vector(LVL1IC_BKK_WIDTH-1 downto 0);
+	--signal lvl1ib_ts_tag_s : std_logic_vector(LVL1C_TAG_WIDTH-1 downto 0);
+	--signal lvl1ib_ts_bkk_s : std_logic_vector(LVL1IC_BKK_WIDTH-1 downto 0);
 	-- TODO check if these will be used, or signal values will be derived directly from some other signal
 	-- 'tag', 'index', 'byte in block' and 'tag store address' fields for levelvl2 cache
 	signal lvl2a_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
@@ -181,21 +186,22 @@ architecture Behavioral of cache_contr_dm is
 
 	-- SIGNALS FOR COMPARING TAG VALUES
 	signal lvl1ii_tag_cmp_s  : std_logic; -- incoming instruction address VS instruction tag store (hit in instruction cache)
-	signal lvl1id_tag_cmp_s  : std_logic; -- incoming instruction address VS data tag store (check for duplicate block in data)
+	--signal lvl1id_tag_cmp_s  : std_logic; -- incoming instruction address VS data tag store (check for duplicate block in data)
 	signal lvl1dd_tag_cmp_s  : std_logic; -- incoming data address VS data tag store (hit in data cache)
-	signal lvl1di_tag_cmp_s  : std_logic; -- incoming data address VS instruction tag store (check for duplicate in instr)
-	signal lvl2_tag_cmp_s  : std_logic; -- incoming address from missed lvl1 i/d cache VS lvl2 tag store
+	--signal lvl1di_tag_cmp_s  : std_logic; -- incoming data address VS instruction tag store (check for duplicate in instr)
+	signal lvl2a_tag_cmp_s  : std_logic; -- incoming address from missed lvl1 i/d cache VS lvl2 tag store
+	signal lvl2b_tag_cmp_s  : std_logic; -- interconnect
 	-- SIGNALS TO INDICATE CACHE HITS/MISSES
 	signal lvl1d_c_hit_s  : std_logic; -- hit in data cache
-	signal lvl1d_c_dup_s  : std_logic; -- addressing block in data cache that has duplicate in instruction cache
+	--signal lvl1d_c_dup_s  : std_logic; -- addressing block in data cache that has duplicate in instruction cache
 	signal lvl1i_c_hit_s  : std_logic; -- hit in instruction cache
-	signal lvl1i_c_dup_s  : std_logic; -- addressing block in instruction cache that has duplicate in data cache
-	signal lvl2_c_hit_s  : std_logic; -- hit in lvl 2 cache
-
+	--signal lvl1i_c_dup_s  : std_logic; -- addressing block in instruction cache that has duplicate in data cache
+	signal lvl2a_c_hit_s  : std_logic; -- hit in lvl 2 cache
+	signal lvl2b_c_hit_s  : std_logic; -- hit in lvl 2 cache
 
 
 	-- Cache controler state
-	type cc_state is (idle, fetch, flush, wait4lvl2);
+	type cc_state is (idle, fetch_instr, fetch_data, flush_data, wait4lvl2);
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
 	-- cc -  cache controller counter
@@ -205,13 +211,14 @@ architecture Behavioral of cache_contr_dm is
 
 begin
 
+
 	-- Separate input ports into fields for easier menagment
 	-- From data cache
 	lvl1d_c_tag_s <= addr_data_i(PHY_ADDR_WIDTH-1 downto LVL1C_ADDR_WIDTH);
 	lvl1d_c_idx_s <= addr_data_i(LVL1C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
 	lvl1d_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl1d_c_addr_s <= addr_data_i(LVL1C_ADDR_WIDTH-1 downto 0);
-	-- From instruction cache
+	-- From instruction cache 
 	lvl1i_c_tag_s <= addr_instr_i(PHY_ADDR_WIDTH-1 downto LVL1C_ADDR_WIDTH);
 	lvl1i_c_idx_s <= addr_instr_i(LVL1C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
 	lvl1i_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
@@ -233,24 +240,26 @@ begin
 	addra_data_tag_s <= lvl1d_c_idx_s;
 	lvl1da_ts_tag_s <= dreada_data_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
 	lvl1da_ts_bkk_s <= dreada_data_tag_s(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
-	-- Data tag store port B - instruction address
-	addrb_data_tag_s <= lvl1i_c_idx_s;
-	lvl1db_ts_tag_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
-	lvl1db_ts_bkk_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	-- NOTE uncoment port B if there is a switch to dual port for tag store
+	-- Data tag store port B - instruction address 
+	--addrb_data_tag_s <= lvl1i_c_idx_s;
+	--lvl1db_ts_tag_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	--lvl1db_ts_bkk_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
 
 	-- Instruction tag store port A - instruction address
 	addra_instr_tag_s <= lvl1i_c_idx_s;
-	lvl1ia_ts_tag_s <= dread_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
-	lvl1ia_ts_bkk_s <= dread_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	lvl1ia_ts_tag_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	lvl1ia_ts_bkk_s <= dreada_instr_tag_s(LVL1C_TAG_WIDTH+LVL1IC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	-- NOTE uncoment port B if there is a switch to dual port for tag store
 	-- Instruction tag store port B  - data address
-	addrb_instr_tag_s <= lvl1d_c_idx_s;
-	lvl1ib_ts_tag_s <= dread_data_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
-	lvl1ib_ts_bkk_s <= dread_data_tag_s(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
+	--addrb_instr_tag_s <= lvl1d_c_idx_s;
+	--lvl1ib_ts_tag_s <= dread_data_tag_s(LVL1C_TAG_WIDTH-1 downto 0);
+	--lvl1ib_ts_bkk_s <= dread_data_tag_s(LVL1C_TAG_WIDTH+LVL1DC_BKK_WIDTH-1 downto LVL1C_TAG_WIDTH);
 
 	-- lvl2 tag store, for LVL1
 	--addra_lvl2_tag_s <= lvl2a_c_idx_s; -- TODO set either data or instruction cache address in FSM  (the one that missed)
-	lvl2a_ts_tag_s <= dreada_lvl2_tag_i(LVL2C_TAG_WIDTH-1 downto 0);
-	lvl2a_ts_bkk_s <= dreada_lvl2_tag_i(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH);
+	lvl2a_ts_tag_s <= dreada_lvl2_tag_s(LVL2C_TAG_WIDTH-1 downto 0);
+	lvl2a_ts_bkk_s <= dreada_lvl2_tag_s(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH);
 
 	-- lvl2 tag store, for interconect
 	--addrb_lvl2_tag_o <= lvl2b_c_idx_s;
@@ -260,20 +269,25 @@ begin
 	
 	-- Compare tags
 	lvl1dd_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1da_ts_tag_s else '0';
-	lvl1di_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1ib_ts_tag_s else '0';
+	--lvl1di_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1ib_ts_tag_s else '0';
 	lvl1ii_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1ia_ts_tag_s else '0';
-	lvl1id_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1db_ts_tag_s else '0';
+	--lvl1id_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1db_ts_tag_s else '0';
 	lvl2a_tag_cmp_s <= '1' when lvl2a_c_tag_s = lvl2a_ts_tag_s else '0'; 
 	--lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
 	
 	-- Cache hit/miss indicator flags => same tag + valid
 	lvl1d_c_hit_s <= lvl1dd_tag_cmp_s and lvl1da_ts_bkk_s(0); 
 	lvl1i_c_hit_s <= lvl1ii_tag_cmp_s and lvl1ia_ts_bkk_s(0);
-	lvl1d_c_dup_s <= lvl1di_tag_cmp_s and lvl1ib_ts_bkk_s(0);
-	lvl1i_c_dup_s <= lvl1id_tag_cmp_s and lvl1db_ts_bkk_s(0);
-	lvl1i_c_haz_s <= lvl1i_c_dup_s and lvl1db_ts_bkk_s(1);
-	lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
+	-- NOTE uncoment if explicit resolution of self modifying code is needed
+	--lvl1d_c_dup_s <= lvl1di_tag_cmp_s and lvl1ib_ts_bkk_s(0);
+	--lvl1i_c_dup_s <= lvl1id_tag_cmp_s and lvl1db_ts_bkk_s(0);
+	--lvl1i_c_haz_s <= lvl1i_c_dup_s and lvl1db_ts_bkk_s(1);
+	--lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
 	--lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(1);
+
+	-- TODO check if this shit can even work outside of fsm
+	data_ready_o <= lvl1d_c_hit_s;
+	instr_ready_o <= lvl1i_c_hit_s;
 
 	-- Adder for counters 
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
@@ -303,42 +317,54 @@ begin
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
 	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
-	fsm_instr : process(icc_state_reg, instr_c_hit_s) is
+	fsm_instr : process(cc_state_reg) is
 	begin
-	we_instr_tag_o <= '0';
-	dwrite_instr_tag_o <= (others => '0');
+		-- for FSM
+		cc_state_next <= idle;
+		cc_counter_next <= (others => '0');
+		-- LVL1 instruction cache and tag
+		wea_instr_tag_s <= '0';
+		dwritea_instr_tag_s <= (others => '0');
+		wea_instr_cache_s <= (others => '0');
+		addra_instr_cache_s <= addr_instr_i;
+		dwritea_instr_cache_s <= (others => '0');
+		dread_instr_o <= dreada_instr_cache_s;
+		-- LVL1 data cache and tag
+		wea_data_tag_s <= '0';
+		dwritea_data_tag_s <=(others => '0');
+		wea_data_cache_s <= we_data_i;
+		addra_data_cache_s <= addr_data_i;
+		dwritea_data_cache_s <= dwrite_data_i;
+		dread_data_o <= dreada_data_cache_s;
+		-- LVL2 data cache and tag
+		--addra_lvl2_cache_s <= lvl2a_c_idx_s & cc_counter_next & "00"; -- index addresses a block in cache, counter & 00 address 4 bytes at a time
 
-	icc_state_next <= idle;
-	icc_counter_next <= (others => '0');
-
-	instr_ready_o <= '0';
-	dread_instr_o <= dread_instr_i;
-	dwrite_instr_o <= dwrite_instr_i;
-	we_instr_o <= we_instr_i;
-	addr_instr_o <= addr_instr_i;
-	addrb_lvl2_o <= lvl2b_c_idx_s & icc_counter_next & "00"; -- index addresses a block in cache, counter & 00 address 4 bytes at a time
-		case (icc_state_reg) is
+		case (cc_state_reg) is
 			when idle =>
-				instr_ready_o <= '1';
-				if(instr_c_hit_s = '0') then -- instr cache miss
-					if(lvl2b_c_hit_s = '1')then
-						icc_state_next <= fetch; -- fetch required data
+				if(lvl1i_c_hit_s = '0') then -- instr cache miss
+					cc_state_next <= fetch_instr;
+				end if;
+				if(lvl1d_c_hit_s = '0') then -- data cache miss
+					if(lvl1da_ts_bkk_s(LVL1DC_BKK_WIDTH-1) = '1')then -- data in lvl1 is dirty
+						cc_state_next <= flush_data;
 					else
-						icc_state_next <= wait4lvl2; -- lvl2 doesn't have data
+						cc_state_next <= fetch_data;
 					end if;
 				end if;
+
+--	TODO TODO check previous state and then continue
 			when fetch => 
-				addr_instr_o <= instr_c_idx_s & icc_counter_reg & 00;
+				addr_instr_o <= instr_c_idx_s & cc_counter_reg & 00;
 				dwrite_instr_o <= dreadb_lvl2_i;
-				icc_counter_next <= icc_counter_incr;
-				if(icc_counter_reg = icc_counter_max)then 
+				cc_counter_next <= cc_counter_incr;
+				if(cc_counter_reg = icc_counter_max)then 
 					-- finished with writing entire block
-					icc_state_next <= idle;
+					cc_state_next <= idle;
 					-- write new tag to tag store, set valid, reset dirty
 					dwrite_instr_tag_o <= "10" & instr_c_tag_s;
 					we_instr_tag_o <= '1';
 				else
-					icc_state_next <= fetch;
+					cc_state_next <= fetch;
 				end if;
 			when wait4lvl2 =>
 				--TODO implement logic
@@ -351,11 +377,14 @@ begin
 	--********** LEVEL 1 CACHE  **************
 	-- INSTRUCTION CACHE
 	-- TODO double check this address logic, change if unaligned accesses are implemented
-	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
+	-- TODO 32 bit address will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
-	addr_instr_cache_s <= addr_instr_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
-	we_instr_cache_s <= "0000";
-	regce_instr_cache_s <= '0';
+	--we_instr_cache_s <= "0000"; NOTE nah
+	addra_instr_cache_s <= addr_instr_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
+	regcea_instr_cache_s <= '0';
+	ena_instr_cache_s <= en_instr_cache_i;
+	rsta_instr_cache_s <= rst_instr_cache_i;
+	-- TODO make a driver for dina, wea, douta
 	-- Instantiation of instruction cache
 	instruction_cache : entity work.BRAM_sp_rf_bw(rtl)
 		generic map (
@@ -367,21 +396,22 @@ begin
 		)
 		port map  (
 			clk   => clk,
-			addra  => addr_instr_cache_s,
-			dina   => dwrite_instr_cache_s,
-			wea    => we_instr_cache_s,
-			ena    => en_instr_cache_s,
-			rsta   => rst_instr_cache_s,
-			regcea => regce_instr_cache_s,
-			douta  => dread_instr_cache_s
+			addra  => addra_instr_cache_s,
+			dina   => dwritea_instr_cache_s,
+			wea    => wea_instr_cache_s,
+			ena    => ena_instr_cache_s,
+			rsta   => rsta_instr_cache_s,
+			regcea => regcea_instr_cache_s,
+			douta  => dreada_instr_cache_s
 		);
 
-	-- TAG STORE FOR INSTRUCTION CACHE
+ -- TAG STORE FOR INSTRUCTION CACHE
  -- TODO @ system boot this entire memory needs to be set to 0
  -- TODO either implement reset and test its timing or make cc handle it @ boot
---	rst_instr_tag_s <= reset;
+ --	rst_instr_tag_s <= reset;
 	--instantiation of tag store
-	instruction_tag_store: entity work.ram_tdp_ar(rtl)
+	ena_instr_tag_s <= '1'; --NOTE right?
+	instruction_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
 			RAM_WIDTH => LVL1C_TAG_WIDTH + LVL1IC_BKK_WIDTH,
 			RAM_DEPTH => LVL1C_NB_BLOCKS
@@ -394,13 +424,13 @@ begin
 			dina => dwritea_instr_tag_s,
 			ena => ena_instr_tag_s,
 			douta => dreada_instr_tag_s,
-			wea => wea_instr_tag_s,
+			wea => wea_instr_tag_s
 			--port b
-			addrb => addrb_instr_tag_s,
-			dinb => dwriteb_instr_tag_s,
-			enb => enb_instr_tag_s,
-			doutb => dreadb_instr_tag_s,
-			web => web_instr_tag_s
+			--addrb => addrb_instr_tag_s,
+			--dinb => dwriteb_instr_tag_s,
+			--enb => enb_instr_tag_s,
+			--doutb => dreadb_instr_tag_s,
+			--web => web_instr_tag_s
 		);
 
 	-- DATA CACHE
@@ -408,10 +438,10 @@ begin
 	-- TODO double check this address logic!, change if unaligned accesses are implemented
 	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
-	addr_data_cache_s <= addr_data_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
-	rst_data_cache_s <= reset;
-	en_data_cache_s <= '1';
-	regce_data_cache_s <= '0';
+	addra_data_cache_s <= addr_data_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
+	rsta_data_cache_s <= reset;
+	ena_data_cache_s <= '1';
+	regcea_data_cache_s <= '0';
 	-- Instantiation of data cache
 	data_cache : entity work.BRAM_sp_rf_bw(rtl)
 		generic map (
@@ -422,14 +452,14 @@ begin
 				INIT_FILE => "" 
 		)
 		port map  (
-				addra  => addr_data_cache_s,
-				dina   => dwrite_data_cache_s,
-				clk   => clk_data_cache_s,
-				wea    => we_data_cache_s,
-				ena    => en_data_cache_s,
-				rsta   => rst_data_cache_s,
-				regcea => regce_data_cache_s,
-				douta  => dread_data_cache_s
+				clk   => clk,
+				addra  => addra_data_cache_s,
+				dina   => dwritea_data_cache_s,
+				wea    => wea_data_cache_s,
+				ena    => ena_data_cache_s,
+				rsta   => rsta_data_cache_s,
+				regcea => regcea_data_cache_s,
+				douta  => dreada_data_cache_s
 		);
 
 
@@ -438,7 +468,8 @@ begin
  -- TODO either implement reset and test its timing or make cc handle it @ boot
 	--rst_data_tag_s <= reset;
 	-- Instantiation of tag store
-	data_tag_store: entity work.ram_tdp_ar(rtl)
+	ena_data_tag_s <= '1'; -- NOTE i think
+	data_tag_store: entity work.ram_sp_ar(rtl)
 		generic map (
 			RAM_WIDTH => LVL1C_TAG_WIDTH + LVL1DC_BKK_WIDTH,
 			RAM_DEPTH => LVL1C_NB_BLOCKS
@@ -451,13 +482,13 @@ begin
 			dina => dwritea_data_tag_s,
 			douta => dreada_data_tag_s,
 			wea => wea_data_tag_s,
-			ena => ena_data_tag_s,
+			ena => ena_data_tag_s
 			--port b
-			doutb => dreadb_data_tag_s,
-			addrb => addrb_data_tag_s,
-			dinb => dwriteb_data_tag_s,
-			web => web_data_tag_s,
-			enb => ena_data_tag_s
+			--doutb => dreadb_data_tag_s,
+			--addrb => addrb_data_tag_s,
+			--dinb => dwriteb_data_tag_s,
+			--web => web_data_tag_s,
+			--enb => ena_data_tag_s
 		);
 
 
@@ -504,6 +535,8 @@ begin
  -- TODO @ system boot this entire memory needs to be set to 0
  -- TODO either implement reset and test its timing or make cc handle it @ boot
 	-- tag store for Level 2 cache
+	ena_lvl2_tag_s <= '1';
+	enb_lvl2_tag_s <= '1';
 	level_2_tag_store: entity work.ram_tdp_ar(rtl)
 		generic map (
 			 RAM_WIDTH => LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH,

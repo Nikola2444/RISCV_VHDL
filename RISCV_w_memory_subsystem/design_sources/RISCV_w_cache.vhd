@@ -7,10 +7,16 @@ use work.cache_pkg.all;
 entity RISCV_w_cache is
 	port (clk : in std_logic;
 			reset : in std_logic;
+			-- NOTE Just for test bench, to simulate real memory
+			addr_phy_o 		: out std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			dread_phy_i 		: in std_logic_vector(31 downto 0);
+			dwrite_phy_o		: out std_logic_vector(31 downto 0);
+         we_phy_o			: out std_logic_vector(3 downto 0);
 			--Instruction cache
 			dread_instr: out std_logic_vector(31 downto 0);
 			--Data cache
 			dread_data: out std_logic_vector(31 downto 0)
+
 			);
 end entity;
 
@@ -39,6 +45,11 @@ architecture Behavioral of RISCV_w_cache is
 		signal rst_data_cache_s : std_logic; 
 		signal re_data_cache_s : std_logic; 
 
+		-- NOTE Just for test bench, to simulate real memory
+		signal addr_phy_s 		: std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+		signal dread_phy_s 	: std_logic_vector(31 downto 0);
+		signal dwrite_phy_s		: std_logic_vector(31 downto 0);
+		signal we_phy_s			: std_logic_vector(3 downto 0);
 
 begin
 
@@ -80,6 +91,11 @@ begin
 			data_ready_o => data_ready_s,
 			instr_ready_o => instr_ready_s,
 			reset => reset,
+		-- NOTE Just for test bench, to simulate real memory
+			addr_phy_o => addr_phy_s,
+			dread_phy_i => dread_phy_s,
+			dwrite_phy_o => dwrite_phy_s,
+			we_phy_o => we_phy_s,
 			-- Instruction cache
 			addr_instr_i => addr_instr_cache_s,
 			dread_instr_o => dread_instr_cache_s,

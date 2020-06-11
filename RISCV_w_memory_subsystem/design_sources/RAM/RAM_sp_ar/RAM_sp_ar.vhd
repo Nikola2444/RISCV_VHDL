@@ -15,7 +15,7 @@ generic (
 port (
         addra : in std_logic_vector((clogb2(RAM_DEPTH)-1) downto 0);     -- Address bus, width determined from RAM_DEPTH
         dina  : in std_logic_vector(RAM_WIDTH-1 downto 0);		  -- RAM input data
-        clka  : in std_logic;                       			  -- Clock
+        clk  : in std_logic;                       			  -- Clock
         wea   : in std_logic;                       			  -- Write enable
         ena   : in std_logic;                       			  -- RAM Enable, for additional power savings, disable port when not in use
         douta : out std_logic_vector(RAM_WIDTH-1 downto 0)   			  -- RAM output data
