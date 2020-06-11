@@ -6,7 +6,8 @@ package test_pkg;
    import uvm_pkg::*;      // import the UVM library   
  `include "uvm_macros.svh" // Include the UVM macros
 
-   import agent_pkg::*;
+   import control_if_agent_pkg::*;
+   import store_if_agent_pkg::*;
    import seq_pkg::*;
    import configurations_pkg::*;   
 `include "environment.sv"   

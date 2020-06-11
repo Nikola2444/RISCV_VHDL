@@ -1,8 +1,8 @@
-`ifndef CALC_DRIVER_SV
- `define CALC_DRIVER_SV
-class control_if_driver extends uvm_driver#(control_if_seq_item);
+`ifndef STORE_IF_DRIVER_SV
+ `define STORE_IF_DRIVER_SV
+class store_if_driver extends uvm_driver#(store_if_seq_item);
 
-    `uvm_component_utils(control_if_driver)
+    `uvm_component_utils(store_if_driver)
    
    virtual interface v_lane_if vif;
 
@@ -24,7 +24,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    const logic [1 : 0] vrf_no_access = 2'b11;
    
    
-   function new(string name = "control_if_driver", uvm_component parent = null);
+   function new(string name = "store_if_driver", uvm_component parent = null);
        super.new(name,parent);
        
    endfunction
@@ -118,7 +118,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        endcase; // case req.vector_instruction_i[31              	          
    endtask: generate_control_signals
 
-endclass : control_if_driver
+endclass : store_if_driver
 
 `endif
 

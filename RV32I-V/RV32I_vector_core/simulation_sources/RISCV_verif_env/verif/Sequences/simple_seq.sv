@@ -1,9 +1,9 @@
 `ifndef CALC_SIMPLE_SEQ_SV
  `define CALC_SIMPLE_SEQ_SV
 
-class calc_simple_seq extends calc_base_seq;
+class control_if_simple_seq extends control_if_base_seq;
 
-   `uvm_object_utils (calc_simple_seq)
+   `uvm_object_utils (control_if_simple_seq)
 
    typedef  logic [31 : 0] instr_queue[$];
     
@@ -13,7 +13,7 @@ class calc_simple_seq extends calc_base_seq;
 
 
     
-   function new(string name = "calc_simple_seq");
+   function new(string name = "control_if_simple_seq");
       super.new(name);
    endfunction
     
@@ -44,6 +44,6 @@ class calc_simple_seq extends calc_base_seq;
 	  //$display("instruction[%d]: %b", i, instr_queue_1[i]);
 	return instr_queue_1;
     endfunction
-endclass : calc_simple_seq
+endclass : control_if_simple_seq
 
 `endif

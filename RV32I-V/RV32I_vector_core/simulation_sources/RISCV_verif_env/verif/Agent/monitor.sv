@@ -1,12 +1,12 @@
-class calc_monitor extends uvm_monitor;
+class control_if_monitor extends uvm_monitor;
 
    // control fileds
    bit checks_enable = 1;
    bit coverage_enable = 1;
 
-   uvm_analysis_port #(control_seq_item) item_collected_port;
+   uvm_analysis_port #(control_if_seq_item) item_collected_port;
 
-   `uvm_component_utils_begin(calc_monitor)
+   `uvm_component_utils_begin(control_if_monitor)
       `uvm_field_int(checks_enable, UVM_DEFAULT)
       `uvm_field_int(coverage_enable, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -15,12 +15,12 @@ class calc_monitor extends uvm_monitor;
    virtual interface v_lane_if vif;
 
    // current transaction
-   control_seq_item curr_it;
+   control_if_seq_item curr_it;
 
    // coverage can go here
    // ...
 
-   function new(string name = "calc_monitor", uvm_component parent = null);
+   function new(string name = "control_if_monitor", uvm_component parent = null);
       super.new(name,parent);      
       item_collected_port = new("item_collected_port", this);
    endfunction
@@ -33,7 +33,7 @@ class calc_monitor extends uvm_monitor;
 
    task main_phase(uvm_phase phase);
       // forever begin
-      // curr_it = control_seq_item::type_id::create("curr_it", this);
+      // curr_it = control_if_seq_item::type_id::create("curr_it", this);
       // ...
       // collect transactions
       // ...
@@ -41,4 +41,4 @@ class calc_monitor extends uvm_monitor;
       // end
    endtask : main_phase
 
-endclass : calc_monitor
+endclass : control_if_monitor

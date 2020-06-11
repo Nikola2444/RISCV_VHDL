@@ -3,8 +3,8 @@
 
 class test_base extends uvm_test;
 
-   calc_env env;
-   calc_config cfg;
+   control_if_env env;
+   vector_lane_config cfg;
 
    `uvm_component_utils(test_base)
 
@@ -14,9 +14,9 @@ class test_base extends uvm_test;
 
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      cfg = calc_config::type_id::create("cfg");      
-      uvm_config_db#(calc_config)::set(this, "env", "calc_config", cfg);      
-      env = calc_env::type_id::create("env", this);      
+      cfg = vector_lane_config::type_id::create("cfg");      
+      uvm_config_db#(vector_lane_config)::set(this, "env", "vector_lane_config", cfg);      
+      env = control_if_env::type_id::create("env", this);      
    endfunction : build_phase
 
    function void end_of_elaboration_phase(uvm_phase phase);

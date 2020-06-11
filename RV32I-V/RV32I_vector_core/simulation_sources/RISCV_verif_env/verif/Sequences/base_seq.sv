@@ -1,12 +1,12 @@
 `ifndef CALC_BASE_SEQ_SV
  `define CALC_BASE_SEQ_SV
 
-class calc_base_seq extends uvm_sequence#(control_seq_item);
+class control_if_base_seq extends uvm_sequence#(control_if_seq_item);
 
-   `uvm_object_utils(calc_base_seq)
-   `uvm_declare_p_sequencer(control_sequencer)
+   `uvm_object_utils(control_if_base_seq)
+   `uvm_declare_p_sequencer(control_if_sequencer)
 
-   function new(string name = "calc_base_seq");
+   function new(string name = "control_if_base_seq");
       super.new(name);
    endfunction
 
@@ -24,6 +24,6 @@ class calc_base_seq extends uvm_sequence#(control_seq_item);
         phase.drop_objection(this, {"Completed sequence '", get_full_name(), "'"});
    endtask : post_body
 
-endclass : calc_base_seq
+endclass : control_if_base_seq
 
 `endif

@@ -1,18 +1,21 @@
-class control_if_agent extends uvm_agent;
+`ifndef STORE_IF_AGENT_SV
+  `define STORE_IF_AGENT_SV
+
+class store_if_agent extends uvm_agent;
 
     // components
-    control_if_driver drv;
-    control_if_sequencer seqr;
-    control_if_monitor mon;
+    store_if_driver drv;
+    store_if_sequencer seqr;
+    store_if_monitor mon;
    virtual interface v_lane_if vif;
    // configuration
    vector_lane_config cfg;
    int 	   value;   
-   `uvm_component_utils_begin (control_if_agent)
+   `uvm_component_utils_begin (store_if_agent)
        `uvm_field_object(cfg, UVM_DEFAULT)
    `uvm_component_utils_end
 
-   function new(string name = "control_if_agent", uvm_component parent = null);
+   function new(string name = "store_if_agent", uvm_component parent = null);
        super.new(name,parent);
    endfunction
 
@@ -30,10 +33,10 @@ class control_if_agent extends uvm_agent;
        uvm_config_db#(virtual v_lane_if)::set(this, "*", "v_lane_if", vif);
        /*****************************************************************/
        
-       mon = control_if_monitor::type_id::create("mon", this);
+       mon = store_if_monitor::type_id::create("mon", this);
        if(cfg.is_active == UVM_ACTIVE) begin
-           drv = control_if_driver::type_id::create("drv", this);
-           seqr = control_if_sequencer::type_id::create("seqr", this);
+           drv = store_if_driver::type_id::create("drv", this);
+           seqr = store_if_sequencer::type_id::create("seqr", this);
        end
    endfunction : build_phase
 
@@ -44,4 +47,6 @@ class control_if_agent extends uvm_agent;
        end
    endfunction : connect_phase
 
-endclass : control_if_agent
+endclass : store_if_agent
+
+ `endif

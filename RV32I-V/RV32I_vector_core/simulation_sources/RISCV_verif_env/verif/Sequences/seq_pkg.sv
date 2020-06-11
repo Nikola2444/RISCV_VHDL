@@ -3,9 +3,9 @@
 package seq_pkg;
    import uvm_pkg::*;      // import the UVM library
  `include "uvm_macros.svh" // Include the UVM macros
-  import agent_pkg::control_seq_item;
-  import agent_pkg::control_sequencer;
+   import control_if_agent_pkg::control_if_seq_item;
+   import control_if_agent_pkg::control_if_sequencer;
  `include "base_seq.sv"
  `include "simple_seq.sv"
-     endpackage 
+endpackage 
 `endif
