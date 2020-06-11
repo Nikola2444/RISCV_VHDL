@@ -1,12 +1,10 @@
 `ifndef CALC_SEQ_ITEM_SV
  `define CALC_SEQ_ITEM_SV
 
-parameter DATA_WIDTH = 32;
-parameter VECTOR_LENGTH = 1024;
 
 class control_seq_item extends uvm_sequence_item;
 
-   rand logic [31 : 0] vector_instruction_i;  
+    rand logic [31 : 0] vector_instruction_i;  
     rand logic [1 : 0]  vmul_i;   
     rand logic [$clog2(VECTOR_LENGTH/DATA_WIDTH) : 0] vector_length_i ; 
     

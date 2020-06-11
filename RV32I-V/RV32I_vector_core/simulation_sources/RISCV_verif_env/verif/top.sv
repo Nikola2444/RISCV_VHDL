@@ -13,7 +13,7 @@ module vector_lane_verif_top;
 
    // DUT
    vector_lane#(
-		.VECTOR_LENGTH (v_lane_vif.VECTOR_LENGTH),
+		.VECTOR_LENGTH (VECTOR_LENGTH),
 		.DATA_WIDTH(32)) 
    vector_lane_DUT(
 		   .clk(clk),
@@ -32,28 +32,28 @@ module vector_lane_verif_top;
 		   .store_fifo_we_i(v_lane_vif.store_fifo_we_i),
 		   .vrf_type_of_access_i(v_lane_vif.vrf_type_of_access_i),
 		   .load_fifo_re_i(v_lane_vif.load_fifo_re_i),
-
+		   .vs1_addr_src_i(v_lane_vif.vs1_addr_src_i),
 		   .data_to_mem_o(v_lane_vif.data_to_mem_o),
 
 		   .ready_o(v_lane_vif.ready_o),
 
-		   .load_fifo_almostempty_o(v_lane_vif.load_fifo_almostempty_o),
-		   .load_fifo_almostfull_o(v_lane_vif.load_fifo_almostfull_o),
+		   .load_fifo_almostempty_o(v_lane_vif.load_fifo_almostempty_o), //not used
+		   .load_fifo_almostfull_o(v_lane_vif.load_fifo_almostfull_o),//not used
 		   .load_fifo_empty_o(v_lane_vif.load_fifo_empty_o),
 		   .load_fifo_full_o(v_lane_vif.load_fifo_full_o),
-		   .load_fifo_rdcount_o(v_lane_vif.load_fifo_rdcount_o),
-		   .load_fifo_rderr_o(v_lane_vif.load_fifo_rderr_o),
-		   .load_fifo_wrcount_o(v_lane_vif.load_fifo_wrcount_o),
-		   .load_fifo_wrerr_o(v_lane_vif.load_fifo_wrerr_o),
+		   .load_fifo_rdcount_o(v_lane_vif.load_fifo_rdcount_o),//not used
+		   .load_fifo_rderr_o(v_lane_vif.load_fifo_rderr_o),//not used
+		   .load_fifo_wrcount_o(v_lane_vif.load_fifo_wrcount_o),//not used
+		   .load_fifo_wrerr_o(v_lane_vif.load_fifo_wrerr_o),//not used
 
-		   .store_fifo_almostempty_o(v_lane_vif.store_fifo_almostempty_o),
-		   .store_fifo_almostfull_o(v_lane_vif.store_fifo_almostfull_o),
+		   .store_fifo_almostempty_o(v_lane_vif.store_fifo_almostempty_o),//not used
+		   .store_fifo_almostfull_o(v_lane_vif.store_fifo_almostfull_o),//not used
 		   .store_fifo_empty_o(v_lane_vif.store_fifo_empty_o),
 		   .store_fifo_full_o(v_lane_vif.store_fifo_full_o),
-		   .store_fifo_rdcount_o(v_lane_vif.store_fifo_rdcount_o),
-		   .store_fifo_rderr_o(v_lane_vif.store_fifo_rderr_o),
-		   .store_fifo_wrcount_o(v_lane_vif.store_fifo_wrcount_o),
-		   .store_fifo_wrerr_o(v_lane_vif.store_fifo_wrerr_o)
+		   .store_fifo_rdcount_o(v_lane_vif.store_fifo_rdcount_o),//not used
+		   .store_fifo_rderr_o(v_lane_vif.store_fifo_rderr_o),//not used
+		   .store_fifo_wrcount_o(v_lane_vif.store_fifo_wrcount_o),//not used
+		   .store_fifo_wrerr_o(v_lane_vif.store_fifo_wrerr_o)//not used
        
 		   );
 
@@ -70,6 +70,16 @@ module vector_lane_verif_top;
        for (int i = 0; i < 6; i++)
 	 @(posedge(clk));
        reset <= 1;
+       while (v_lane_vif.store_fifo_empty_o)
+	 @(posedge(clk));
+       	 @(posedge(clk));
+       	 @(posedge(clk));
+       while (!v_lane_vif.store_fifo_empty_o) begin
+	   v_lane_vif.store_fifo_re_i = 1'b1;
+	   @(posedge(clk));
+       end
+       v_lane_vif.store_fifo_re_i = 0'b1;
+       
    end
 
    // clock generation

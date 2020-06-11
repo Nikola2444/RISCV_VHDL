@@ -17,7 +17,7 @@ package test_pkg;
 
 endpackage : test_pkg
 
- `include "module_if.sv"
+`include "module_if.sv"
 
 `endif
 

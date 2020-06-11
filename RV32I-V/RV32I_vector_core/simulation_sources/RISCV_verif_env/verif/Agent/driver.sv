@@ -11,6 +11,7 @@ class calc_driver extends uvm_driver#(control_seq_item);
 
    
    const logic [6 : 0] arith_opcode = 7'b1010111;
+   const logic [6 : 0] store_opcode = 7'b0100111;
 
    const logic [5 : 0] v_add_funct6 = 6'b000000;
    const logic [5 : 0] v_sub_funct6 = 6'b000010;
@@ -47,7 +48,9 @@ class calc_driver extends uvm_driver#(control_seq_item);
 	   if (vif.reset) begin
 	       case (v_lane_dr_stages)
 		   wait_for_ready: begin
-
+		       `uvm_info(get_type_name(),
+				 $sformatf("waiting for reset"),
+				 UVM_LOW)
 		       if (vif.ready_o)
 			 v_lane_dr_stages = send_control_signals ;		       		       
 		   end
@@ -65,13 +68,17 @@ class calc_driver extends uvm_driver#(control_seq_item);
 		   end
 	       endcase; // case (v_lane_dr_stages)
 	   end // if (vif.reset)
-	   
-           
        end
    endtask : main_phase
 
 
-   function void generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
+   /*This function generates vector lane control signals. It has two argumets:
+    
+    vif - inside it is the virtual interface of vector lane
+    vector_instruction_i - is the instruction the lane needs to receive
+    
+    */
+   task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
       logic [6 : 0] opcode = req.vector_instruction_i [6 : 0];
       logic [5 : 0] funct6 = req.vector_instruction_i[31 : 26];
        
@@ -79,7 +86,7 @@ class calc_driver extends uvm_driver#(control_seq_item);
        case (opcode)
 	   arith_opcode: begin
 	       vif.vrf_type_of_access_i = vrf_read_write;
-	       
+	       vif.vs1_addr_src_i = 0;	       
 	       case (funct6)
 		   v_add_funct6: begin
 		       $display("sending add_op");		       
@@ -96,12 +103,27 @@ class calc_driver extends uvm_driver#(control_seq_item);
 		   end
 		   v_xor_funct6: begin
 		       vif.alu_op_i = xor_op;
-		   end		    
+		   end		   
 	       endcase; // case funct6	       
 	   end // case: arith_opcode
-	   
+	   store_opcode: begin
+	       vif.vs1_addr_src_i = 1;
+	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
+	       vif.alu_op_i = add_op;
+	       `uvm_info(get_type_name(),
+			 $sformatf("Seting fifo_we_to 1"),
+			 UVM_LOW)
+	       vif.store_fifo_we_i <= #100 1'b1; // this way store fifo will be high after one clock cycle
+/* -----\/----- EXCLUDED -----\/-----
+	       fork
+		 @(posedge(vif.clk))
+		   #1;		   
+ vif.store_fifo_we_i = 1'b1; // this way store fifo will be high after one clock cycle
+	       join_none
+ -----/\----- EXCLUDED -----/\----- */
+	   end
        endcase; // case req.vector_instruction_i[31              	          
-   endfunction: generate_control_signals
+   endtask: generate_control_signals
 
 endclass : calc_driver
 
