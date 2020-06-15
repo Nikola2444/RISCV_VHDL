@@ -168,9 +168,14 @@ architecture Behavioral of cache_contr_dm is
 	-- TODO check if these will be used, or signal values will be derived directly from some other signal
 	-- 'tag', 'index', 'byte in block' and 'tag store address' fields for levelvl2 cache
 	signal lvl2a_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
-	signal lvl2a_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
-	signal lvl2a_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
-	signal lvl2a_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
+	signal lvl2ia_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
+	signal lvl2ia_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
+	signal lvl2ia_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	signal lvl2ia_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
+	signal lvl2da_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
+	signal lvl2da_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
+	signal lvl2da_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	signal lvl2da_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
 	-- 'tag', 'index', 'byte in block' and 'tag store address' fields for levelvl2 cache
 	signal lvl2b_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2b_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
@@ -201,12 +206,12 @@ architecture Behavioral of cache_contr_dm is
 
 
 	-- Cache controler state
-	type cc_state is (idle, check_lvl2_isntr, check_lvl2_data, fetch_instr, fetch_data, flush_data);
+	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data);
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
 	-- cc -  cache controller counter
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
-	constant counter_max : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
+	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
 
 
 begin
@@ -225,13 +230,13 @@ begin
 	lvl1i_c_addr_s <= addr_instr_i(LVL1C_ADDR_WIDTH-1 downto 0);
 	-- TODO this will be controlled by FSM
 	-- From level1
+	--lvl2ia_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
+	--lvl2da_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl2ia_c_tag_s <= addr_instr_i(PHY_ADDR_WIDTH-1 downto LVL2C_ADDR_WIDTH);
 	lvl2ia_c_idx_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
-	lvl2ia_c_bib_s <= addr_instr_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl2ia_c_addr_s <= addr_instr_i(LVL2C_ADDR_WIDTH-1 downto 0);
 	lvl2da_c_tag_s <= addr_data_i(PHY_ADDR_WIDTH-1 downto LVL2C_ADDR_WIDTH);
 	lvl2da_c_idx_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto BLOCK_ADDR_WIDTH);
-	lvl2da_c_bib_s <= addr_data_i(BLOCK_ADDR_WIDTH-1 downto 0);
 	lvl2da_c_addr_s <= addr_data_i(LVL2C_ADDR_WIDTH-1 downto 0);
 	-- TODO this will be controlled by interprocessor module
 	--lvl2b_c_tag_s <= addr_instr_i(PHY_ADDR_WIDTH-1 downto LVL2C_ADDR_WIDTH);
@@ -332,14 +337,14 @@ begin
 		wea_instr_tag_s <= '0';
 		dwritea_instr_tag_s <= (others => '0');
 		wea_instr_cache_s <= (others => '0');
-		addra_instr_cache_s <= addr_instr_i;
+		addra_instr_cache_s <= addr_instr_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
 		dwritea_instr_cache_s <= (others => '0');
 		dread_instr_o <= dreada_instr_cache_s;
 		-- LVL1 data cache and tag
 		wea_data_tag_s <= '0';
 		dwritea_data_tag_s <= (others => '0');
 		wea_data_cache_s <= we_data_i;
-		addra_data_cache_s <= addr_data_i;
+		addra_data_cache_s <= addr_data_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
 		dwritea_data_cache_s <= dwrite_data_i;
 		dread_data_o <= dreada_data_cache_s;
 		-- LVL2 cache and tag
@@ -351,15 +356,20 @@ begin
 		wea_lvl2_tag_s <= '0';
 		dwritea_lvl2_tag_s <= (others => '0'); 
 		dreada_lvl2_tag_s <= (others => '0'); 
-		
-
+				
 		case (cc_state_reg) is
 			when idle =>
 				if(lvl1i_c_hit_s = '0') then -- instr cache miss
 					cc_state_next <= check_lvl2_instr;
 				end if;
 				if(lvl1d_c_hit_s = '0') then -- data cache miss
-					cc_state_next <= check_lvl2_data;
+					if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
+						-- flush needed, prepare address one clk before
+						cc_state_next <= flush_data;
+						addra_data_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
+					else
+						cc_state_next <= check_lvl2_data;
+					end if;
 				end if;
 
 			when check_lvl2_instr => 
@@ -370,7 +380,7 @@ begin
 				else
 					cc_state_next <= check_lvl2_instr; -- stay here if lvl2 is not ready
 				end if;
-				addra_lvl2_cache_s <= lvl1i_c_idx_s & cc_counter_reg & 00;
+				addra_lvl2_cache_s <= lvl1i_c_idx_s & cc_counter_reg & "00";
 
 			when check_lvl2_data => 
 				addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -380,36 +390,33 @@ begin
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
-				if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
-					cc_state_next <= flush_data;
-				else
-					cc_state_next <= fetch_data;
-				end if;
-				addra_lvl2_cache_s <= lvl1d_c_idx_s & cc_counter_reg & 00;
+				addra_lvl2_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
 
 			when fetch_instr => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl1i_c_idx_s & cc_counter_reg & 00;
+				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_incr & "00";
+				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg & "00";
 				dwritea_instr_cache_s <= dreada_lvl2_cache_s;
 				wea_instr_cache_s <= "1111";
 				cc_counter_next <= cc_counter_incr;
-				if(cc_counter_reg = icc_counter_max)then 
+				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
 						-- write new tag to tag store, set valid, reset dirty
 					dwritea_instr_tag_s <= "01" & lvl1i_c_tag_s; 
-					we_instr_tag_s <= '1';
+					wea_instr_tag_s <= '1';
 				else
 					cc_state_next <= fetch_instr;
 				end if;
 
 			when fetch_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl1d_c_idx_s & cc_counter_reg & 00;
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
+				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
 				dwritea_data_cache_s <= dreada_lvl2_cache_s;
 				wea_data_cache_s <= "1111";
 				cc_counter_next <= cc_counter_incr;
-				if(cc_counter_reg = icc_counter_max)then 
+				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
 						-- write new tag to tag store, set valid, reset dirty
@@ -422,18 +429,20 @@ begin
 			when flush_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
 				-- TODO IMPLEMENT LOGIC FOR FLUSHING
-				addra_lvl2_cache_s <= lvl1d_c_idx_s & cc_counter_reg & 00;
-				dwritea_data_cache_s <= dreada_lvl2_cache_s;
-				wea_data_cache_s <= "1111";
+				addra_lvl2_cache_s <= dreada_data_tag_s(LVL2C_TAG_WIDTH-1 downto 0) & cc_counter_reg & "00";
+				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_incr & "00";
+				dwritea_lvl2_cache_s <= dreada_data_cache_s;
+				wea_lvl2_cache_s <= "1111";
 				cc_counter_next <= cc_counter_incr;
-				if(cc_counter_reg = icc_counter_max)then 
+				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
-					cc_state_next <= fetch_data;
+					cc_state_next <= check_lvl2_data;
 						-- write new tag to tag store, set valid, reset dirty
-					dwritea_data_tag_s <= "01" & lvl1d_c_tag_s; 
+					addra_lvl2_tag_s <= lvl2da_c_idx_s;
+					dwritea_lvl2_tag_s <= "11" & lvl2a_c_tag_s; -- valid and dirty
 					wea_data_tag_s <= '1';
 				else
-					cc_state_next <= fetch_data;
+					cc_state_next <= flush_data;
 				end if;
 
 		end case;
@@ -447,7 +456,6 @@ begin
 	-- TODO 32 bit address will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
 	--we_instr_cache_s <= "0000"; NOTE nah
-	addra_instr_cache_s <= addr_instr_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
 	regcea_instr_cache_s <= '0';
 	ena_instr_cache_s <= en_instr_cache_i;
 	rsta_instr_cache_s <= rst_instr_cache_i;
@@ -505,7 +513,6 @@ begin
 	-- TODO double check this address logic!, change if unaligned accesses are implemented
 	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
-	addra_data_cache_s <= addr_data_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
 	rsta_data_cache_s <= reset;
 	ena_data_cache_s <= '1';
 	regcea_data_cache_s <= '0';
