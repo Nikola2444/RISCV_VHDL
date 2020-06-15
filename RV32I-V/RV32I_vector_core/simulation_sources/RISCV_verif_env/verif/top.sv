@@ -13,7 +13,7 @@ module vector_lane_verif_top;
 
    // DUT
    vector_lane#(
-		.VECTOR_LENGTH (VECTOR_LENGTH),
+		.VECTOR_LENGTH (1024),
 		.DATA_WIDTH(32)) 
    vector_lane_DUT(
 		   .clk(clk),
@@ -78,7 +78,7 @@ module vector_lane_verif_top;
 	   v_lane_vif.store_fifo_re_i = 1'b1;
 	   @(posedge(clk));
        end
-       v_lane_vif.store_fifo_re_i = 0'b1;
+       v_lane_vif.store_fifo_re_i = 1'b1;
        
    end
 

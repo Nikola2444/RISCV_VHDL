@@ -123,6 +123,8 @@ begin
       generic map (
          WIDTH => DATA_WIDTH)
       port map (
+         clk => clk,
+         reset => reset,
          a_i   => vs1_data_s,
          b_i   => vs2_data_s,
          op_i  => alu_op_i,

@@ -9,6 +9,8 @@ ENTITY ALU IS
    GENERIC(
       WIDTH : NATURAL := 32);
    PORT(
+      clk: in std_logic;
+      reset: in std_logic;
       a_i    : in STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --first input
       b_i    : in STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0); --second input
       op_i   : in STD_LOGIC_VECTOR(4 DOWNTO 0); --operation select
@@ -25,23 +27,22 @@ ARCHITECTURE behavioral OF ALU IS
    signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    signal custom_mul32_res_s:std_logic_vector(WIDTH - 1 downto 0);
    --signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH-1 DOWNTO 0);	
-   signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH+1 DOWNTO 0);
+   signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH - 1  DOWNTO 0);	
+   signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH - 1 DOWNTO 0);
+   signal c_s: std_logic_vector (63 downto 0);
    
    
 BEGin
 
-   -- Because multiplier is a unsigned one, if there is a need for signed multiplication
-   -- operand need to be complemented.
    multiplier32_bit_1: entity work.multiplier32_bit
       generic map (
-         DATA_WIDTH => DATA_WIDTH)
+         DATA_WIDTH => WIDTH)
       port map (
          clk   => clk,
          reset => reset,
          op => op_i,
-         a     => a_s,
-         b     => b_s,
+         a     => a_i,
+         b     => b_i,
          c     => c_s);
    
    -- addition

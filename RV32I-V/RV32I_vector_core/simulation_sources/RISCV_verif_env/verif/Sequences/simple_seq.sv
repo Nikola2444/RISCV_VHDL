@@ -9,7 +9,7 @@ class control_if_simple_seq extends control_if_base_seq;
     
     instr_queue instr_queue_1;
     
-   string 	file_path = "../../../../../RV32I_vector_core/simulation_sources/assembly_test_files/assembly_store_code.txt";
+   string 	file_path = "../RV32I_vector_core/simulation_sources/assembly_test_files/assembly_store_code.txt";
 
 
     
