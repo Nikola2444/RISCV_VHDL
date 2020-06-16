@@ -10,7 +10,9 @@ package test_pkg;
    import control_if_agent_pkg::*;
    import store_if_agent_pkg::*;
    import seq_pkg::*;
+   import v_alu_ops_pkg::*;
    
+`include "scoreboard.sv"
 `include "environment.sv"   
 `include "test_base.sv"
 `include "test_simple.sv"

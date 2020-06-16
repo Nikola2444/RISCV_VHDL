@@ -70,15 +70,6 @@ module vector_lane_verif_top;
        for (int i = 0; i < 6; i++)
 	 @(posedge(clk));
        reset <= 1;
-       while (v_lane_vif.store_fifo_empty_o)
-	 @(posedge(clk));
-       	 @(posedge(clk));
-       	 @(posedge(clk));
-       while (!v_lane_vif.store_fifo_empty_o) begin
-	   v_lane_vif.store_fifo_re_i = 1'b1;
-	   @(posedge(clk));
-       end
-       v_lane_vif.store_fifo_re_i = 1'b1;
        
    end
 

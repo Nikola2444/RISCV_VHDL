@@ -1,0 +1,12 @@
+#packages
+xvhdl  ../RV32I_vector_core/design_sources/data_path/packages/BRAM_package.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/packages/alu_ops_pkg.vhd
+#HDL files
+xvhdl  ../RV32I_vector_core/design_sources/data_path/custom_multiplier/multiplier32_bit.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/ALU.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/BRAM_18KB.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/VRF_BRAM_addr_generator_v2.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/vector_register_file.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/vector_lane.vhd
+#Verification files
+

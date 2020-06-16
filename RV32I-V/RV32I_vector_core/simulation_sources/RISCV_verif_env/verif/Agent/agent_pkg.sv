@@ -13,6 +13,7 @@ package control_if_agent_pkg;
    import v_alu_ops_pkg::*;
    
    //`include "v_alu_ops_pkg.sv"
+   `include "store_data_seq_item.sv"
    `include "seq_item.sv"
    `include "sequencer.sv"
    `include "driver.sv"

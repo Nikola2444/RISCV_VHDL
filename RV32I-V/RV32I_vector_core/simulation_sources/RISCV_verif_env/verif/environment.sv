@@ -3,7 +3,8 @@
 
 class control_if_env extends uvm_env;
 
-    control_if_agent agent;
+    control_if_agent control_agent;
+    vector_lane_scoreboard scoreboard;    
     vector_lane_config cfg;
    virtual interface v_lane_if vif;
    `uvm_component_utils (control_if_env)
@@ -24,13 +25,19 @@ class control_if_env extends uvm_env;
 
 
        /************Setting to configuration database********************/
-       uvm_config_db#(vector_lane_config)::set(this, "agent", "vector_lane_config", cfg);
-       uvm_config_db#(virtual v_lane_if)::set(this, "agent", "v_lane_if", vif);
+       uvm_config_db#(vector_lane_config)::set(this, "*if_agent", "vector_lane_config", cfg);
+       uvm_config_db#(virtual v_lane_if)::set(this, "*if_agent", "v_lane_if", vif);
        /*****************************************************************/
-       agent = control_if_agent::type_id::create("agent", this);
-       
+       control_agent = control_if_agent::type_id::create("control_if_agent", this);
+       scoreboard = vector_lane_scoreboard::type_id::create("scoreboard", this);
+              
    endfunction : build_phase
 
+   function void connect_phase(uvm_phase phase);
+       super.connect_phase(phase);
+       control_agent.mon.instr_item_collected_port.connect(scoreboard.collected_imp_instr_item);
+       control_agent.mon.store_data_collected_port.connect(scoreboard.collected_imp_store_data_item);
+   endfunction : connect_phase
 endclass : control_if_env
 
 `endif

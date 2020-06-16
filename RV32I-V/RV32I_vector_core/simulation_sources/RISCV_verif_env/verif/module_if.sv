@@ -27,7 +27,7 @@ interface v_lane_if (input clk, logic reset);
    
 
    //oputput data
-   logic [DATA_WIDTH - 1 : 0] 	    data_to_mem_o;   
+   logic [DATA_WIDTH - 1 : 0] 			    data_to_mem_o;   
    // status signals
    logic 					    ready_o;   
    

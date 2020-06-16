@@ -25,8 +25,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    
    
    function new(string name = "control_if_driver", uvm_component parent = null);
-       super.new(name,parent);
-       
+       super.new(name,parent);       
    endfunction
 
    function void build_phase(uvm_phase phase);
@@ -46,19 +45,31 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
            @(posedge(vif.clk));
 	   #1ns;		       			   
 	   if (vif.reset) begin
+
+	       /*Generate read enable for store fifo if it is not empty*/
+	       if (!vif.store_fifo_empty_o)begin
+		   vif.store_fifo_re_i = 1'b1;		   
+	       end
+	       
+
+	       
+	       /*State machine that genereates certain control signals depending
+		on received instruction.*/
 	       case (v_lane_dr_stages)
 		   wait_for_ready: begin
 		       `uvm_info(get_type_name(),
 				 $sformatf("waiting for reset"),
-				 UVM_LOW)
+				 UVM_HIGH)
 		       if (vif.ready_o)
+			 
 			 v_lane_dr_stages = send_control_signals ;		       		       
 		   end
 		   send_control_signals: begin
 		       seq_item_port.get_next_item(req);
 		       `uvm_info(get_type_name(),
 				 $sformatf("Driver sending...\n%s", req.sprint()),
-				 UVM_LOW)
+				 UVM_HIGH)
+		       vif.store_fifo_re_i = 1'b0;
 		       vif.vector_instruction_i = req.vector_instruction_i;
 		       vif.vector_length_i = req.vector_length_i;
 		       vif.vmul_i = req.vmul_i;
@@ -73,10 +84,9 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 
 
    /*This function generates vector lane control signals. It has two argumets:
-    
+        
     vif - inside it is the virtual interface of vector lane
-    vector_instruction_i - is the instruction the lane needs to receive
-    
+    vector_instruction_i - is the instruction the lane needs to receive    
     */
    task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
       logic [6 : 0] opcode = req.vector_instruction_i [6 : 0];
@@ -86,7 +96,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        case (opcode)
 	   arith_opcode: begin
 	       vif.vrf_type_of_access_i = vrf_read_write;
-	       vif.vs1_addr_src_i = 0;	       
+	       vif.vs1_addr_src_i = 0;
 	       case (funct6)
 		   v_add_funct6: begin
 		       $display("sending add_op");		       
@@ -112,7 +122,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       vif.alu_op_i = add_op;
 	       `uvm_info(get_type_name(),
 			 $sformatf("Seting fifo_we_to 1"),
-			 UVM_LOW)
+			 UVM_HIGH)
 	       vif.store_fifo_we_i <= #100 1'b1; // this way store fifo will be high after one clock cycle
 	   end
        endcase; // case req.vector_instruction_i[31              	          

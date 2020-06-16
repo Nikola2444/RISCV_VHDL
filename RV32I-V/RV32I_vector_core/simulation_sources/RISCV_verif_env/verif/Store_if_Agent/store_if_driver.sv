@@ -6,8 +6,8 @@ class store_if_driver extends uvm_driver#(store_if_seq_item);
    
    virtual interface v_lane_if vif;
 
-   typedef enum {wait_for_ready, send_control_signals} driving_stages;
-   driving_stages v_lane_dr_stages = wait_for_ready;
+   typedef enum {store_fifo_empty, store_fifo_not_empty} driving_stages;
+   driving_stages store_if_dr_stages = store_fifo_empty;
 
    
    const logic [6 : 0] arith_opcode = 7'b1010111;
@@ -46,27 +46,10 @@ class store_if_driver extends uvm_driver#(store_if_seq_item);
            @(posedge(vif.clk));
 	   #1ns;		       			   
 	   if (vif.reset) begin
-	       case (v_lane_dr_stages)
-		   wait_for_ready: begin
-		       `uvm_info(get_type_name(),
-				 $sformatf("waiting for reset"),
-				 UVM_LOW)
-		       if (vif.ready_o)
-			 v_lane_dr_stages = send_control_signals ;		       		       
-		   end
-		   send_control_signals: begin
-		       seq_item_port.get_next_item(req);
-		       `uvm_info(get_type_name(),
-				 $sformatf("Driver sending...\n%s", req.sprint()),
-				 UVM_LOW)
-		       vif.vector_instruction_i = req.vector_instruction_i;
-		       vif.vector_length_i = req.vector_length_i;
-		       vif.vmul_i = req.vmul_i;
-		       generate_control_signals (vif, req.vector_instruction_i);
-		       seq_item_port.item_done();
-		       v_lane_dr_stages = wait_for_ready;		       
-		   end
-	       endcase; // case (v_lane_dr_stages)
+	       if (!vif.store_fifo_empty_o) begin
+		   vif.store_fifo_re_i = 1'b1;		   
+	       end
+	       else vif.store_fifo_re_i = 1'b0;		   
 	   end // if (vif.reset)
        end
    endtask : main_phase
