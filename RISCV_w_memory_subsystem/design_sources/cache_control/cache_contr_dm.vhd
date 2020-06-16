@@ -170,11 +170,11 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2a_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2ia_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2ia_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
-	signal lvl2ia_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	--signal lvl2ia_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
 	signal lvl2ia_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
 	signal lvl2da_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
 	signal lvl2da_c_idx_s : std_logic_vector(LVL2C_INDEX_WIDTH-1 downto 0);
-	signal lvl2da_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
+	--signal lvl2da_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
 	signal lvl2da_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
 	-- 'tag', 'index', 'byte in block' and 'tag store address' fields for levelvl2 cache
 	signal lvl2b_c_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
@@ -207,10 +207,13 @@ architecture Behavioral of cache_contr_dm is
 
 	-- Cache controler state
 	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data);
+	type mc_state is (idle, flush, fetch); 
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
+	signal mc_state_reg, mc_state_next: mc_state;
 	-- cc -  cache controller counter
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
+	signal mc_counter_reg, mc_counter_incr, mc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
 
 
@@ -300,6 +303,7 @@ begin
 
 	-- Adder for counters 
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
+	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
 
 	-- Sequential logic - regs
 	regs : process(clk)is
@@ -308,9 +312,13 @@ begin
 			if(reset= '0')then
 				cc_state_reg <= idle;
 				cc_counter_reg <= (others => '0');
+				mc_state_reg <= idle;
+				mc_counter_reg <= (others => '0');
 			else
 				cc_state_reg <= cc_state_next;
 				cc_counter_reg <=  cc_counter_next;
+				mc_state_reg <= mc_state_next;
+				mc_counter_reg <=  mc_counter_next;
 			end if;
 		end if;
 	end process;
@@ -326,7 +334,10 @@ begin
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
 	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
-	fsm_instr : process(cc_state_reg) is
+	fsm_cache : process(cc_state_reg, lvl2ia_c_tag_s, addr_instr_i, dreada_instr_cache_s, 
+		we_data_i, addr_data_i, dwrite_data_i, dreada_data_cache_s, lvl1i_c_hit_s, 
+		lvl1d_c_hit_s, lvl1da_ts_bkk_s, lvl2da_c_idx_s, cc_counter_reg, cc_counter_incr, lvl2ia_c_idx_s, 
+		lvl2ia_c_tag_s, lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,lvl1d_c_tag_s,lvl2a_c_tag_s) is
 	begin
 		-- for FSM
 		cc_state_next <= idle;
@@ -351,11 +362,9 @@ begin
 		addra_lvl2_cache_s <= (others => '0');
 		wea_lvl2_cache_s <= (others => '0');
 		dwritea_lvl2_cache_s <= (others => '0'); 
-		dreada_lvl2_cache_s <= (others => '0'); 
-		addra_lvl2_tag_s <= (others => '0');
+		addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 		wea_lvl2_tag_s <= '0';
 		dwritea_lvl2_tag_s <= (others => '0'); 
-		dreada_lvl2_tag_s <= (others => '0'); 
 				
 		case (cc_state_reg) is
 			when idle =>
@@ -366,7 +375,7 @@ begin
 					if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
 						-- flush needed, prepare address one clk before
 						cc_state_next <= flush_data;
-						addra_data_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
+						addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
 					else
 						cc_state_next <= check_lvl2_data;
 					end if;
@@ -380,7 +389,7 @@ begin
 				else
 					cc_state_next <= check_lvl2_instr; -- stay here if lvl2 is not ready
 				end if;
-				addra_lvl2_cache_s <= lvl1i_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg & "00";
 
 			when check_lvl2_data => 
 				addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -390,7 +399,7 @@ begin
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
-				addra_lvl2_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
 
 			when fetch_instr => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
@@ -398,7 +407,12 @@ begin
 				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg & "00";
 				dwritea_instr_cache_s <= dreada_lvl2_cache_s;
 				wea_instr_cache_s <= "1111";
+
 				cc_counter_next <= cc_counter_incr;
+
+				-- TODO depending on mc fsm, see if this is needed or not
+				--addra_lvl2_tag_s <= lvl2ia_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2ia_c_tag_s;
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
@@ -415,7 +429,12 @@ begin
 				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
 				dwritea_data_cache_s <= dreada_lvl2_cache_s;
 				wea_data_cache_s <= "1111";
+
 				cc_counter_next <= cc_counter_incr;
+
+				-- TODO depending on mc fsm, see if this is needed or not
+				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
@@ -429,27 +448,59 @@ begin
 			when flush_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
 				-- TODO IMPLEMENT LOGIC FOR FLUSHING
-				addra_lvl2_cache_s <= dreada_data_tag_s(LVL2C_TAG_WIDTH-1 downto 0) & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
 				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_incr & "00";
 				dwritea_lvl2_cache_s <= dreada_data_cache_s;
 				wea_lvl2_cache_s <= "1111";
+
 				cc_counter_next <= cc_counter_incr;
+
+				-- TODO depending on mc fsm, see if this is needed or not
+				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
+
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= check_lvl2_data;
-						-- write new tag to tag store, set valid, reset dirty
 					addra_lvl2_tag_s <= lvl2da_c_idx_s;
-					dwritea_lvl2_tag_s <= "11" & lvl2a_c_tag_s; -- valid and dirty
+						-- write new tag to tag store, set valid, reset dirty
+					dwritea_lvl2_tag_s <= "11" & lvl2a_ts_tag_s; -- valid and dirty
 					wea_data_tag_s <= '1';
 				else
 					cc_state_next <= flush_data;
 				end if;
 
+			when others =>
 		end case;
 	end process;
 
 
+	fsm_inter_proc : process(mc_state_reg) is
+	begin
+		-- for FSM
+		mc_state_next <= idle;
+		mc_counter_next <= (others => '0');
+		-- LVL 2 signals ports B
+		addrb_lvl2_cache_s <= (others => '0');
+		web_lvl2_cache_s <= (others => '0');
+		dwriteb_lvl2_cache_s <= (others => '0'); 
+		addrb_lvl2_tag_s <= (others => '0');
+		web_lvl2_tag_s <= '0';
+		dwriteb_lvl2_tag_s <= (others => '0'); 
+		-- MEMORY interface signals (bus)
+		-- dread_phy_i -> use this to read data from bus
+		addr_phy_o <= (others => '0');
+		dwrite_phy_o <= (others => '0');
+		we_phy_o <= (others => '0');
 
+		case (mc_state_reg) is
+			when idle =>
+			when flush =>
+			when fetch =>
+			when others =>
+
+		end case;
+	end process;
 	--********** LEVEL 1 CACHE  **************
 	-- INSTRUCTION CACHE
 	-- TODO double check this address logic, change if unaligned accesses are implemented
