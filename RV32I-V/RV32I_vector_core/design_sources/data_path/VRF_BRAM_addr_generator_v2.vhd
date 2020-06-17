@@ -15,20 +15,21 @@ entity VRF_BRAM_addr_generator is
       vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
       alu_exe_time_i       : in std_logic_vector(2 downto 0);
       vmul_i : in std_logic_vector (1 downto 0);
+      --vector_length_i tells us how many elements there are per vector register
+      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
       -- input signals
       vs1_address_i        : in std_logic_vector(4 downto 0);
       vs2_address_i        : in std_logic_vector(4 downto 0);
       vd_address_i         : in std_logic_vector(4 downto 0);
-
-      
-      --vector_length_i tells us how many elements there are per vector register
-      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
+            
       -- output signals
       BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
       BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
       BRAM_re_o        : out std_logic;
 
-      mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+      -- Because mask register needs to mask a maximum of 1/4 of all elements
+      -- mask address must have enough bits to do so.
+      mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH/4)  downto 0);
       mask_BRAM_re_o        : out std_logic;
 
       BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
@@ -73,7 +74,7 @@ architecture behavioral of VRF_BRAM_addr_generator is
    constant counter1_eq_zero: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) + 3 downto 0):= (others => '0');
    constant mask_we_zero: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) + 3 - 5 downto 0):= (others => '0');
    -- Widened vd_address_i
-   signal vd_address_extened_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+   signal vd_address_extended_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
    -- write enable for mask register
    signal mask_BRAM_re_s: std_logic;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -121,7 +122,7 @@ begin
 --********************************COMBINATION LOGIC*************************************
 
    
-   --generate v_len_s taking vmul into account
+   --generate v_len_s taking vmul into account.
    process (vector_length_i, vmul_i)is
    begin
       case vmul_i is
@@ -262,11 +263,11 @@ begin
    -- zero is neccesary because mask_bram_r_address_o is 10 bits wide, and synth
    -- wont pass unless one of the operand is 10 bits wide.
    
-   vd_address_extened_s <= '0'&mask_we_zero&vd_address_i;
-   -- Generates addresses for VO bram which containt mask bits. Genereting mask
-   -- register addresses and mask register write enable start one clock cycle
+   vd_address_extended_s <= '0'&mask_we_zero&vd_address_i;
+   -- Generates addresses for mask bram which containt mask bits. Genereting mask
+   -- register addresses and mask register write enable starts one clock cycle
    -- before BRAM write enable.
-   mask_BRAM_r_address_o <= std_logic_vector(unsigned(vd_address_extened_s) + unsigned(counter2_next_s));
+   mask_BRAM_r_address_o <= counter2_next_s;
    mask_BRAM_re_o <= mask_BRAM_re_s;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 

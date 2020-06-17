@@ -126,19 +126,25 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			vv_funct3:begin
 			    a = VRF_referent_model[i + vs1_addr*elements_per_vector];
 			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
-			    VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    			    
 			end
 			vs_funct3: begin
 			    a = tr.rs1_data_i;			    
 			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
-			    VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    
 			end
 			vi_funct3: begin
 			    a = imm;
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
-			    VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    
+			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];		
 			end
 		    endcase // case (funct3)
+		    /*Checking whether masking is enabled and checking mask bits in VRF[0]
+		     VM VRF[0]
+		     0      0              0
+		     0      1              1
+		     1      0              1
+		     1      1              1
+		     */		    
+		    if (vm | VRF_referent_model [i][0])
+		      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    			    
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)
 	    end // case: arith_opcode
 	    store_opcode: begin
