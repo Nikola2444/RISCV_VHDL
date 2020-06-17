@@ -70,15 +70,13 @@ class control_if_monitor extends uvm_monitor;
 		item on data_to_mem poert and send it to scoreboard*/
 	       case (v_lane_store_stages)
 		   wait_for_re:begin
-		       if(vif.store_fifo_re_i) 
+		       if(vif.store_fifo_re_i)
 			 v_lane_store_stages = send_store_seq_item;		       
 		   end
 		   send_store_seq_item: begin
-		       if(vif.store_fifo_re_i) begin
-			   curr_store_item.data_to_mem_o = vif.data_to_mem_o;			  
-			   store_data_collected_port.write(curr_store_item);
-		       end
-		       else begin
+		       curr_store_item.data_to_mem_o = vif.data_to_mem_o;			  
+		       store_data_collected_port.write(curr_store_item);
+		       if(!vif.store_fifo_re_i) begin			  
 			   v_lane_store_stages = wait_for_re;
 		       end
 		   end   

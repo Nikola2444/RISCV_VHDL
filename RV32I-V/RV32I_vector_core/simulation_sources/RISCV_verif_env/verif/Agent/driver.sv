@@ -47,9 +47,11 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	   if (vif.reset) begin
 
 	       /*Generate read enable for store fifo if it is not empty*/
-	       if (!vif.store_fifo_empty_o)begin
-		   vif.store_fifo_re_i = 1'b1;		   
-	       end
+	       if (!vif.store_fifo_empty_o)
+		 vif.store_fifo_re_i = 1'b1;
+	       else
+		 vif.store_fifo_re_i = 1'b0;
+	       
 	       
 
 	       
@@ -57,19 +59,16 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 		on received instruction.*/
 	       case (v_lane_dr_stages)
 		   wait_for_ready: begin
-		       `uvm_info(get_type_name(),
-				 $sformatf("waiting for reset"),
-				 UVM_HIGH)
-		       if (vif.ready_o)
-			 
-			 v_lane_dr_stages = send_control_signals ;		       		       
+		       if (vif.ready_o) begin
+			 v_lane_dr_stages = send_control_signals ;
+		       end
 		   end
 		   send_control_signals: begin
 		       seq_item_port.get_next_item(req);
 		       `uvm_info(get_type_name(),
 				 $sformatf("Driver sending...\n%s", req.sprint()),
 				 UVM_HIGH)
-		       vif.store_fifo_re_i = 1'b0;
+		       
 		       vif.vector_instruction_i = req.vector_instruction_i;
 		       vif.vector_length_i = req.vector_length_i;
 		       vif.vmul_i = req.vmul_i;
@@ -97,6 +96,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	   arith_opcode: begin
 	       vif.vrf_type_of_access_i = vrf_read_write;
 	       vif.vs1_addr_src_i = 0;
+	       vif.store_fifo_we_i <= #200 1'b0;
 	       case (funct6)
 		   v_add_funct6: begin
 		       $display("sending add_op");		       
@@ -117,12 +117,10 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       endcase; // case funct6	       
 	   end // case: arith_opcode
 	   store_opcode: begin
+	       vif.store_fifo_we_i <= 1'b0;
 	       vif.vs1_addr_src_i = 1;
 	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
-	       vif.alu_op_i = add_op;
-	       `uvm_info(get_type_name(),
-			 $sformatf("Seting fifo_we_to 1"),
-			 UVM_HIGH)
+	       vif.alu_op_i = add_op;	       
 	       vif.store_fifo_we_i <= #100 1'b1; // this way store fifo will be high after one clock cycle
 	   end
        endcase; // case req.vector_instruction_i[31              	          

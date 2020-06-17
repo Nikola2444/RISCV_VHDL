@@ -106,13 +106,16 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        const logic 	   vi_funct3 = 3'b011;
 
        logic [31 : 0] 	   a;
-       logic [31 : 0] b;
-       logic [6 : 0]  opcode = tr.vector_instruction_i [6 : 0];
-       logic [5 : 0]  funct6 = tr.vector_instruction_i[31 : 26];
-       logic [4 : 0]  vs1_addr = tr.vector_instruction_i[19 : 15];
-       logic [4 : 0]  vs2_addr = tr.vector_instruction_i[24 : 20];
-       logic [4 : 0]  vd_addr = tr.vector_instruction_i[11 : 7];
-       logic [4 : 0]  imm = tr.vector_instruction_i[19 : 15];
+       logic [31 : 0] 	   b;
+
+       /*Instruction fields*/
+       logic 		   vm = tr.vector_instruction_i[25];	
+       logic [6 : 0] 	   opcode = tr.vector_instruction_i [6 : 0];
+       logic [5 : 0] 	   funct6 = tr.vector_instruction_i[31 : 26];
+       logic [4 : 0] 	   vs1_addr = tr.vector_instruction_i[19 : 15];
+       logic [4 : 0] 	   vs2_addr = tr.vector_instruction_i[24 : 20];
+       logic [4 : 0] 	   vd_addr = tr.vector_instruction_i[11 : 7];
+       logic [4 : 0] 	   imm = tr.vector_instruction_i[19 : 15];
 	// Funct3 determines the type of operands (vector - vector or vector-scalar or 
 	// vector - immediate) 
        logic [2 : 0]  funct3 = tr.vector_instruction_i[14:12];       	
@@ -122,7 +125,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 		    case (funct3)			
 			vv_funct3:begin
 			    a = VRF_referent_model[i + vs1_addr*elements_per_vector];
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
+			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
 			    VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    			    
 			end
 			vs_funct3: begin
