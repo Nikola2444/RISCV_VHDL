@@ -15,7 +15,7 @@ generic (PHY_ADDR_SPACE : natural := 512*1024*1024; -- 512 MB
 			data_ready_o : out std_logic;
 			instr_ready_o : out std_logic;
 			-- NOTE Just for test bench, to simulate real memory
-			addr_phy_o 			: out std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			addr_phy_o 			: out std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 			dread_phy_i 		: in std_logic_vector(31 downto 0);
 			dwrite_phy_o		: out std_logic_vector(31 downto 0);
          we_phy_o				: out std_logic_vector(3 downto 0);
@@ -23,10 +23,10 @@ generic (PHY_ADDR_SPACE : natural := 512*1024*1024; -- 512 MB
 			-- Instruction cache
 			rst_instr_cache_i : in std_logic;
 			en_instr_cache_i  : in std_logic;
-			addr_instr_i 		: in std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			addr_instr_i 		: in std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 			dread_instr_o 		: out std_logic_vector(31 downto 0);
 			-- Data cache
-			addr_data_i			: in std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			addr_data_i			: in std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 			dread_data_o 		: out std_logic_vector(31 downto 0);
 			dwrite_data_i		: in std_logic_vector(31 downto 0);
          we_data_i			: in std_logic_vector(3 downto 0);
@@ -56,7 +56,7 @@ architecture Behavioral of cache_contr_dm is
 
 
 	-- Instruction cache signals
-	signal addra_instr_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+	signal addra_instr_cache_s : std_logic_vector((LVL1C_ADDR_WIDTH-3) downto 0); --(-2 bits because byte in 32-bit word is not adressible) 
 	signal dwritea_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 	signal dreada_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 	signal wea_instr_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
@@ -81,7 +81,7 @@ architecture Behavioral of cache_contr_dm is
 
 	-- Data cache signals
 	signal clk_data_cache_s : std_logic;
-	signal addra_data_cache_s : std_logic_vector((clogb2(LVL1_CACHE_SIZE)-1) downto 0);
+	signal addra_data_cache_s : std_logic_vector((LVL1C_ADDR_WIDTH-3) downto 0); --(-2 bits because byte in 32-bit word is not adressible)
 	signal dwritea_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 	signal dreada_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
 	signal wea_data_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
@@ -110,7 +110,7 @@ architecture Behavioral of cache_contr_dm is
 
 	-- Level 2 cache signals
 	-- port A
-	signal addra_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
+	signal addra_lvl2_cache_s : std_logic_vector((LVL2C_ADDR_WIDTH-3) downto 0); --(-2 bits because byte in 32-bit word is not adressible)
 	signal dwritea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 	signal dreada_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 	signal wea_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
@@ -118,7 +118,7 @@ architecture Behavioral of cache_contr_dm is
 	signal rsta_lvl2_cache_s : std_logic;
 	signal regcea_lvl2_cache_s : std_logic;
 	-- port B
-	signal addrb_lvl2_cache_s : std_logic_vector((clogb2(LVL2_CACHE_SIZE)-1) downto 0);
+	signal addrb_lvl2_cache_s : std_logic_vector((LVL2C_ADDR_WIDTH-3) downto 0);
 	signal dwriteb_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 	signal dreadb_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 	signal web_lvl2_cache_s : std_logic_vector(LVL2C_NUM_COL-1 downto 0);
@@ -212,7 +212,8 @@ architecture Behavioral of cache_contr_dm is
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
 	signal mc_state_reg, mc_state_next: mc_state;
-	-- cc -  cache controller counter
+	-- cc -  cache controller counter 
+	-- (-2) because 4 bytes are written at once, 32 bit bus - 4 bytes
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	signal mc_counter_reg, mc_counter_incr, mc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
@@ -303,8 +304,8 @@ begin
 	instr_ready_o <= lvl1i_c_hit_s;
 
 	-- Adder for counters 
-	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
-	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH));
+	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
+	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 
 	-- Sequential logic - regs
 	regs : process(clk)is
@@ -335,8 +336,8 @@ begin
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
 	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
-	fsm_cache : process(cc_state_reg, lvl2ia_c_tag_s, addr_instr_i, dreada_instr_cache_s, 
-		we_data_i, addr_data_i, dwrite_data_i, dreada_data_cache_s, lvl1i_c_hit_s, 
+	fsm_cache : process(cc_state_reg, lvl1i_c_addr_s, lvl1d_c_addr_s, lvl2ia_c_tag_s, dreada_instr_cache_s, lvl1i_c_tag_s,
+		we_data_i, dwrite_data_i, dreada_data_cache_s, lvl1i_c_hit_s, lvl2ia_c_addr_s, lvl2a_c_hit_s,
 		lvl1d_c_hit_s, lvl1da_ts_bkk_s, lvl2da_c_idx_s, cc_counter_reg, cc_counter_incr, lvl2ia_c_idx_s, 
 		lvl2ia_c_tag_s, lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,lvl1d_c_tag_s,lvl2a_c_tag_s) is
 	begin
@@ -350,18 +351,18 @@ begin
 		wea_instr_tag_s <= '0';
 		dwritea_instr_tag_s <= (others => '0');
 		wea_instr_cache_s <= (others => '0');
-		addra_instr_cache_s <= addr_instr_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
+		addra_instr_cache_s <= lvl1i_c_addr_s((LVL1C_ADDR_WIDTH-1) downto 2);
 		dwritea_instr_cache_s <= (others => '0');
 		dread_instr_o <= dreada_instr_cache_s;
 		-- LVL1 data cache and tag
 		wea_data_tag_s <= '0';
 		dwritea_data_tag_s <= (others => '0');
 		wea_data_cache_s <= we_data_i;
-		addra_data_cache_s <= addr_data_i((clogb2(LVL1_CACHE_SIZE)-1) downto 2);
+		addra_data_cache_s <= lvl1d_c_addr_s((LVL1C_ADDR_WIDTH-1) downto 2);
 		dwritea_data_cache_s <= dwrite_data_i;
 		dread_data_o <= dreada_data_cache_s;
 		-- LVL2 cache and tag
-		addra_lvl2_cache_s <= (others => '0');
+		addra_lvl2_cache_s <= lvl2ia_c_addr_s((LVL2C_ADDR_WIDTH-1) downto 2);
 		wea_lvl2_cache_s <= (others => '0');
 		dwritea_lvl2_cache_s <= (others => '0'); 
 		addra_lvl2_tag_s <= lvl2ia_c_idx_s;
@@ -377,7 +378,7 @@ begin
 					if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
 						-- flush needed, prepare address one clk before
 						cc_state_next <= flush_data;
-						addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
+						addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 					else
 						cc_state_next <= check_lvl2_data;
 					end if;
@@ -392,7 +393,7 @@ begin
 				else
 					cc_state_next <= check_lvl2_instr; -- stay here if lvl2 is not ready
 				end if;
-				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg;
 
 			when check_lvl2_data => 
 				addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -403,12 +404,12 @@ begin
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
 
 			when fetch_instr => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_incr & "00";
-				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_incr;
+				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
 				dwritea_instr_cache_s <= dreada_lvl2_cache_s;
 				wea_instr_cache_s <= "1111";
 
@@ -429,8 +430,8 @@ begin
 
 			when fetch_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
-				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg & "00";
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
+				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 				dwritea_data_cache_s <= dreada_lvl2_cache_s;
 				wea_data_cache_s <= "1111";
 
@@ -452,8 +453,8 @@ begin
 			when flush_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
 				-- TODO IMPLEMENT LOGIC FOR FLUSHING
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg & "00";
-				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_incr & "00";
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
+				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_incr;
 				dwritea_lvl2_cache_s <= dreada_data_cache_s;
 				wea_lvl2_cache_s <= "1111";
 
@@ -479,7 +480,8 @@ begin
 	end process;
 
 
-	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, lvl2a_c_idx_s, lvl2a_c_tag_s, lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i) is
+	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, lvl2a_c_idx_s, lvl2a_c_tag_s,
+									 lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i, lvl2a_ts_tag_s) is
 	begin
 		-- for FSM
 		mc_state_next <= idle;
@@ -502,7 +504,7 @@ begin
 				if(lvl2a_c_hit_s = '1')then
 					if (lvl2a_ts_bkk_s(1) = '1')then -- dirty
 						mc_state_next <= flush;
-						addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg & "00";
+						addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;
 					else
 						mc_state_next <= fetch;
 						addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_reg & "00";
@@ -512,7 +514,7 @@ begin
 
 			when flush =>
 				addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_reg & "00";
-				addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_incr & "00";
+				addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_incr;
 				dwrite_phy_o <= dreada_lvl2_cache_s;
 				we_phy_o <= "1111";
 
@@ -527,7 +529,7 @@ begin
 
 			when fetch =>
 				addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_incr & "00";
-				addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg & "00";
+				addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;
 				dwriteb_lvl2_cache_s <= dread_phy_i;
 				web_lvl2_cache_s <= "1111";
 

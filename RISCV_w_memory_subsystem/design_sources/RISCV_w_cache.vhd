@@ -8,7 +8,7 @@ entity RISCV_w_cache is
 	port (clk : in std_logic;
 			reset : in std_logic;
 			-- NOTE Just for test bench, to simulate real memory
-			addr_phy_o 		: out std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+			addr_phy_o 		: out std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 			dread_phy_i 		: in std_logic_vector(31 downto 0);
 			dwrite_phy_o		: out std_logic_vector(31 downto 0);
          we_phy_o			: out std_logic_vector(3 downto 0);
@@ -28,7 +28,7 @@ architecture Behavioral of RISCV_w_cache is
 
 
    -- Instruction cache signals
-		signal addr_instr_cache_s : std_logic_vector((PHY_ADDR_WIDTH-1) downto 0);
+		signal addr_instr_cache_s : std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 		signal addr_instr_cache_32_s : std_logic_vector(31 downto 0);
 		signal dread_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal en_instr_cache_s : std_logic;
@@ -36,7 +36,7 @@ architecture Behavioral of RISCV_w_cache is
 
 
 	-- Data cache signals
-		signal addr_data_cache_s : std_logic_vector((PHY_ADDR_WIDTH-1) downto 0);
+		signal addr_data_cache_s : std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 		signal addr_data_cache_32_s : std_logic_vector(31 downto 0);
 		signal dwrite_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dread_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
@@ -46,7 +46,7 @@ architecture Behavioral of RISCV_w_cache is
 		signal re_data_cache_s : std_logic; 
 
 		-- NOTE Just for test bench, to simulate real memory
-		signal addr_phy_s 		: std_logic_vector(clogb2(PHY_ADDR_WIDTH)-1 downto 0);
+		signal addr_phy_s 		: std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 		signal dread_phy_s 	: std_logic_vector(31 downto 0);
 		signal dwrite_phy_s		: std_logic_vector(31 downto 0);
 		signal we_phy_s			: std_logic_vector(3 downto 0);
@@ -112,5 +112,11 @@ begin
 --	Dummy ports so Vivado wouldn't "optimize" the entire design for now
 	dread_instr <= dread_instr_cache_s;
 	dread_data <= dread_data_cache_s;
+
+-- Physical memory interface
+	addr_phy_o <= addr_phy_s;
+	dread_phy_s <= dread_phy_i;
+	dwrite_phy_o <= dwrite_phy_s;
+	we_phy_o <= we_phy_s;
 
 end architecture;

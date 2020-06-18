@@ -11,7 +11,7 @@ library ieee;
 library work;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.ram_pkg.all;
+use work.cache_pkg.all;
 USE std.textio.all;
 
 entity RAM_tdp_rf_bw is

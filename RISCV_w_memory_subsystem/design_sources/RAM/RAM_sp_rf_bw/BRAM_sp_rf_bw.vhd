@@ -12,7 +12,7 @@ library ieee;
 library work;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.ram_pkg.all;
+use work.cache_pkg.all;
 USE std.textio.all;
 
 entity BRAM_sp_rf_bw is
@@ -98,7 +98,7 @@ process(clk)
 begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
-			  -- Lines marked with + are added by user to Xilinx template
+			  -- Lines marked with + are added by user to the Xilinx template
 			  	if(rsta = '1')then -- +
 					ram_data_a <= ram_array(to_integer(unsigned(addra)));
 				else -- +
