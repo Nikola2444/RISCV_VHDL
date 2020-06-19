@@ -4,7 +4,7 @@ use work.custom_functions_pkg.all;
 use ieee.numeric_std.all;
 
 entity VRF_BRAM_addr_generator is
-   generic(VECTOR_LENGTH : natural := 1024;
+   generic(VECTOR_LENGTH : natural := 32;
            DATA_WIDTH: natural := 32
            );
    port (
@@ -16,23 +16,23 @@ entity VRF_BRAM_addr_generator is
       alu_exe_time_i       : in std_logic_vector(2 downto 0);
       vmul_i : in std_logic_vector (1 downto 0);
       --vector_length_i tells us how many elements there are per vector register
-      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
+      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
       -- input signals
       vs1_address_i        : in std_logic_vector(4 downto 0);
       vs2_address_i        : in std_logic_vector(4 downto 0);
       vd_address_i         : in std_logic_vector(4 downto 0);
             
       -- output signals
-      BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-      BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+      BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+      BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
       BRAM_re_o        : out std_logic;
 
       -- Because mask register needs to mask a maximum of 1/4 of all elements
       -- mask address must have enough bits to do so.
-      mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH/4)  downto 0);
+      mask_BRAM_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 8)  downto 0);
       mask_BRAM_re_o        : out std_logic;
 
-      BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+      BRAM_w_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
       BRAM_we_o        : out std_logic;
 
 
@@ -42,7 +42,7 @@ end entity;
 
 architecture behavioral of VRF_BRAM_addr_generator is
 
-   type lookup_table_of_vr_indexes is array (0 to 31) of std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+   type lookup_table_of_vr_indexes is array (0 to 31) of std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
 
 
       -- ******************FUNCTION DEFINITIONS NEEDED FOR THIS MODULE*************
@@ -52,13 +52,13 @@ architecture behavioral of VRF_BRAM_addr_generator is
       variable lookup_table_v : lookup_table_of_vr_indexes;
    begin
       for i in lookup_table_of_vr_indexes'range loop
-         lookup_table_v(i) := std_logic_vector(to_unsigned(i * VECTOR_LENGTH/DATA_WIDTH, clogb2(VECTOR_LENGTH)));
+         lookup_table_v(i) := std_logic_vector(to_unsigned(i * VECTOR_LENGTH, clogb2(VECTOR_LENGTH * 32)));
       end loop;
       return lookup_table_v;
    end function;
    --***************************************************************************************
 
-   constant concat_bits: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH)  downto 0) := (others => '0');
+   constant concat_bits: std_logic_vector(clogb2(VECTOR_LENGTH)  downto 0) := (others => '0');
 
    -------------------------------------------------------------------------------------------------------------------------------------------------------
    --VRF_TYPES_OF_ACCESS
@@ -66,40 +66,40 @@ architecture behavioral of VRF_BRAM_addr_generator is
    constant read_and_write_c : std_logic_vector(1 downto 0) := "00";
    constant only_read_c      : std_logic_vector(1 downto 0) := "10";
    constant only_write_c     : std_logic_vector(1 downto 0) := "01";
-   constant one_c : unsigned(clogb2(VECTOR_LENGTH/DATA_WIDTH)  + 3 downto 0) := to_unsigned(1, clogb2(VECTOR_LENGTH/DATA_WIDTH) + 4);
+   constant one_c : unsigned(clogb2(VECTOR_LENGTH)  + 3 downto 0) := to_unsigned(1, clogb2(VECTOR_LENGTH) + 4);
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 
    -------------------------------------------------------------------------------------------------------------------------------------------------------
    -- Consant used to widen vd_address_i so it has the same number of bits ac counter2_reg_s
-   constant counter1_eq_zero: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) + 3 downto 0):= (others => '0');
-   constant mask_we_zero: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) + 3 - 5 downto 0):= (others => '0');
+   constant counter1_eq_zero: std_logic_vector(clogb2(VECTOR_LENGTH) + 3 downto 0):= (others => '0');
+   constant mask_we_zero: std_logic_vector(clogb2(VECTOR_LENGTH) + 3 - 5 downto 0):= (others => '0');
    -- Widened vd_address_i
-   signal vd_address_extended_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+   signal vd_address_extended_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
    -- write enable for mask register
    signal mask_BRAM_re_s: std_logic;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 
    signal index_lookup_table_s : lookup_table_of_vr_indexes := init_lookup_table(VECTOR_LENGTH);
-   signal vector_len_shifted_s: std_logic_vector (clogb2(VECTOR_LENGTH/DATA_WIDTH)  + 3 downto 0);
-   signal bram_vs1_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal bram_vs2_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal bram_vd_index_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal bram_vs1_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal bram_vs2_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
-   signal bram_vd_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH) - 1 downto 0);
+   signal vector_len_shifted_s: std_logic_vector (clogb2(VECTOR_LENGTH)  + 3 downto 0);
+   signal bram_vs1_index_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal bram_vs2_index_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal bram_vd_index_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal bram_vs1_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal bram_vs2_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal bram_vd_index_vmul_shifted_s: std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
    signal BRAM_we_s: std_logic;
    --+3 takes into account the shift that happens when vmul > 1
-   signal v_len_s: std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH)  + 3 downto 0);
+   signal v_len_s: std_logic_vector(clogb2(VECTOR_LENGTH)  + 3 downto 0);
 
 
 
    -------------------------------------------------------------------------------------------------------------------------------------------------------
    -- Counter necessary for read/write BRAM operations 
    --+3 takes into account the shift that happens when vmul > 1
-   signal counter1_reg_s, counter1_next_s : std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) + 3 downto 0);
+   signal counter1_reg_s, counter1_next_s : std_logic_vector(clogb2(VECTOR_LENGTH) + 3 downto 0);
    -- Counter necessary for read_and_write BRAM operations 
    --+3 takes into account the shift that happens when vmul > 1
-   signal counter2_reg_s, counter2_next_s : std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH)  + 3 downto 0);
+   signal counter2_reg_s, counter2_next_s : std_logic_vector(clogb2(VECTOR_LENGTH)  + 3 downto 0);
    -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 begin
@@ -216,8 +216,8 @@ begin
    -- lmul = 8 - shift left 3
 
    -- When lmul = 1, element from only one register are read from BRAM (0 -
-   -- VECTOR_LENGTH/DATA_WIDTH), when lmul = 2, two vector registers are read
-   -- from BRAM (0 to 2*VECTOR_LENGTH/DATA_WIDTH), and so on. Shift to the left
+   -- VECTOR_LENGTH - 1), when lmul = 2, two vector registers are read
+   -- from BRAM (0 to 2*VECTOR_LENGTH - 1), and so on. Shift to the left
    -- multiplies vector register index, and with that two vector registers are
    -- concataneted into one.
    -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -233,17 +233,17 @@ begin
             bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s;
             bram_vd_index_vmul_shifted_s <= bram_vd_index_s;
          when "01" =>            
-            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH) - 2 downto 0)&'0';
-            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH) - 2 downto 0)&'0';            
-            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH) - 2 downto 0)&'0';
+            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH * 32) - 2 downto 0)&'0';
+            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH * 32) - 2 downto 0)&'0';            
+            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH * 32) - 2 downto 0)&'0';
          when "10" =>
-            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH) - 3 downto 0)&"00";
-            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH) - 3 downto 0)&"00";
-            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH) - 3 downto 0)&"00";
+            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH * 32) - 3 downto 0)&"00";
+            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH * 32) - 3 downto 0)&"00";
+            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH * 32) - 3 downto 0)&"00";
          when "11" =>            
-            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH) - 4 downto 0)&"000";            
-            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH) - 4 downto 0)&"000";            
-            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH) - 4 downto 0)&"000";
+            bram_vs1_index_vmul_shifted_s <= bram_vs1_index_s(clogb2(VECTOR_LENGTH * 32) - 4 downto 0)&"000";            
+            bram_vs2_index_vmul_shifted_s <= bram_vs2_index_s(clogb2(VECTOR_LENGTH * 32) - 4 downto 0)&"000";            
+            bram_vd_index_vmul_shifted_s <= bram_vd_index_s(clogb2(VECTOR_LENGTH * 32) - 4 downto 0)&"000";
          when others =>
       end case;
    end process;

@@ -19,7 +19,7 @@ class control_if_base_seq extends uvm_sequence#(control_if_seq_item);
 
    // objections are dropped in post_body
    virtual task post_body();
-      uvm_phase phase = get_starting_phase();
+       uvm_phase phase = get_starting_phase();
       if (phase != null)
         phase.drop_objection(this, {"Completed sequence '", get_full_name(), "'"});
    endtask : post_body

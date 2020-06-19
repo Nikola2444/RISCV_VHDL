@@ -84,7 +84,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 
    /*This function generates vector lane control signals. It has two argumets:
         
-    vif - inside it is the virtual interface of vector lane
+    vif - inside it, is the virtual interface of vector lane
     vector_instruction_i - is the instruction the lane needs to receive    
     */
    task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
@@ -96,7 +96,10 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	   arith_opcode: begin
 	       vif.vrf_type_of_access_i = vrf_read_write;
 	       vif.vs1_addr_src_i = 0;
-	       vif.store_fifo_we_i <= #200 1'b0;
+	       // Next line need's to be handled better. Two	       
+	       // Clock cycles delay is neccessary after receiveng new
+	       // intruction before setting store_we_i to 0
+	       vif.store_fifo_we_i <= #99 1'b0; 
 	       case (funct6)
 		   v_add_funct6: begin
 		       $display("sending add_op");		       
@@ -117,11 +120,10 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       endcase; // case funct6	       
 	   end // case: arith_opcode
 	   store_opcode: begin
-	       vif.store_fifo_we_i <= 1'b0;
 	       vif.vs1_addr_src_i = 1;
 	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
 	       vif.alu_op_i = add_op;	       
-	       vif.store_fifo_we_i <= #100 1'b1; // this way store fifo will be high after one clock cycle
+	       vif.store_fifo_we_i <= #99 1'b1; // this way store fifo will be high after one clock cycle
 	   end
        endcase; // case req.vector_instruction_i[31              	          
    endtask: generate_control_signals

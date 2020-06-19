@@ -9,7 +9,7 @@ interface v_lane_if (input clk, logic reset);
    logic [31 : 0] vector_instruction_i;   
    logic [DATA_WIDTH - 1 : 0] data_from_mem_i;   
    logic [1 : 0] 	      vmul_i;   
-   logic [$clog2(VECTOR_LENGTH/DATA_WIDTH) : 0] vector_length_i ;
+   logic [$clog2(VECTOR_LENGTH) : 0] vector_length_i ;
    
    /*************control signals***********************************/
    // from memory control unit        

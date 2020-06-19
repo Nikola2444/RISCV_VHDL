@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 
 entity vector_lane is
    generic (DATA_WIDTH    : natural := 32;
-            VECTOR_LENGTH : natural := 1024
+            VECTOR_LENGTH : natural := 32
             );
    port(clk                  : in std_logic;
         reset                : in std_logic;
@@ -15,7 +15,7 @@ entity vector_lane is
         vector_instruction_i : in std_logic_vector(31 downto 0);
         data_from_mem_i      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         vmul_i               : in std_logic_vector (1 downto 0);
-        vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH/DATA_WIDTH) downto 0);
+        vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
         --*************control signals***********************************
         -- from memory control unit        
         load_fifo_we_i       : in std_logic;
@@ -119,7 +119,7 @@ begin
          vs1_data_o           => vs1_data_s,
          vs2_data_o           => vs2_data_s,
          ready_o              => ready_o);
-   ALU_1 : entity work.ALU
+   ALU_1 : entity work.V_ALU
       generic map (
          WIDTH => DATA_WIDTH)
       port map (

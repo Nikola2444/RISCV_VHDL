@@ -13,7 +13,7 @@ module vector_lane_verif_top;
 
    // DUT
    vector_lane#(
-		.VECTOR_LENGTH (1024),
+		.VECTOR_LENGTH (32),
 		.DATA_WIDTH(32)) 
    vector_lane_DUT(
 		   .clk(clk),

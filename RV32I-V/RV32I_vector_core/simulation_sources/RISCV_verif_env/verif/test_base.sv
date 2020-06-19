@@ -19,7 +19,7 @@ class test_base extends uvm_test;
       env = control_if_env::type_id::create("env", this);      
    endfunction : build_phase
 
-   function void end_of_elaboration_phase(uvm_phase phase);
+    function void end_of_elaboration_phase(uvm_phase phase);
       super.end_of_elaboration_phase(phase);
        uvm_top.print_topology();
    endfunction : end_of_elaboration_phase

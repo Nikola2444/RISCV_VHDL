@@ -7,15 +7,15 @@ class vector_lane_scoreboard extends uvm_scoreboard;
    bit checks_enable = 1;
    bit coverage_enable = 1;
    int i = 0;
-   int VRF_num_of_el = VECTOR_LENGTH*32;
+   int VRF_num_of_el = VECTOR_LENGTH;
    int num_of_matches = 0;
    int num_of_mis_matches = 0;
-   const int elements_per_vector = VECTOR_LENGTH/32;
+   const int elements_per_vector = VECTOR_LENGTH;
 
     
    typedef struct 
 		 {
-		    logic [$clog2(VECTOR_LENGTH/DATA_WIDTH) : 0] vector_length_i; 
+		    logic [$clog2(VECTOR_LENGTH) : 0] vector_length_i; 
 		    logic [1 : 0] 			 vmul_i;
 		    logic [4 : 0] 			 vd_addr;
 		 } store_info;
@@ -27,7 +27,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
     
    int num_of_tr;
 
-   logic [31 : 0] VRF_referent_model [VECTOR_LENGTH];
+   logic [31 : 0] VRF_referent_model [VECTOR_LENGTH * 32];
 
     `uvm_component_utils_begin(vector_lane_scoreboard)
 	`uvm_field_int(checks_enable, UVM_DEFAULT)
@@ -39,7 +39,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	collected_imp_instr_item = new("collected_imp_instr_item", this);
 	collected_imp_store_data_item = new("collected_imp_store_data_item", this);
 	// initializing VRF referent model the same way real VRF is initialized
-	for (int i = 0; i < VECTOR_LENGTH; i++) begin
+	for (int i = 0; i < VECTOR_LENGTH * 32; i++) begin
 	    VRF_referent_model[i] = i;
 	    $display ("VRF[%d] = %d",i, VRF_referent_model[i]);	    
 	end 
@@ -75,6 +75,8 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	if(checks_enable) begin
 	   int vrf_addr = i++ + tmp_store_info.vd_addr * elements_per_vector; 
 	    assert(tr_clone.data_to_mem_o == VRF_referent_model[vrf_addr]) begin
+		`uvm_info(get_type_name(), $sformatf("Match on position VRF[%d]! expected value: %x, \t real_value: %x", 
+						       vrf_addr, VRF_referent_model[vrf_addr ], tr_clone.data_to_mem_o), UVM_LOW);
 		num_of_matches++;		
 	    end
 	      else begin
@@ -83,7 +85,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 		  num_of_mis_matches++;
 	      end
 		
-	    if(i == ( tmp_store_info.vector_length_i*2**tmp_store_info.vmul_i - 1)) begin
+	    if(i == ( tmp_store_info.vector_length_i*2**tmp_store_info.vmul_i)) begin
 
 		i = 0;
 		store_info_fifo.pop_front();	
@@ -141,8 +143,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 		     0      0              0
 		     0      1              1
 		     1      0              1
-		     1      1              1
-		     */		    
+		     1      1              1 */		    
 		    if (vm | VRF_referent_model [i][0])
 		      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    			    
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)

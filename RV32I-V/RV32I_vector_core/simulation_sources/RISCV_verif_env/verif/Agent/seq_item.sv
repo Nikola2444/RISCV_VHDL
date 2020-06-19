@@ -6,7 +6,7 @@ class control_if_seq_item extends uvm_sequence_item;
 
     rand logic [31 : 0] vector_instruction_i;  
     rand logic [1 : 0]  vmul_i;   
-    rand logic [$clog2(VECTOR_LENGTH/DATA_WIDTH) : 0] vector_length_i;
+    rand logic [$clog2(VECTOR_LENGTH) : 0] vector_length_i;
     rand logic [31 : 0] rs1_data_i;
     rand logic [4 : 0] alu_op_i;
     

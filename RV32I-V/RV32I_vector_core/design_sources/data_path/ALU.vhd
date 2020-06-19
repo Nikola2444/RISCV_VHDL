@@ -5,7 +5,7 @@ use ieee.math_real.all;
 use work.alu_ops_pkg.all;
 
 
-ENTITY ALU IS
+ENTITY V_ALU IS
    GENERIC(
       WIDTH : NATURAL := 32);
    PORT(
@@ -17,9 +17,9 @@ ENTITY ALU IS
       res_o  : out STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0)); --result
       --zero_o : out STD_LOGIC; --zero flag
       --of_o   : out STD_LOGIC; --overflow flag
-END ALU;
+END V_ALU;
 
-ARCHITECTURE behavioral OF ALU IS
+ARCHITECTURE behavioral OF V_ALU IS
 
    constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
    signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
