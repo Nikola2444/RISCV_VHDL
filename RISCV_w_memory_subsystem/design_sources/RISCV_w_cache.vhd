@@ -13,7 +13,7 @@ entity RISCV_w_cache is
 			dwrite_phy_o		: out std_logic_vector(31 downto 0);
          we_phy_o			: out std_logic_vector(3 downto 0);
 			--Instruction cache
-			dread_instr: out std_logic_vector(31 downto 0);
+			dread_instr : out std_logic_vector(31 downto 0);
 			--Data cache
 			dread_data: out std_logic_vector(31 downto 0)
 

@@ -67,17 +67,17 @@ file ramfile	: text is in ramfilename;
 variable ramfileline : line;
 variable i : integer := 0;
 
-variable ram_array	: ram_type;
+variable ram_array_v	: ram_type;
 variable bitvec : bit_vector(C_NB_COL*C_COL_WIDTH-1 downto 0);
 begin
-	 ram_array := (others => (others => '0'));
+	 ram_array_v := (others => (others => '0'));
     while not endfile(ramfile) loop
         readline (ramfile, ramfileline);
         read (ramfileline, bitvec);
-        ram_array(i) := to_stdlogicvector(bitvec);
+        ram_array_v(i) := to_stdlogicvector(bitvec);
         i:=i+1;
     end loop;
-    return ram_array;
+    return ram_array_v;
 end function;
 
 impure function init_from_file_or_zeroes(ramfile : string) return ram_type is
@@ -88,9 +88,11 @@ begin
         return (others => (others => '0'));
     end if;
 end;
--- Following code defines RAM
 
-shared variable ram_array : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
+-- Following code defines RAM
+shared variable ram_array_v : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
+attribute ram_style : string;
+attribute ram_style of ram_array_v : variable is "block";
 
 begin
 
@@ -100,13 +102,13 @@ begin
         if(ena = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
 			  	if(rsta = '0')then -- +
-					ram_data_a <= ram_array(to_integer(unsigned(addra)));
+					ram_data_a <= ram_array_v(to_integer(unsigned(addra)));
 				else -- +
 					ram_data_a <= (others => '0'); -- +
 				end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(wea(i) = '1') then
-                    ram_array(to_integer(unsigned(addra)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dina((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
+                    ram_array_v(to_integer(unsigned(addra)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dina((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
                 end if;
             end loop;
         end if;
@@ -119,13 +121,13 @@ begin
         if(enb = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
 			  	if(rstb = '0')then -- +
-					ram_data_b <= ram_array(to_integer(unsigned(addrb)));
+					ram_data_b <= ram_array_v(to_integer(unsigned(addrb)));
 				else -- +
 					ram_data_b <= (others => '0'); -- +
 				end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(web(i) = '1') then
-                    ram_array(to_integer(unsigned(addrb)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dinb((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
+                    ram_array_v(to_integer(unsigned(addrb)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dinb((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
                 end if;
             end loop;
         end if;

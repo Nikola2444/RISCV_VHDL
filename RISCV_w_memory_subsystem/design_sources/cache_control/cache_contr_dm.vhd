@@ -134,6 +134,7 @@ architecture Behavioral of cache_contr_dm is
 	signal ena_lvl2_tag_s : std_logic;
 	signal rsta_lvl2_tag_s : std_logic;
 	signal wea_lvl2_tag_s : std_logic;
+	signal regcea_lvl2_tag_s : std_logic;
 	-- port B
 	signal dwriteb_lvl2_tag_s : std_logic_vector(LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH - 1 downto 0);
 	signal dreadb_lvl2_tag_s : std_logic_vector(LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH - 1 downto 0);
@@ -141,6 +142,7 @@ architecture Behavioral of cache_contr_dm is
 	signal enb_lvl2_tag_s : std_logic;
 	signal rstb_lvl2_tag_s : std_logic;
 	signal web_lvl2_tag_s : std_logic;
+	signal regceb_lvl2_tag_s : std_logic;
 --*******************************************************************************************
 
 
@@ -373,6 +375,7 @@ begin
 			when idle =>
 				if(lvl1i_c_hit_s = '0') then -- instr cache miss
 					cc_state_next <= check_lvl2_instr;
+					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 				end if;
 				if(lvl1d_c_hit_s = '0') then -- data cache miss
 					if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
@@ -381,6 +384,7 @@ begin
 						addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 					else
 						cc_state_next <= check_lvl2_data;
+						addra_lvl2_tag_s <= lvl2da_c_idx_s;
 					end if;
 				end if;
 
@@ -709,7 +713,11 @@ begin
 	-- tag store for Level 2 cache
 	ena_lvl2_tag_s <= '1';
 	enb_lvl2_tag_s <= '1';
-	level_2_tag_store: entity work.ram_tdp_ar(rtl)
+	rsta_lvl2_tag_s <= '0';
+	rstb_lvl2_tag_s <= '0';
+	regcea_lvl2_tag_s <= '0'; -- TODO remove these if Vivado doesnt
+	regceb_lvl2_tag_s <= '0'; -- TODO remove these if Vivado doesnt
+	level_2_tag_store: entity work.ram_tdp_rf(rtl)
 		generic map (
 			 RAM_WIDTH => LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH,
 			 RAM_DEPTH => LVL2C_NB_BLOCKS
@@ -722,12 +730,16 @@ begin
 			dina => dwritea_lvl2_tag_s,
 			douta => dreada_lvl2_tag_s,
 			wea => wea_lvl2_tag_s,
+			rsta   => rsta_lvl2_tag_s,
+			regcea => regcea_lvl2_tag_s,
 			ena => ena_lvl2_tag_s,
 			--port b
 			dinb => dwriteb_lvl2_tag_s,
 			addrb => addrb_lvl2_tag_s,
 			doutb => dreadb_lvl2_tag_s,
 			web => web_lvl2_tag_s,
+			rstb   => rstb_lvl2_tag_s,
+			regceb => regceb_lvl2_tag_s,
 			enb => enb_lvl2_tag_s
 		);
 

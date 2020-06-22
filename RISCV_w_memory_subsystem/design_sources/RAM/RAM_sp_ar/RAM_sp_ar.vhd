@@ -55,9 +55,9 @@ begin
         return (others => (others => '0'));
     end if;
 end;
-attribute ram_style : string;
 -- Following code defines RAM
 signal ram_s : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
+attribute ram_style : string;
 attribute ram_style of ram_s : signal is "distributed";
 begin
 
