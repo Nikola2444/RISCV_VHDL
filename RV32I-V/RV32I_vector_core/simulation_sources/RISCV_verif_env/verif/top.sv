@@ -31,6 +31,7 @@ module vector_lane_verif_top;
 		   .mem_to_vrf_i(v_lane_vif.mem_to_vrf_i),
 		   .store_fifo_we_i(v_lane_vif.store_fifo_we_i),
 		   .vrf_type_of_access_i(v_lane_vif.vrf_type_of_access_i),
+		   .type_of_masking_i(v_lane_vif.type_of_masking_i),
 		   .load_fifo_re_i(v_lane_vif.load_fifo_re_i),
 		   .vs1_addr_src_i(v_lane_vif.vs1_addr_src_i),
 		   .data_to_mem_o(v_lane_vif.data_to_mem_o),

@@ -20,12 +20,15 @@ entity vector_lane is
         -- from memory control unit        
         load_fifo_we_i       : in std_logic;
         store_fifo_re_i      : in std_logic;
-
+        
         -- from vector control unit
         alu_op_i                : in  std_logic_vector(4 downto 0);
         mem_to_vrf_i            : in  std_logic_vector(1 downto 0);
         store_fifo_we_i         : in  std_logic;
-        vrf_type_of_access_i    : in  std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access        
+        vrf_type_of_access_i    : in  std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
+        -- 1: all elements in VRF are updated
+        -- 0: only masked elements in VRF are updated
+        type_of_masking_i: in std_logic;                                         
         load_fifo_re_i          : in  std_logic;
         vs1_addr_src_i          : in  std_logic;
         --oputput data
@@ -75,6 +78,13 @@ architecture structural of vector_lane is
 --****************************INTERCONNECTIONS*******************************
 --VRF output signals
    signal vs1_data_s, vs2_data_s, vd_data_s : std_logic_vector (DATA_WIDTH - 1 downto 0);
+   signal mask_s: std_logic;
+
+-- VRF input signals
+   signal masked_we_s:std_logic;
+   alias vm_s: std_logic is vector_instruction_i(25);
+   signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
+   signal vm_and_update_el_s:std_logic;
 -- ALU result
    signal alu_result_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
 -- LOAD FIFO I/O signals
@@ -87,9 +97,16 @@ begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
 
+   
+   
+   merge_data_s <= vs1_data_s when mask_s  = '1' else
+                   vs2_data_s;
    --mem to vector register file mux
-   vd_data_s <= fifo_data_output_s when mem_to_vrf_i = "01" else
-                alu_result_s;
+   vd_data_s <=
+      fifo_data_output_s when mem_to_vrf_i = "01" else
+      merge_data_s when mem_to_vrf_i = "10" else
+      vs1_data_s when mem_to_vrf_i = "11" else
+      alu_result_s;
 
 
 --****************************INSTANTIATIONS*********************************
@@ -98,8 +115,12 @@ begin
    alu_exe_time_s <= ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i)));
 
    vs1_address_s <= vector_instruction_i(19 downto 15) when vs1_addr_src_i = '0' else
-                     vector_instruction_i(11 downto 7);
+                    vector_instruction_i(11 downto 7);
+
+   vm_and_update_el_s <= vm_s or type_of_masking_i;
    
+   masked_we_s <= mask_s when vm_and_update_el_s = '0' else
+                  '1';
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH    => DATA_WIDTH,
@@ -110,7 +131,7 @@ begin
          vrf_type_of_access_i => vrf_type_of_access_i,
          alu_exe_time_i       => alu_exe_time_s,
          vmul_i               => vmul_i,
-         vm_i                 => vector_instruction_i(25),
+         masked_we_i => masked_we_s,
          vector_length_i      => vector_length_i,
          vs1_address_i        => vs1_address_s,
          vs2_address_i        => vector_instruction_i(24 downto 20),
@@ -118,6 +139,7 @@ begin
          vd_data_i            => vd_data_s,
          vs1_data_o           => vs1_data_s,
          vs2_data_o           => vs2_data_s,
+         mask_o => mask_s,
          ready_o              => ready_o);
    ALU_1 : entity work.V_ALU
       generic map (

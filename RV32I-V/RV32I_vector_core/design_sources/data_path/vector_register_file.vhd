@@ -15,19 +15,18 @@ entity vector_register_file is
          vector_length_i : in std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
          alu_exe_time_i  : in std_logic_vector (2 downto 0);
          vmul_i          : in std_logic_vector(1 downto 0);
-         vm_i            : in std_logic;
-         
+         masked_we_i: in std_logic;
          -- input data
          vs1_address_i   : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i   : in std_logic_vector(4 downto 0);
          vd_address_i    : in std_logic_vector(4 downto 0);
-
+         
          vd_data_i : in std_logic_vector(DATA_WIDTH - 1 downto 0);
 
          -- output data        
          vs1_data_o : out std_logic_vector(DATA_WIDTH - 1 downto 0);
          vs2_data_o : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-
+         mask_o: out std_logic;
          ready_o : out std_logic
          );
 end entity;
@@ -82,7 +81,7 @@ architecture structural of vector_register_file is
    
    signal BRAM_we_s         : std_logic;
    signal mask_BRAM_we_s      : std_logic;
-   signal mask_BRAM_re_s      : std_logic;
+   signal mask_BRAM_re_s      : std_logic; 
    signal BRAM_re_s         : std_logic;
 
    -- Signals coming out of mask BRAM
@@ -107,19 +106,15 @@ begin
    --Generating control signals for mask bram
    mask_BRAM_we_s <= VRF_BRAM_we_s when vd_address_i = "00000"  else
                    '0';
-   mask_BRAM_re_s <= VRF_mask_BRAM_re_s when vm_i = '0' else
-                     '0';
-
+   mask_BRAM_re_s <= VRF_mask_BRAM_re_s;
    -- Generating control signals for vector BRAM's
-   BRAM_we_s <= VRF_BRAM_we_s  when vm_i = '1' else
-                VRF_BRAM_we_s when mask_s = '1' and vm_i = '0' else
-                '0';
+   BRAM_we_s <= VRF_BRAM_we_s  and masked_we_i;
 
 
    --This BRAM contains mask bits that are used to determine which
    --elements inside other two BRAM's should be updated and which
    --not. Number of locations is 1/4 of maximum number of elements
-   -- because maximum number of concatanedet regiters is 8 (vmul = '11')
+   -- because maximum number of concatanated registers is 8 (vmul = '11')
    mask_reg : entity work.BRAM_18KB
       generic map (
          RAM_WIDTH       => 1,         
@@ -133,10 +128,10 @@ begin
          read_addr_i(clogb2(VECTOR_LENGTH * 8) - 1 downto 0)     => mask_BRAM_r_address_s(clogb2(VECTOR_LENGTH * 8) - 1 downto 0),
          write_data_i(0)    => vd_data_i(0),
          we_i            => mask_BRAM_we_s,
-         re_i            => mask_BRAM_re_s,
-         rst_read_i      => vm_i,
+         re_i            => '1',
+         rst_read_i      => '0',
          output_reg_en_i => '0',
-         read_data_o(0)     => mask_s);
+         read_data_o(0)     => mask_o);
 
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator

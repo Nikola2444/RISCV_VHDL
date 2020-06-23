@@ -18,7 +18,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    const logic [5 : 0] v_and_funct6 = 6'b001001;
    const logic [5 : 0] v_or_funct6 = 6'b001010;
    const logic [5 : 0] v_xor_funct6 = 6'b001011;
-   
+   const logic [5 : 0] v_merge_funct6 = 6'b010111;
 
    const logic [1 : 0] vrf_read_write = 2'b00;
    const logic [1 : 0] vrf_no_access = 2'b11;
@@ -45,16 +45,12 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
            @(posedge(vif.clk));
 	   #1ns;		       			   
 	   if (vif.reset) begin
-
 	       /*Generate read enable for store fifo if it is not empty*/
 	       if (!vif.store_fifo_empty_o)
 		 vif.store_fifo_re_i = 1'b1;
 	       else
 		 vif.store_fifo_re_i = 1'b0;
-	       
-	       
-
-	       
+       
 	       /*State machine that genereates certain control signals depending
 		on received instruction.*/
 	       case (v_lane_dr_stages)
@@ -90,19 +86,20 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
       logic [6 : 0] opcode = req.vector_instruction_i [6 : 0];
       logic [5 : 0] funct6 = req.vector_instruction_i[31 : 26];
-       
+      logic 	    vm = vector_instruction_i[25];	
        
        case (opcode)
 	   arith_opcode: begin
 	       vif.vrf_type_of_access_i = vrf_read_write;
 	       vif.vs1_addr_src_i = 0;
+	       vif.type_of_masking_i = 1'b0;
+	       vif.mem_to_vrf_i = 2'b00;
 	       // Next line need's to be handled better. Two	       
 	       // Clock cycles delay is neccessary after receiveng new
 	       // intruction before setting store_we_i to 0
 	       vif.store_fifo_we_i <= #99 1'b0; 
 	       case (funct6)
 		   v_add_funct6: begin
-		       $display("sending add_op");		       
 		       vif.alu_op_i = add_op;
 		   end
 		   v_sub_funct6: begin
@@ -116,15 +113,35 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 		   end
 		   v_xor_funct6: begin
 		       vif.alu_op_i = xor_op;
-		   end		   
+		   end
+		   v_merge_funct6: begin
+		       vif.type_of_masking_i = 1'b1;
+		       vif.mem_to_vrf_i = 2'b10;		       
+		       vif.alu_op_i = add_op;
+		       if(vm) begin // vmv and v_merge share the same encodings except for vm and vs2
+			   vif.mem_to_vrf_i = 2'b11;
+		       end
+		   end
 	       endcase; // case funct6	       
 	   end // case: arith_opcode
 	   store_opcode: begin
+	       vif.type_of_masking_i = 1'b0;
 	       vif.vs1_addr_src_i = 1;
 	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
 	       vif.alu_op_i = add_op;	       
 	       vif.store_fifo_we_i <= #99 1'b1; // this way store fifo will be high after one clock cycle
 	   end
+	   default: begin
+	       vif.vrf_type_of_access_i = vrf_no_access;
+	       vif.vs1_addr_src_i = 0;
+	       vif.type_of_masking_i = 1'b0;
+	       vif.mem_to_vrf_i = 2'b00;
+	       // Next line need's to be handled better. Two	       
+	       // Clock cycles delay is neccessary after receiveng new
+	       // intruction before setting store_we_i to 0
+	       vif.store_fifo_we_i <= #99 1'b0; 
+	   end
+	  
        endcase; // case req.vector_instruction_i[31              	          
    endtask: generate_control_signals
 

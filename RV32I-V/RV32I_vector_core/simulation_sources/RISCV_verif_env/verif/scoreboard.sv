@@ -86,7 +86,6 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	      end
 		
 	    if(i == ( tmp_store_info.vector_length_i*2**tmp_store_info.vmul_i)) begin
-
 		i = 0;
 		store_info_fifo.pop_front();	
 	    end	     
@@ -103,10 +102,14 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        const logic [6 : 0] arith_opcode = 7'b1010111;
        const logic [6 : 0] store_opcode = 7'b0100111;
 
+
        const logic 	   vv_funct3 = 3'b000;
        const logic 	   vs_funct3 = 3'b100;
        const logic 	   vi_funct3 = 3'b011;
 
+       const logic [5 : 0] v_merge_funct6 = 6'b010111;
+
+	
        logic [31 : 0] 	   a;
        logic [31 : 0] 	   b;
 
@@ -123,7 +126,8 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        logic [2 : 0]  funct3 = tr.vector_instruction_i[14:12];       	
 	case (opcode)
 	    arith_opcode: begin
-		for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)begin		    
+		for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)begin
+		    // Finding correct operand for arith operation
 		    case (funct3)			
 			vv_funct3:begin
 			    a = VRF_referent_model[i + vs1_addr*elements_per_vector];
@@ -138,14 +142,28 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];		
 			end
 		    endcase // case (funct3)
-		    /*Checking whether masking is enabled and checking mask bits in VRF[0]
-		     VM VRF[0]
-		     0      0              0
-		     0      1              1
-		     1      0              1
-		     1      1              1 */		    
-		    if (vm | VRF_referent_model [i][0])
-		      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);			    			    
+		    /*Checking if arith instruction is merge or not. If it is calculate acordingly 
+		     expected values. If vm = 1, that means that merge is a move instruction
+		     and expected value is equal to vs1 (a), else depending on mask bits in V0
+		     expected value can be a or b. If instruction is not merge that means it's a 
+		     regular arith instruction, and calculcation is done only if VM and VRF_referent_model[i][0]
+		     are not zero. When they are, that means masking is on (vm = 0), mask bit is zero, and
+		     element on that index should not be updated.*/
+		    case (funct6)
+			v_merge_funct6: begin
+			    if (vm) // when vm = 1 merge is a move instruction (vmv)
+			      VRF_referent_model [i + vd_addr*elements_per_vector] = a;
+			    else
+			      if (VRF_referent_model[i][0]) 
+				VRF_referent_model [i + vd_addr*elements_per_vector] = a;
+			      else
+				VRF_referent_model [i + vd_addr*elements_per_vector] = b;
+			end
+			default: begin
+			    if (vm | VRF_referent_model[i][0])
+			      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);
+			end
+		    endcase
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)
 	    end // case: arith_opcode
 	    store_opcode: begin
@@ -165,6 +183,6 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	    and_op: return a & b;		
 	    or_op: return a | b;
 	    xor_op: return a ^ b;	    
-	endcase; // case funct6	       
+	endcase;
     endfunction: arith_operation
 endclass : vector_lane_scoreboard
