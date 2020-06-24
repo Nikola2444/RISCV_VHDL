@@ -373,20 +373,30 @@ begin
 				
 		case (cc_state_reg) is
 			when idle =>
+				-- ACCESS TO DATA MEMORY
+				if(we_data_i /= "0000" or re_data_i='1') then --its only then a data memory access
+					if(lvl1d_c_hit_s = '1') then 
+						if(we_data_i /= "0000")then
+							wea_data_tag_s <= '1';
+							dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
+						end if;
+					else -- data cache miss
+						if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
+							-- flush needed, prepare address one clk before
+							cc_state_next <= flush_data;
+							addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
+						else
+							cc_state_next <= check_lvl2_data;
+							addra_lvl2_tag_s <= lvl2da_c_idx_s;
+						end if;
+					end if;
+				end if;
+				-- ACCESS TO INSTR MEMORY
 				if(lvl1i_c_hit_s = '0') then -- instr cache miss
 					cc_state_next <= check_lvl2_instr;
 					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 				end if;
-				if(lvl1d_c_hit_s = '0') then -- data cache miss
-					if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
-						-- flush needed, prepare address one clk before
-						cc_state_next <= flush_data;
-						addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
-					else
-						cc_state_next <= check_lvl2_data;
-						addra_lvl2_tag_s <= lvl2da_c_idx_s;
-					end if;
-				end if;
+				
 
 			when check_lvl2_instr => 
 				addra_lvl2_tag_s <= lvl2ia_c_idx_s;
@@ -505,7 +515,7 @@ begin
 
 		case (mc_state_reg) is
 			when idle =>
-				if(lvl2a_c_hit_s = '1')then
+				if(lvl2a_c_hit_s = '0')then
 					if (lvl2a_ts_bkk_s(1) = '1')then -- dirty
 						mc_state_next <= flush;
 						addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;

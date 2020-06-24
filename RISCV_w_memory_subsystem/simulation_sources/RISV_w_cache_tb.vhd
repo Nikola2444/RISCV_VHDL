@@ -78,9 +78,9 @@ begin
 	-- Clock process definitions
 	process
 	begin
-		clk <= '0';
-		wait for clk_period/2;
 		clk <= '1';
+		wait for clk_period/2;
+		clk <= '0';
 		wait for clk_period/2;
 	end process;
 
@@ -111,7 +111,7 @@ begin
 	process
 	begin
 		-- hold reset state for 100 ns
-		wait for 100 ns;
+		wait for 15 ns;
 		reset <= '1';
 
 		wait for 10000 ns;

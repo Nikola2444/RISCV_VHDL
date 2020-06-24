@@ -10,7 +10,7 @@ package cache_pkg is
 		constant PHY_ADDR_SPACE : integer := 512*1024*1024;
 		constant PHY_ADDR_WIDTH : integer := clogb2(PHY_ADDR_SPACE);
 	-- Block size is 64 bytes, this can be changed, as long as it is power of 2
-		constant BLOCK_SIZE : integer := 64;
+		constant BLOCK_SIZE : integer := 32;
 	-- Number of bits needed to address all bytes inside the block
 		constant BLOCK_ADDR_WIDTH : integer := clogb2(BLOCK_SIZE);
 
