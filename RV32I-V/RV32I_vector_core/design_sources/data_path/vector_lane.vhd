@@ -83,6 +83,8 @@ architecture structural of vector_lane is
    signal mask_s: std_logic;
 
 -- VRF input signals
+   signal sign_extension: std_logic_vector(DATA_WIDTH - 1 - 4 downto 0);
+   signal immediate_sign_ext: std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal masked_we_s:std_logic;
    alias vm_s: std_logic is vector_instruction_i(25);
    signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
@@ -101,8 +103,10 @@ begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
 
+   sign_extension <= (others => vector_instruction_i(19));
+   immediate_sign_ext <= sign_extension & vector_instruction_i(18 downto 15);
    
-   
+   --chosing what to write into VRF vs1 or vs2
    merge_data_s <= alu_a_input_s when mask_s  = '1' else
                    vs2_data_s;
    --mem to vector register file mux
@@ -130,7 +134,8 @@ begin
 
    -- Multiplexing source operand "a" of ALU unit
    alu_a_input_s <= vs1_data_s when alu_src_a_i = "00" else
-                  rs1_data_i;
+                    rs1_data_i when alu_src_a_i = "01" else
+                    immediate_sign_ext;
                   
 
 --****************************INSTANTIATIONS*********************************
