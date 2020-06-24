@@ -103,9 +103,9 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        const logic [6 : 0] store_opcode = 7'b0100111;
 
 
-       const logic 	   vv_funct3 = 3'b000;
-       const logic 	   vs_funct3 = 3'b100;
-       const logic 	   vi_funct3 = 3'b011;
+       const logic [2 : 0]	   vv_funct3 = 3'b000;
+       const logic [2 : 0]	   vs_funct3 = 3'b100;
+       const logic [2 : 0]	   vi_funct3 = 3'b011;
 
        const logic [5 : 0] v_merge_funct6 = 6'b010111;
 
@@ -123,7 +123,8 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        logic [4 : 0] 	   imm = tr.vector_instruction_i[19 : 15];
 	// Funct3 determines the type of operands (vector - vector or vector-scalar or 
 	// vector - immediate) 
-       logic [2 : 0]  funct3 = tr.vector_instruction_i[14:12];       	
+       logic [2 : 0]  funct3 = tr.vector_instruction_i[14:12];
+	`uvm_info(get_type_name(), $sformatf("funct3 is: %d",  funct3), UVM_LOW);
 	case (opcode)
 	    arith_opcode: begin
 		for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)begin
@@ -135,7 +136,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			end
 			vs_funct3: begin
 			    a = tr.rs1_data_i;			    
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
+			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
 			end
 			vi_funct3: begin
 			    a = imm;
@@ -163,8 +164,10 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			    if (vm | VRF_referent_model[i][0])
 			      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);
 			end
-		    endcase
+		    endcase // case (funct6)
+		    `uvm_info(get_type_name(), $sformatf("alu_result[%d]: %x \t a is: %x, b is :%x", i + vd_addr*elements_per_vector, VRF_referent_model [i + vd_addr*elements_per_vector], a, b), UVM_LOW);
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)
+		
 	    end // case: arith_opcode
 	    store_opcode: begin
 		tmp_store_info.vector_length_i = tr.vector_length_i;

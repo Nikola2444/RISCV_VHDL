@@ -19,6 +19,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    const logic [5 : 0] v_or_funct6 = 6'b001010;
    const logic [5 : 0] v_xor_funct6 = 6'b001011;
    const logic [5 : 0] v_merge_funct6 = 6'b010111;
+   
 
    const logic [1 : 0] vrf_read_write = 2'b00;
    const logic [1 : 0] vrf_no_access = 2'b11;
@@ -60,15 +61,19 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 		       end
 		   end
 		   send_control_signals: begin
+		       //receiving item
 		       seq_item_port.get_next_item(req);
 		       `uvm_info(get_type_name(),
 				 $sformatf("Driver sending...\n%s", req.sprint()),
-				 UVM_HIGH)
+				 UVM_HIGH)		      
 		       
 		       vif.vector_instruction_i = req.vector_instruction_i;
 		       vif.vector_length_i = req.vector_length_i;
 		       vif.vmul_i = req.vmul_i;
+		       vif.rs1_data_i = req.rs1_data_i;
 		       generate_control_signals (vif, req.vector_instruction_i);
+
+		       // Sending item
 		       seq_item_port.item_done();
 		       v_lane_dr_stages = wait_for_ready;		       
 		   end
@@ -84,9 +89,17 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
     vector_instruction_i - is the instruction the lane needs to receive    
     */
    task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
+      // Funct3 constants
+      const logic [2 : 0] vv_funct3 = 3'b000;
+      const logic [2 : 0] vs_funct3 = 3'b100;
+      const logic [2 : 0] vi_funct3 = 3'b011;
+       
       logic [6 : 0] opcode = req.vector_instruction_i [6 : 0];
       logic [5 : 0] funct6 = req.vector_instruction_i[31 : 26];
+      logic [2 : 0] funct3 = req.vector_instruction_i[14 : 12];
       logic 	    vm = vector_instruction_i[25];	
+
+
        
        case (opcode)
 	   arith_opcode: begin
@@ -94,7 +107,9 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       vif.vs1_addr_src_i = 0;
 	       vif.type_of_masking_i = 1'b0;
 	       vif.mem_to_vrf_i = 2'b00;
-	       // Next line need's to be handled better. Two	       
+	       vif.alu_src_a_i = funct3[1:0];
+	       
+	       // Next line need's to be handled better. One
 	       // Clock cycles delay is neccessary after receiveng new
 	       // intruction before setting store_we_i to 0
 	       vif.store_fifo_we_i <= #99 1'b0; 
@@ -122,8 +137,20 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 			   vif.mem_to_vrf_i = 2'b11;
 		       end
 		   end
-	       endcase; // case funct6	       
-	   end // case: arith_opcode
+	       endcase; // case funct6
+	       // depending on instruction set alu_src_a_i
+	       case (funct3)			
+		   vv_funct3:begin
+		       vif.alu_src_a_i = 2'b00;		       
+		   end
+		   vs_funct3: begin
+		       vif.alu_src_a_i = 2'b01;
+		   end
+		   vi_funct3: begin
+		       vif.alu_src_a_i = 2'b11;
+		   end
+	       endcase // case (funct3)	       
+	   end // case: arith_opcode	   
 	   store_opcode: begin
 	       vif.type_of_masking_i = 1'b0;
 	       vif.vs1_addr_src_i = 1;

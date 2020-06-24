@@ -16,6 +16,7 @@ entity vector_lane is
         data_from_mem_i      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         vmul_i               : in std_logic_vector (1 downto 0);
         vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
+        rs1_data_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
         --*************control signals***********************************
         -- from memory control unit        
         load_fifo_we_i       : in std_logic;
@@ -26,6 +27,7 @@ entity vector_lane is
         mem_to_vrf_i            : in  std_logic_vector(1 downto 0);
         store_fifo_we_i         : in  std_logic;
         vrf_type_of_access_i    : in  std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
+        alu_src_a_i: in std_logic_vector(1 downto 0);
         -- 1: all elements in VRF are updated
         -- 0: only masked elements in VRF are updated
         type_of_masking_i: in std_logic;                                         
@@ -84,9 +86,11 @@ architecture structural of vector_lane is
    signal masked_we_s:std_logic;
    alias vm_s: std_logic is vector_instruction_i(25);
    signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
-   signal vm_and_update_el_s:std_logic;
--- ALU result
+   signal vm_or_update_el_s:std_logic;
+-- ALU I/O interconnections
    signal alu_result_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal alu_a_input_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
+   
 -- LOAD FIFO I/O signals
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_exe_time_s                    : std_logic_vector(2 downto 0);
@@ -99,28 +103,39 @@ begin
 
    
    
-   merge_data_s <= vs1_data_s when mask_s  = '1' else
+   merge_data_s <= alu_a_input_s when mask_s  = '1' else
                    vs2_data_s;
    --mem to vector register file mux
    vd_data_s <=
       fifo_data_output_s when mem_to_vrf_i = "01" else
       merge_data_s when mem_to_vrf_i = "10" else
-      vs1_data_s when mem_to_vrf_i = "11" else
+      alu_a_input_s when mem_to_vrf_i = "11" else
       alu_result_s;
 
-
---****************************INSTANTIATIONS*********************************
-
-   
+   -- Depending on which instructions is being executed exe time of alu can differ.
+   -- For example multiplication takes 4 clk but addition 0 (for now).
    alu_exe_time_s <= ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i)));
 
+   -- If Store is being executed instruction (11 : 7) holds the address of
+   -- vector register that needs to be stored.
    vs1_address_s <= vector_instruction_i(19 downto 15) when vs1_addr_src_i = '0' else
                     vector_instruction_i(11 downto 7);
 
-   vm_and_update_el_s <= vm_s or type_of_masking_i;
+   --Only if value of both vm_s and type_of_masking_i is '0' then
+   --masking should be applied, otherwise all elements are updated
+   vm_or_update_el_s <= vm_s or type_of_masking_i;
    
-   masked_we_s <= mask_s when vm_and_update_el_s = '0' else
+   masked_we_s <= mask_s when vm_or_update_el_s = '0' else
                   '1';
+
+   -- Multiplexing source operand "a" of ALU unit
+   alu_a_input_s <= vs1_data_s when alu_src_a_i = "00" else
+                  rs1_data_i;
+                  
+
+--****************************INSTANTIATIONS*********************************
+   
+
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH    => DATA_WIDTH,
@@ -147,7 +162,7 @@ begin
       port map (
          clk => clk,
          reset => reset,
-         a_i   => vs1_data_s,
+         a_i   => alu_a_input_s,
          b_i   => vs2_data_s,
          op_i  => alu_op_i,
          res_o => alu_result_s);

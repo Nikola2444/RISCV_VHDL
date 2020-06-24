@@ -61,6 +61,7 @@ class control_if_monitor extends uvm_monitor;
 		       curr_instr_item.vmul_i = vif.vmul_i;
 		       curr_instr_item.vector_length_i = vif.vector_length_i;
 		       curr_instr_item.alu_op_i = vif.alu_op_i;
+		       curr_instr_item.rs1_data_i = vif.rs1_data_i;
 		       instr_item_collected_port.write(curr_instr_item);
 		       v_lane_mon_stages = wait_for_ready;			
 		   end

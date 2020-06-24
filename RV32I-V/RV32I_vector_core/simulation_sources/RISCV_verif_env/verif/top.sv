@@ -23,14 +23,16 @@ module vector_lane_verif_top;
 		   .data_from_mem_i (v_lane_vif.data_from_mem_i),
 		   .vmul_i(v_lane_vif.vmul_i),
 		   .vector_length_i(v_lane_vif.vector_length_i),
-
+		   .rs1_data_i(v_lane_vif.rs1_data_i),
+		   
 		   .load_fifo_we_i(v_lane_vif.load_fifo_we_i),
 		   .store_fifo_re_i(v_lane_vif.store_fifo_re_i),
-
+		   
 		   .alu_op_i(v_lane_vif.alu_op_i),
 		   .mem_to_vrf_i(v_lane_vif.mem_to_vrf_i),
 		   .store_fifo_we_i(v_lane_vif.store_fifo_we_i),
 		   .vrf_type_of_access_i(v_lane_vif.vrf_type_of_access_i),
+		   .alu_src_a_i(v_lane_vif.alu_src_a_i),
 		   .type_of_masking_i(v_lane_vif.type_of_masking_i),
 		   .load_fifo_re_i(v_lane_vif.load_fifo_re_i),
 		   .vs1_addr_src_i(v_lane_vif.vs1_addr_src_i),

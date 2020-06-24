@@ -10,6 +10,7 @@ interface v_lane_if (input clk, logic reset);
    logic [DATA_WIDTH - 1 : 0] data_from_mem_i;   
    logic [1 : 0] 	      vmul_i;   
    logic [$clog2(VECTOR_LENGTH) : 0] vector_length_i ;
+   logic [DATA_WIDTH - 1 : 0] 	     rs1_data_i;
    
    /*************control signals***********************************/
    // from memory control unit        
@@ -21,7 +22,9 @@ interface v_lane_if (input clk, logic reset);
    logic [4 : 0] 		     alu_op_i;   
    logic [1 : 0] 		     mem_to_vrf_i;   
    logic 			     store_fifo_we_i = 0;   
-   logic [1:0]		     vrf_type_of_access_i;
+   logic [1 : 0]		     vrf_type_of_access_i;
+   logic [1 : 0] 		     alu_src_a_i;
+ 		     
    logic 			     type_of_masking_i;
    
    logic 			     load_fifo_re_i = 0;
