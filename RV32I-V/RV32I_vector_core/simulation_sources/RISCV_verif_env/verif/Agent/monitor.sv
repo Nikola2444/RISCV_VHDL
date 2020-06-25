@@ -7,7 +7,7 @@ class control_if_monitor extends uvm_monitor;
     uvm_analysis_port #(control_if_seq_item) instr_item_collected_port;
     uvm_analysis_port #(store_data_seq_item) store_data_collected_port;
     
-   typedef enum {wait_for_ready, send_seq_item} collect_instr_stages;
+   typedef enum {wait_for_ready, send_seq_item, wait_store_to_finish} collect_instr_stages;
     collect_instr_stages v_lane_mon_stages = wait_for_ready;
 
    typedef enum {wait_for_re, send_store_seq_item} collect_store_data_stages;
@@ -48,42 +48,59 @@ class control_if_monitor extends uvm_monitor;
 	   #2ns;		       			   
            curr_instr_item = control_if_seq_item::type_id::create("curr_instr_item", this);
 	   curr_store_item = store_data_seq_item::type_id::create("curr_store_item", this);
+
 	   if (vif.reset)begin
 	       /*wait for ready, and after one clock cycle collect instruction, vmul, vector length and 
 		send it to scoreboard*/
-	       case (v_lane_mon_stages)
-		   wait_for_ready:begin
-		       if(vif.ready_o)
-			 v_lane_mon_stages = send_seq_item;			
-		   end
-		   send_seq_item: begin
-		       curr_instr_item.vector_instruction_i = vif.vector_instruction_i;
-		       curr_instr_item.vmul_i = vif.vmul_i;
-		       curr_instr_item.vector_length_i = vif.vector_length_i;
-		       curr_instr_item.alu_op_i = vif.alu_op_i;
-		       curr_instr_item.rs1_data_i = vif.rs1_data_i;
-		       instr_item_collected_port.write(curr_instr_item);
-		       v_lane_mon_stages = wait_for_ready;			
-		   end
-	       endcase // case (v_lane_mon_stages)
+	       fork
+		   begin
+		       case (v_lane_mon_stages)
+			   wait_for_ready:begin
+			       if(vif.ready_o)
+				 v_lane_mon_stages = send_seq_item;			
+			   end
+			   send_seq_item: begin
+			       curr_instr_item.vector_instruction_i = vif.vector_instruction_i;
+			       curr_instr_item.vmul_i = vif.vmul_i;
+			       curr_instr_item.vector_length_i = vif.vector_length_i;
+			       curr_instr_item.alu_op_i = vif.alu_op_i;
+			       curr_instr_item.rs1_data_i = vif.rs1_data_i;
 
-	       /*If read enable is set, wait for one clock cycle and then collect 
-		item on data_to_mem poert and send it to scoreboard*/
-	       case (v_lane_store_stages)
-		   wait_for_re:begin
-		       if(vif.store_fifo_re_i) begin
-			   //@(posedge(vif.clk));			   
-			   v_lane_store_stages = send_store_seq_item;
-		       end
+			       // This here is so wrong but i cant lose any more time.
+			       // This is neccessary because if we dont wait for 3 clock
+			       // cycles, store will not be able to finish extracting data from
+			       // VRF, and referent model will update the data that has not
+			       // yet been compared, and missmatch will ocurr where it shouldn't
+			       // be
+			       @(posedge(vif.clk));
+			       @(posedge(vif.clk));
+			       @(posedge(vif.clk));
+			       instr_item_collected_port.write(curr_instr_item);
+			       v_lane_mon_stages = wait_for_ready;
+			   end
+
+		       endcase // case (v_lane_mon_stages)
 		   end
-		   send_store_seq_item: begin
-		       curr_store_item.data_to_mem_o = vif.data_to_mem_o;		       
-		       store_data_collected_port.write(curr_store_item);
-		       if(!vif.store_fifo_re_i) begin			  
-			   v_lane_store_stages = wait_for_re;
-		       end
-		   end   
-	       endcase // case v_lane_store_stages		
+		   /*If read enable is set, wait for one clock cycle and then collect 
+		    item on data_to_mem poert and send it to scoreboard*/
+		   begin
+		       case (v_lane_store_stages)
+			   wait_for_re:begin
+			       if(vif.store_fifo_re_i) begin
+				   //@(posedge(vif.clk));			   
+				   v_lane_store_stages = send_store_seq_item;
+			       end
+			   end
+			   send_store_seq_item: begin
+			       curr_store_item.data_to_mem_o = vif.data_to_mem_o;		       
+			       store_data_collected_port.write(curr_store_item);
+			       if(!vif.store_fifo_re_i) begin			  
+				   v_lane_store_stages = wait_for_re;
+			       end
+			   end   
+		       endcase // case v_lane_store_stages
+		   end
+	       join_none
 	   end
 	   
        end

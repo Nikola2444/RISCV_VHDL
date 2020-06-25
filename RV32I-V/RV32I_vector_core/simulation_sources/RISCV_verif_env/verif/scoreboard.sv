@@ -76,7 +76,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	   int vrf_addr = i++ + tmp_store_info.vd_addr * elements_per_vector; 
 	    assert(tr_clone.data_to_mem_o == VRF_referent_model[vrf_addr]) begin
 		`uvm_info(get_type_name(), $sformatf("Match on position VRF[%d]! expected value: %x, \t real_value: %x", 
-						       vrf_addr, VRF_referent_model[vrf_addr ], tr_clone.data_to_mem_o), UVM_LOW);
+						       vrf_addr, VRF_referent_model[vrf_addr ], tr_clone.data_to_mem_o), UVM_HIGH);
 		num_of_matches++;		
 	    end
 	      else begin
@@ -165,7 +165,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);
 			end
 		    endcase // case (funct6)
-		    `uvm_info(get_type_name(), $sformatf("alu_result[%d]: %x \t a is: %x, b is :%x", i + vd_addr*elements_per_vector, VRF_referent_model [i + vd_addr*elements_per_vector], a, b), UVM_LOW);
+		    `uvm_info(get_type_name(), $sformatf("alu_result[%d]: %x \t a is: %x, b is :%x", i + vd_addr*elements_per_vector, VRF_referent_model [i + vd_addr*elements_per_vector], a, b), UVM_FULL);
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)
 		
 	    end // case: arith_opcode
@@ -180,12 +180,56 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 
 
     function logic[31 : 0] arith_operation(logic [31 : 0] a, logic [31 : 0] b, logic [4 : 0] alu_op);
+       logic [63 : 0] mul_temp;	
 	case (alu_op)
 	    add_op: return a + b;		       
 	    sub_op: return a - b;	   
 	    and_op: return a & b;		
 	    or_op: return a | b;
-	    xor_op: return a ^ b;	    
+	    xor_op: return a ^ b;
+	    mulhu_op: begin 
+		mul_temp = unsigned'(a) * unsigned'(b);
+		return mul_temp[63 : 32];		
+	    end
+	    mulhs_op: begin 
+		mul_temp = signed'(a) * signed'(b);
+		return mul_temp[63 : 32];		
+	    end
+	    muls_op: begin 
+		mul_temp = signed'(a) * signed'(b);
+		return mul_temp[31 : 0];		
+	    end
+	    mulhsu_op: begin 
+		mul_temp = unsigned'(a) * signed'(b);
+		return mul_temp[31 : 0];		
+	    end	    
+	    sll_op: return b << a;	   
+	    srl_op: return b >> a;		
+	    sra_op: return b >>>a;
+	    eq_op: return a == b;
+	    neq_op: return a != b;
+	    sle_op: return (signed'(a) != signed'(b) || signed'(b) < signed'(a));
+	    sleu_op: return (unsigned'(a) != unsigned'(b) || unsigned'(b) < unsigned'(a));
+	    sle_op: return (signed'(b) < signed'(a));
+	    sleu_op: return (unsigned'(b) < unsigned'(a));
+	    sgt_op: return (signed'(b) > signed'(a));
+	    sgtu_op: return (unsigned'(b) > unsigned'(a));
+	    min_op: begin 
+		if (signed'(a) < signed'(b)) 
+		  return a; 
+		else 
+		  return b;
+	    end
+	    minu_op: begin 
+		if (unsigned'(a) < unsigned'(b)) 
+		  return a; 
+		else 
+		  return b;
+	    end
+	    
+	    
 	endcase;
     endfunction: arith_operation
 endclass : vector_lane_scoreboard
+
+

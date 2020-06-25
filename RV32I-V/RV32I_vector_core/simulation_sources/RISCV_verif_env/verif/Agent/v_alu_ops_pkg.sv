@@ -22,10 +22,18 @@ package v_alu_ops_pkg;
    const logic [4 : 0] divs_op= 5'b01110; //-> divide signed
    const logic [4 : 0] remu_op= 5'b01111; //-> reminder unsigned
    const logic [4 : 0] rems_op= 5'b10000; //-> reminder signed
-   const logic [4 : 0] lts_op= 5'b10100; //-> set less than signed
-   const logic [4 : 0] ltu_op= 5'b10101; //-> set less than unsigned
+   const logic [4 : 0] muls_op= 5'b10001; //-> multiply lower
+   const logic [4 : 0] slt_op= 5'b10100; //-> set less than signed
+   const logic [4 : 0] sltu_op= 5'b10101; //-> set less than unsigned
    const logic [4 : 0] sll_op= 5'b10110; //-> shift left logic      
    const logic [4 : 0] eq_op= 5'b10111; //->  set equal
+   const logic [4 : 0] neq_op=5'b11000; //->  set not equal
+   const logic [4 : 0] sle_op=5'b11001; //->  set less then_or_equal_signed
+   const logic [4 : 0] sleu_op=5'b11010; //->  set less then_or_equal_unsigned
+   const logic [4 : 0] sgtu_op=5'b11011; //->  set less then_or_equal_signed
+   const logic [4 : 0] sgt_op=5'b11100; //->  set less then_or_equal_unsigne
+   const logic [4 : 0] min_op=5'b11101; //->  set less then_or_equal_signed
+   const logic [4 : 0] minu_op=5'b11110; //->  set less then_or_equal_unsigne
 endpackage: v_alu_ops_pkg
 
 `endif

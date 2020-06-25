@@ -40,7 +40,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
 use ieee.numeric_std.all;
-use work.alu_ops_pkg.all;
+use work.vector_alu_ops_pkg.all;
 library UNISIM;
 use UNISIM.vcomponents.all;
 
@@ -138,7 +138,7 @@ begin
          a_s <= a;
       else
          case op is
-            when mulu_op =>
+            when muls_op =>
                a_s <= a_signed_s;
             when mulhs_op =>
                a_s <= a_signed_s;
@@ -156,7 +156,7 @@ begin
          b_s <= b;
       else
          case op is
-            when mulu_op =>
+            when muls_op =>
                b_s <= b_signed_s;
             when mulhs_op =>
                b_s <= b_signed_s;

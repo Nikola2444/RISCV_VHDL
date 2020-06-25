@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 use ieee.math_real.all;
-use work.alu_ops_pkg.all;
+use work.vector_alu_ops_pkg.all;
 
 
 ENTITY V_ALU IS
@@ -25,6 +25,8 @@ ARCHITECTURE behavioral OF V_ALU IS
    signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 
    signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    neq_res, sle_res, sleu_res, sgtu_res, sgt_res: STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal min_res, minu_res:STD_LOGIC_VECTOR(WIDTH - 1 downto 0);
    signal custom_mul32_res_s:std_logic_vector(WIDTH - 1 downto 0);
    --signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH - 1  DOWNTO 0);	
@@ -32,7 +34,7 @@ ARCHITECTURE behavioral OF V_ALU IS
    signal c_s: std_logic_vector (63 downto 0);
    
    
-BEGin
+begin
 
    multiplier32_bit_1: entity work.multiplier32_bit
       generic map (
@@ -58,16 +60,35 @@ BEGin
    -- equal
    eq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) = signed(b_i)) else
              std_logic_vector(to_unsigned(0,WIDTH));
+   neq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) /= signed(b_i)) else
+              std_logic_vector(to_unsigned(0,WIDTH));
+   --min max
+   min_res <= a_i when (signed(b_i) < signed(a_i)) else
+              b_i;
+   minu_res <= a_i when (unsigned(b_i) < unsigned(a_i)) else
+              b_i;
+   
    -- less then signed
-   lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) < signed(b_i)) else
+   lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) < signed(a_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
    -- less then unsigned
-   ltu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(a_i) < unsigned(b_i)) else
+   ltu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) < unsigned(a_i)) else
+              std_logic_vector(to_unsigned(0,WIDTH));
+   -- less then or equal unsigned
+   sleu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) < unsigned(a_i) or unsigned(b_i) = unsigned(a_i)) else
+               std_logic_vector(to_unsigned(0,WIDTH));
+   -- less then or equal signed
+   sle_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) < signed(a_i) or signed(a_i) = signed(b_i)) else
+              std_logic_vector(to_unsigned(0,WIDTH));
+   -- greater then 
+      sgtu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) > unsigned(a_i)) else std_logic_vector(to_unsigned(0,WIDTH));
+   -- greater then 
+   sgt_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) > signed(a_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
    --shift results
-   sll_res <= std_logic_vector(shift_left(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
-   srl_res <= std_logic_vector(shift_right(unsigned(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
-   sra_res <= std_logic_vector(shift_right(signed(a_i), to_integer(unsigned(b_i(l2WIDTH downto 0)))));
+   sll_res <= std_logic_vector(shift_left(unsigned(b_i), to_integer(unsigned(a_i(l2WIDTH downto 0)))));
+   srl_res <= std_logic_vector(shift_right(unsigned(b_i), to_integer(unsigned(a_i(l2WIDTH downto 0)))));
+   sra_res <= std_logic_vector(shift_right(signed(b_i), to_integer(unsigned(a_i(l2WIDTH downto 0)))));
    --multiplication
    
    muls_res <= c_s;
@@ -93,8 +114,15 @@ BEGin
       add_res when add_op, --add (changed opcode)
       sub_res when sub_op, --sub
       eq_res when eq_op, -- set equal
+      neq_res when neq_op,
+      min_res when min_op,
+      minu_res when minu_op,
       lts_res when lts_op, -- set less than signed
       ltu_res when ltu_op, -- set less than unsigned
+      sleu_res when sleu_op,
+      sle_res when sle_op,
+      sgtu_res when sgtu_op,
+      sgt_res when sgt_op,
       sll_res when sll_op, -- shift left logic
       srl_res when srl_op, -- shift right logic
       sra_res when sra_op, -- shift right arithmetic
