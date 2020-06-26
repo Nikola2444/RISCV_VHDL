@@ -126,22 +126,22 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	// Funct3 determines the type of operands (vector - vector or vector-scalar or 
 	// vector - immediate) 
        logic [2 : 0] 	   funct3 = tr.vector_instruction_i[14:12];
-	`uvm_info(get_type_name(), $sformatf("funct3 is: %d",  funct3), UVM_LOW)
+	`uvm_info(get_type_name(), $sformatf("funct3 is: %d",  funct3), UVM_HIGH)
 	case (opcode)
 	    arith_opcode: begin
 		for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)begin
 		    // Finding correct operand for arith operation
 		    if (funct3 == OPIVV_funct3 || funct3 == OPMVV_funct3) begin
-			    a = VRF_referent_model[i + vs1_addr*elements_per_vector];
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
+			a = VRF_referent_model[i + vs1_addr*elements_per_vector];
+			b = VRF_referent_model[i + vs2_addr*elements_per_vector];
 		    end
 		    else if(funct3 == OPIVX_funct3 || funct3 == OPMVX_funct3) begin
-			    a = tr.rs1_data_i;			    
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
+			a = tr.rs1_data_i;			    
+			b = VRF_referent_model[i + vs2_addr*elements_per_vector];
 		    end
 		    else if (funct3 == OPIVI_funct3) begin			
-			    a = imm;
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];		
+			a = imm;
+			b = VRF_referent_model[i + vs2_addr*elements_per_vector];		
 		    end
 		    else
 		      `uvm_error (get_type_name(), $sformatf("Non supported OPM funct3 generated with value: %x", funct3))
@@ -169,7 +169,7 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 			      VRF_referent_model [i + vd_addr*elements_per_vector] = arith_operation(a, b, tr.alu_op_i);
 			end
 		    endcase // case (funct6)
-		    `uvm_info(get_type_name(), $sformatf("alu_result[%d]: %x \t a is: %x, b is :%x", i + vd_addr*elements_per_vector, VRF_referent_model [i + vd_addr*elements_per_vector], a, b), UVM_FULL);
+		    `uvm_info(get_type_name(), $sformatf("instruction: %x,  alu_result[%d]: %x \t a is: %x, b is :%x", funct6,  i + vd_addr*elements_per_vector, VRF_referent_model [i + vd_addr*elements_per_vector], a, b), UVM_MEDIUM);
 		end // for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)
 		
 	    end // case: arith_opcode
@@ -205,11 +205,11 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	    end
 	    mulhsu_op: begin 
 		mul_temp = unsigned'(a) * signed'(b);
-		return mul_temp[31 : 0];		
+		return mul_temp[63 : 32];		
 	    end	    
-	    sll_op: return b << a;	   
-	    srl_op: return b >> a;		
-	    sra_op: return b >>>a;
+	    sll_op: return b << a[5 : 0];	   
+	    srl_op: return b >> a[5 : 0];		
+	    sra_op: return b >>>a[5 : 0];
 	    eq_op: return a == b;
 	    neq_op: return a != b;
 	    sle_op: return (signed'(a) != signed'(b) || signed'(b) < signed'(a));

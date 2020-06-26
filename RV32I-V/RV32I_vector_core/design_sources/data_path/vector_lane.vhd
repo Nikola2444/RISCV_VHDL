@@ -72,8 +72,8 @@ architecture structural of vector_lane is
        "001", "100", "100", "100",
        --mulhu  divu    divs     remu
        "100", "000", "000", "000",
-       --rems    setLts  setLtu  shl     
-       "000", "000", "000", "001",
+       --rems    muls  setLtu  shl     
+       "000", "100", "000", "001",
        --seteq
        "000", others => "000");
 

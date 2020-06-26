@@ -18,7 +18,7 @@ class control_if_seq_item extends uvm_sequence_item;
     `uvm_object_utils_end
 
 
-    constraint rs1_data_i_constr {rs1_data_i < 5;}
+    //constraint rs1_data_i_constr {rs1_data_i < 5;}
     function new (string name = "control_if_seq_item");
 	super.new(name);
     endfunction // new

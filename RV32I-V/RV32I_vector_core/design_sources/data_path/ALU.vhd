@@ -29,8 +29,8 @@ ARCHITECTURE behavioral OF V_ALU IS
    signal min_res, minu_res:STD_LOGIC_VECTOR(WIDTH - 1 downto 0);
    signal custom_mul32_res_s:std_logic_vector(WIDTH - 1 downto 0);
    --signal    divu_res,divs_res,rems_res,remu_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
-   signal    muls_res,mulu_res : STD_LOGIC_VECTOR(2*WIDTH - 1  DOWNTO 0);	
-   signal    mulsu_res : STD_LOGIC_VECTOR(2*WIDTH - 1 DOWNTO 0);
+   signal    muls_res,mulhu_res : STD_LOGIC_VECTOR(2*WIDTH - 1  DOWNTO 0);	
+   signal    mulhsu_res, mulhs_res : STD_LOGIC_VECTOR(2*WIDTH - 1 DOWNTO 0);
    signal c_s: std_logic_vector (63 downto 0);
    
    
@@ -92,8 +92,9 @@ begin
    --multiplication
    
    muls_res <= c_s;
-   mulsu_res <= c_s;
-   mulu_res <= c_s;
+   mulhs_res <= c_s;
+   mulhsu_res <= c_s;
+   mulhu_res <= c_s;
    --division
    --divs_res <= std_logic_vector(signed(a_i)/signed(b_i)) when b_i /= std_logic_vector(to_unsigned(0,WIDTH)) else
    --            (others => '1');
@@ -126,10 +127,10 @@ begin
       sll_res when sll_op, -- shift left logic
       srl_res when srl_op, -- shift right logic
       sra_res when sra_op, -- shift right arithmetic
-      mulu_res(WIDTH-1 downto 0) when mulu_op, -- multiply lower
-      muls_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
-      mulsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
-      mulu_res(2*WIDTH-1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
+      muls_res(WIDTH-1 downto 0) when muls_op, -- multiply lower
+      mulhs_res(2*WIDTH-1 downto WIDTH) when mulhs_op, -- multiply higher signed
+      mulhsu_res(2*WIDTH-1 downto WIDTH) when mulhsu_op, -- multiply higher signed and unsigned
+      mulhu_res(2*WIDTH -1 downto WIDTH) when mulhu_op, -- multiply higher unsigned
       --divu_res when divu_op, -- divide unsigned
       --divs_res when divs_op, -- divide signed
       --remu_res when remu_op, -- reminder signed

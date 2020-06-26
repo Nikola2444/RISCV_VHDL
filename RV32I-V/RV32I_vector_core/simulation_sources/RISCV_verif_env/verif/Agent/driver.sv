@@ -25,7 +25,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
    const logic [5 : 0] v_mul_funct6 = 6'b100101; // signed mul //implemented
    const logic [5 : 0] v_mulhsu_funct6 = 6'b100110;// signed (VS2) unsigned mul //implemented
    const logic [5 : 0] v_mulhs_funct6 = 6'b100111; //signed higher mul   //implemented
-   const logic [5 : 0] v_mulhu_funct6 = 6'b100111; // unsigned higher mul //implemented
+   const logic [5 : 0] v_mulhu_funct6 = 6'b100100; // unsigned higher mul //implemented
    
    const logic [5 : 0] v_shll_funct6 = 6'b100101; // shift left logic //implemented
    const logic [5 : 0] v_shrl_funct6 = 6'b101000; // shift right logic //implemented
@@ -161,7 +161,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        vif.vs1_addr_src_i = 0;
        vif.type_of_masking_i = 1'b0;
        vif.mem_to_vrf_i = 2'b00;
-       vif.alu_src_a_i = funct3[1:0];
+
        
        // Next line need's to be handled better. One
        // Clock cycles delay is neccessary after receiveng new
@@ -195,7 +195,9 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 		   vif.type_of_masking_i = 1'b1;
 		   vif.mem_to_vrf_i = 2'b10;	       
 		   vif.alu_op_i = add_op;
-		   if(vm) begin // vmv and v_merge share the same encodings except for vm and vs2
+		   // vmv and v_merge share the same encodings except for vm and vs2
+		   // if vm = 1 the instructions is vmv else instruction is merge
+		   if(vm) begin 
 		       vif.mem_to_vrf_i = 2'b11;
 		   end
 	       end
@@ -238,10 +240,6 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        endcase // case (funct3)	       
    endtask: generate_arith_control_signals;
    
-/* -----\/----- EXCLUDED -----\/-----
-   function logic[4 : 0] alu_op_decode(logic[5 : 0] funct6, logic [2 : 0] funct 3);
-   endfunction: alu_op_decode;
- -----/\----- EXCLUDED -----/\----- */
    
 endclass : control_if_driver
 
