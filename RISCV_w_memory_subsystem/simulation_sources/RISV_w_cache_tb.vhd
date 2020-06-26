@@ -3,7 +3,7 @@
 -- Filename			: tb_RISCV_w_cache.vhd
 -- Author			: ChenYong
 -- Created On		: 2020-06-22 17:47
--- Last Modified	: 2020-06-22 19:01
+-- Last Modified	: 2020-06-24 02:57
 -- Version			: v1.0
 -- Description		: 
 --						
@@ -35,7 +35,7 @@ architecture behavior of tb_RISCV_w_cache is
 	);
 	end component;
 	    
-	constant C_SHRINK_ADDR_WIDTH : integer := 8;
+	constant C_SHRINK_ADDR_WIDTH : integer := 14;
     constant C_SHRINK_ADDR_SPACE    : integer := 2**C_SHRINK_ADDR_WIDTH;
 	-- Inputs
 	signal	clk				: std_logic:='0';
@@ -88,7 +88,7 @@ begin
 	rst_phy_s <= '0';
 	en_phy_s <= '1';
 	regce_phy_s <= '1';
-	physical_memory : entity work.BRAM_sp_rf_bw(rtl)
+	physical_memory : entity work.RAM_sp_rf_bw(rtl)
 		generic map (
 				NB_COL => 4,
 				COL_WIDTH => 8,

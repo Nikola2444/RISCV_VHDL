@@ -30,7 +30,7 @@ constant C_RAM_DEPTH : integer := RAM_DEPTH;
 constant C_INIT_FILE : string := INIT_FILE;
 
 
-type ram_type is array (C_RAM_DEPTH-1 downto 0) of std_logic_vector (C_RAM_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
+type ram_type is array (0 to C_RAM_DEPTH-1) of std_logic_vector (C_RAM_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
 
 -- The folowing code either initializes the memory values to a specified file or to all zeros to match hardware
 impure function initramfromfile (ramfilename : in string) return ram_type is

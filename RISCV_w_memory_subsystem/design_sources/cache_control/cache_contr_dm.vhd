@@ -192,6 +192,8 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2b_ts_bkk_s : std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
 
 
+	signal data_access_s  : std_logic; -- current instr reads or writes to data memory 
+
 	-- SIGNALS FOR COMPARING TAG VALUES
 	signal lvl1ii_tag_cmp_s  : std_logic; -- incoming instruction address VS instruction tag store (hit in instruction cache)
 	--signal lvl1id_tag_cmp_s  : std_logic; -- incoming instruction address VS data tag store (check for duplicate block in data)
@@ -219,6 +221,7 @@ architecture Behavioral of cache_contr_dm is
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	signal mc_counter_reg, mc_counter_incr, mc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
+	constant COUNTER_MIN : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'0');
 
 
 begin
@@ -302,7 +305,8 @@ begin
 	lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(0);
 
 	-- TODO check if this shit can even work outside of fsm
-	data_ready_o <= lvl1d_c_hit_s;
+   data_access_s <= '1' when ((we_data_i /= "0000") or (re_data_i='1')) else '0';
+	data_ready_o <= lvl1d_c_hit_s or not data_access_s;
 	instr_ready_o <= lvl1i_c_hit_s;
 
 	-- Adder for counters 
@@ -374,9 +378,9 @@ begin
 		case (cc_state_reg) is
 			when idle =>
 				-- ACCESS TO DATA MEMORY
-				if(we_data_i /= "0000" or re_data_i='1') then --its only then a data memory access
+				if (data_access_s = '1') then --its only then a data memory access
 					if(lvl1d_c_hit_s = '1') then 
-						if(we_data_i /= "0000")then
+						if(re_data_i = '0')then -- this means instruction is a write, better to check one bit than 4 bits for we_data_i signal
 							wea_data_tag_s <= '1';
 							dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
 						end if;
@@ -432,6 +436,7 @@ begin
 				-- TODO depending on mc fsm, see if this is needed or not
 				--addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 				--lvl2a_c_tag_s <= lvl2ia_c_tag_s;
+
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
@@ -454,6 +459,7 @@ begin
 				-- TODO depending on mc fsm, see if this is needed or not
 				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
 				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
+
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= idle;
@@ -534,6 +540,12 @@ begin
 
 				mc_counter_next <= mc_counter_incr;
 
+				if(mc_counter_reg = COUNTER_MIN)then  -- because of read first mode
+					addrb_lvl2_tag_s <= lvl2a_c_idx_s;
+					dwriteb_lvl2_tag_s <= "01" & lvl2a_c_tag_s; 
+					web_lvl2_tag_s <= '1';
+				end if;
+
 				if(mc_counter_reg = COUNTER_MAX)then 
 					mc_state_next <= fetch;
 					addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_reg & "00";
@@ -549,11 +561,15 @@ begin
 
 				mc_counter_next <= mc_counter_incr;
 
+				if(mc_counter_reg = COUNTER_MIN)then  -- because of read first mode
+					addrb_lvl2_tag_s <= lvl2a_c_idx_s;
+					dwriteb_lvl2_tag_s <= "01" & lvl2a_c_tag_s; 
+					web_lvl2_tag_s <= '1';
+				end if;
+
 				if(mc_counter_reg = COUNTER_MAX)then 
 					mc_state_next <= idle;
 						-- write new tag to tag store, set valid, reset dirty
-					dwriteb_lvl2_tag_s <= "01" & lvl2a_ts_tag_s; 
-					web_lvl2_tag_s <= '1';
 				else
 					mc_state_next <= fetch;
 				end if;
@@ -573,7 +589,7 @@ begin
 	rsta_instr_cache_s <= rst_instr_cache_i;
 	-- TODO make a driver for dina, wea, douta
 	-- Instantiation of instruction cache
-	instruction_cache : entity work.BRAM_sp_rf_bw(rtl)
+	instruction_cache : entity work.RAM_sp_rf_bw(rtl)
 		generic map (
 			NB_COL => LVL1C_NUM_COL,
 			COL_WIDTH => LVL1C_COL_WIDTH,
@@ -626,10 +642,10 @@ begin
 	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
 	rsta_data_cache_s <= reset;
-	ena_data_cache_s <= '1';
+	ena_data_cache_s <= data_access_s; -- check if this shit works *thought* enable only on data acess
 	regcea_data_cache_s <= '0';
 	-- Instantiation of data cache
-	data_cache : entity work.BRAM_sp_rf_bw(rtl)
+	data_cache : entity work.RAM_sp_rf_bw(rtl)
 		generic map (
 				NB_COL => LVL1C_NUM_COL,
 				COL_WIDTH => LVL1C_COL_WIDTH,

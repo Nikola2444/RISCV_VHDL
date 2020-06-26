@@ -15,13 +15,13 @@ use ieee.numeric_std.all;
 use work.cache_pkg.all;
 USE std.textio.all;
 
-entity BRAM_sp_rf_bw is
+entity RAM_sp_rf_bw is
 generic (
     NB_COL    : integer := 4;                       -- Specify number of columns (number of bytes)
     COL_WIDTH : integer := 8;                       -- Specify column width (byte width, typically 8 or 9)
     RAM_DEPTH : integer := 32;                    -- Specify RAM depth (number of entries)
     RAM_PERFORMANCE : string := "LOW_LATENCY";      -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-    INIT_FILE : string := ""            -- Specify name/location of RAM initialization file if using one (leave blank if not)
+    INIT_FILE : string := "assembly_code.txt"            -- Specify name/location of RAM initialization file if using one (leave blank if not)
     );
 
 port (
@@ -35,9 +35,9 @@ port (
         douta : out std_logic_vector(NB_COL*COL_WIDTH-1 downto 0)   --  Port A RAM output data
     );
 
-end BRAM_sp_rf_bw;
+end RAM_sp_rf_bw;
 
-architecture rtl of BRAM_sp_rf_bw is
+architecture rtl of RAM_sp_rf_bw is
 
 constant C_NB_COL    : integer := NB_COL;
 constant C_COL_WIDTH : integer := COL_WIDTH;
@@ -48,7 +48,7 @@ constant C_INIT_FILE : string := INIT_FILE;
 
 signal douta_reg : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) := (others => '0');
 
-type ram_type is array (C_RAM_DEPTH-1 downto 0) of std_logic_vector (C_NB_COL*C_COL_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
+type ram_type is array (0 to C_RAM_DEPTH-1) of std_logic_vector (C_NB_COL*C_COL_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
 
 signal ram_data_a : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) ;
 -- The folowing code either initializes the memory values to a specified file or to all zeros to match hardware
@@ -99,7 +99,7 @@ begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
 			  -- Lines marked with + are added by user to the Xilinx template
-			  	if(rsta = '1')then -- +
+			  	if(rsta = '0')then -- +
 					ram_data_a <= ram_array(to_integer(unsigned(addra)));
 				else -- +
 					ram_data_a <= (others => '0'); -- +

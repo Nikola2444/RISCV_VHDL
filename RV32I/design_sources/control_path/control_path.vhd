@@ -300,7 +300,7 @@ begin
    load_type_o <= funct3_wb_s;
 	-- cache controller needs to know about loads in memory phase
 	-- so it can validate in time that requested data is in data cache
-	data_mem_re_o <= '1' when mem_to_reg_mem_s ="10" else '0';
+	data_mem_re_o <= mem_to_reg_mem_s(1); -- there is no "11" combination se we can use just upper bit
 
 
 end architecture;

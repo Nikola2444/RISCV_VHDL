@@ -55,7 +55,7 @@ constant C_INIT_FILE : string := INIT_FILE;
 signal douta_reg : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) := (others => '0');
 signal doutb_reg : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) := (others => '0');
 
-type ram_type is array (C_RAM_DEPTH-1 downto 0) of std_logic_vector (C_NB_COL*C_COL_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
+type ram_type is array (0 to C_RAM_DEPTH-1) of std_logic_vector (C_NB_COL*C_COL_WIDTH-1 downto 0);          -- 2D Array Declaration for RAM signal
 
 signal ram_data_a : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) ;
 signal ram_data_b : std_logic_vector(C_NB_COL*C_COL_WIDTH-1 downto 0) ;
@@ -101,11 +101,11 @@ begin
     if(clk'event and clk = '1') then
         if(ena = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
-			  	if(rsta = '0')then -- +
+			  	--if(rsta = '0')then -- +
 					ram_data_a <= ram_array_v(to_integer(unsigned(addra)));
-				else -- +
-					ram_data_a <= (others => '0'); -- +
-				end if; -- +
+				--else -- +
+					--ram_data_a <= (others => '0'); -- +
+				--end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(wea(i) = '1') then
                     ram_array_v(to_integer(unsigned(addra)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dina((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
@@ -120,11 +120,11 @@ begin
     if(clk'event and clk = '1') then
         if(enb = '1') then
 			  -- Lines marked with + are added by user to Xilinx template
-			  	if(rstb = '0')then -- +
+			  	--if(rstb = '0')then -- +
 					ram_data_b <= ram_array_v(to_integer(unsigned(addrb)));
-				else -- +
-					ram_data_b <= (others => '0'); -- +
-				end if; -- +
+				--else -- +
+					--ram_data_b <= (others => '0'); -- +
+				--end if; -- +
             for i in 0 to C_NB_COL-1 loop
                 if(web(i) = '1') then
                     ram_array_v(to_integer(unsigned(addrb)))((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH) := dinb((i+1)*C_COL_WIDTH-1 downto i*C_COL_WIDTH);
