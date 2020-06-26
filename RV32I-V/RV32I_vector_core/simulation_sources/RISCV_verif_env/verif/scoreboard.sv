@@ -103,9 +103,11 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        const logic [6 : 0] store_opcode = 7'b0100111;
 
 
-       const logic [2 : 0]	   vv_funct3 = 3'b000;
-       const logic [2 : 0]	   vs_funct3 = 3'b100;
-       const logic [2 : 0]	   vi_funct3 = 3'b011;
+       const logic [2 : 0] OPIVV_funct3 = 3'b000;
+       const logic [2 : 0] OPIVX_funct3 = 3'b100;
+       const logic [2 : 0] OPIVI_funct3 = 3'b011;
+       const logic [2 : 0] OPMVV_funct3 = 3'b010;
+       const logic [2 : 0] OPMVX_funct3 = 3'b110;
 
        const logic [5 : 0] v_merge_funct6 = 6'b010111;
 
@@ -123,26 +125,28 @@ class vector_lane_scoreboard extends uvm_scoreboard;
        logic [4 : 0] 	   imm = tr.vector_instruction_i[19 : 15];
 	// Funct3 determines the type of operands (vector - vector or vector-scalar or 
 	// vector - immediate) 
-       logic [2 : 0]  funct3 = tr.vector_instruction_i[14:12];
-	`uvm_info(get_type_name(), $sformatf("funct3 is: %d",  funct3), UVM_LOW);
+       logic [2 : 0] 	   funct3 = tr.vector_instruction_i[14:12];
+	`uvm_info(get_type_name(), $sformatf("funct3 is: %d",  funct3), UVM_LOW)
 	case (opcode)
 	    arith_opcode: begin
 		for (int i = 0; i < 2**tr.vmul_i*tr.vector_length_i; i++)begin
 		    // Finding correct operand for arith operation
-		    case (funct3)			
-			vv_funct3:begin
+		    if (funct3 == OPIVV_funct3 || funct3 == OPMVV_funct3) begin
 			    a = VRF_referent_model[i + vs1_addr*elements_per_vector];
 			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
-			end
-			vs_funct3: begin
+		    end
+		    else if(funct3 == OPIVX_funct3 || funct3 == OPMVX_funct3) begin
 			    a = tr.rs1_data_i;			    
-			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];			    
-			end
-			vi_funct3: begin
+			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];
+		    end
+		    else if (funct3 == OPIVI_funct3) begin			
 			    a = imm;
 			    b = VRF_referent_model[i + vs2_addr*elements_per_vector];		
-			end
-		    endcase // case (funct3)
+		    end
+		    else
+		      `uvm_error (get_type_name(), $sformatf("Non supported OPM funct3 generated with value: %x", funct3))
+
+		    
 		    /*Checking if arith instruction is merge or not. If it is calculate acordingly 
 		     expected values. If vm = 1, that means that merge is a move instruction
 		     and expected value is equal to vs1 (a), else depending on mask bits in V0

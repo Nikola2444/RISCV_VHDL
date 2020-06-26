@@ -112,74 +112,15 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
     vector_instruction_i - is the instruction the lane needs to receive    
     */
    task generate_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
-       // Funct3 constants
-      const logic [2 : 0] vv_funct3 = 3'b000;
-      const logic [2 : 0] vs_funct3 = 3'b100;
-      const logic [2 : 0] vi_funct3 = 3'b011;
-       
+       // Funct3 constants       
       logic [6 : 0] 	  opcode = req.vector_instruction_i [6 : 0];
       logic [5 : 0] 	  funct6 = req.vector_instruction_i[31 : 26];
       logic [2 : 0] 	  funct3 = req.vector_instruction_i[14 : 12];
       logic 		  vm = vector_instruction_i[25];	
-
-
        
        case (opcode)
 	   arith_opcode: begin
-	       vif.vrf_type_of_access_i = vrf_read_write;
-	       vif.vs1_addr_src_i = 0;
-	       vif.type_of_masking_i = 1'b0;
-	       vif.mem_to_vrf_i = 2'b00;
-	       vif.alu_src_a_i = funct3[1:0];
-	       
-	       // Next line need's to be handled better. One
-	       // Clock cycles delay is neccessary after receiveng new
-	       // intruction before setting store_we_i to 0
-	       vif.store_fifo_we_i <= #99 1'b0; 
-	       case (funct6)
-		   v_add_funct6: vif.alu_op_i = add_op;
-		   v_sub_funct6: vif.alu_op_i = sub_op;
-		   v_and_funct6: vif.alu_op_i = and_op;
-		   v_or_funct6: vif.alu_op_i = or_op;
-		   v_xor_funct6: vif.alu_op_i = xor_op;
-		   //v_mul_funct6: vif.alu_op_i = muls_op;		   
-		   v_mulhsu_funct6: vif.alu_op_i = mulhsu_op;
-		   v_mulhs_funct6: vif.alu_op_i = mulhs_op;
-		   v_mulhu_funct6: vif.alu_op_i = mulhu_op;
-		   v_shll_funct6: vif.alu_op_i = sll_op;
-		   v_shrl_funct6: vif.alu_op_i = srl_op;
-		   v_shra_funct6: vif.alu_op_i = sra_op;
-		   v_vmseq_funct6: vif.alu_op_i = eq_op;
-		   v_vmsne_funct6: vif.alu_op_i = neq_op;		   
-		   v_vmsltu_funct6: vif.alu_op_i = slt_op;		   
-		   v_vmslt_funct6: vif.alu_op_i = sltu_op;
-		   v_vmsleu_funct6: vif.alu_op_i = sleu_op;		   
-		   v_vmsle_funct6: vif.alu_op_i = sle_op;		   
-		   v_vmsgtu_funct6: vif.alu_op_i = sgtu_op;
-		   v_vmsgt_funct6: vif.alu_op_i = sgt_op;
-		   v_vminu_funct6: vif.alu_op_i = minu_op;
-		   v_vmin_funct6: vif.alu_op_i = min_op;       
-		   v_merge_funct6: begin
-		       vif.type_of_masking_i = 1'b1;
-		       vif.mem_to_vrf_i = 2'b10;		       
-		       vif.alu_op_i = add_op;
-		       if(vm) begin // vmv and v_merge share the same encodings except for vm and vs2
-			   vif.mem_to_vrf_i = 2'b11;
-		       end
-		   end
-	       endcase; // case funct6
-	       // depending on instruction set alu_src_a_i
-	       case (funct3)			
-		   vv_funct3:begin
-		       vif.alu_src_a_i = 2'b00;		       
-		   end
-		   vs_funct3: begin
-		       vif.alu_src_a_i = 2'b01;
-		   end
-		   vi_funct3: begin
-		       vif.alu_src_a_i = 2'b11;
-		   end
-	       endcase // case (funct3)	       
+	       generate_arith_control_signals(vif, vector_instruction_i);	       
 	   end // case: arith_opcode	   
 	   store_opcode: begin
 	       vif.type_of_masking_i = 1'b0;
@@ -202,7 +143,109 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        endcase; // case req.vector_instruction_i[31              	          
    endtask: generate_control_signals
 
+   task generate_arith_control_signals(virtual v_lane_if vif, logic[31 : 0] vector_instruction_i);
+
+      logic [6 : 0] 	  opcode = req.vector_instruction_i [6 : 0];
+      logic [5 : 0] 	  funct6 = req.vector_instruction_i[31 : 26];
+      logic [2 : 0] 	  funct3 = req.vector_instruction_i[14 : 12];
+      logic 		  vm = vector_instruction_i[25];	
+
+      const logic [2 : 0] OPIVV_funct3 = 3'b000;
+      const logic [2 : 0] OPIVX_funct3 = 3'b100;
+      const logic [2 : 0] OPIVI_funct3 = 3'b011;
+      const logic [2 : 0] OPMVV_funct3 = 3'b010;
+      const logic [2 : 0] OPMVX_funct3 = 3'b110;
+       
+
+       vif.vrf_type_of_access_i = vrf_read_write;
+       vif.vs1_addr_src_i = 0;
+       vif.type_of_masking_i = 1'b0;
+       vif.mem_to_vrf_i = 2'b00;
+       vif.alu_src_a_i = funct3[1:0];
+       
+       // Next line need's to be handled better. One
+       // Clock cycles delay is neccessary after receiveng new
+       // intruction before setting store_we_i to 0
+       vif.store_fifo_we_i <= #99 1'b0;
+
+       
+       // Depending on funct3 some instructions may be in OPI group or OPM group, and instructions
+       // from these two groups can have the same funct6.
+       if (funct3 == OPIVV_funct3 || funct3 == OPIVX_funct3 || funct3 == OPIVI_funct3) begin
+	   case (funct6)
+	       v_add_funct6: vif.alu_op_i = add_op;
+	       v_sub_funct6: vif.alu_op_i = sub_op;
+	       v_and_funct6: vif.alu_op_i = and_op;
+	       v_or_funct6: vif.alu_op_i = or_op;
+	       v_xor_funct6: vif.alu_op_i = xor_op;		       
+	       v_shll_funct6: vif.alu_op_i = sll_op;
+	       v_shrl_funct6: vif.alu_op_i = srl_op;
+	       v_shra_funct6: vif.alu_op_i = sra_op;
+	       v_vmseq_funct6: vif.alu_op_i = eq_op;
+	       v_vmsne_funct6: vif.alu_op_i = neq_op;		   
+	       v_vmsltu_funct6: vif.alu_op_i = slt_op;		   
+	       v_vmslt_funct6: vif.alu_op_i = sltu_op;
+	       v_vmsleu_funct6: vif.alu_op_i = sleu_op;		   
+	       v_vmsle_funct6: vif.alu_op_i = sle_op;		   
+	       v_vmsgtu_funct6: vif.alu_op_i = sgtu_op;
+	       v_vmsgt_funct6: vif.alu_op_i = sgt_op;
+	       v_vminu_funct6: vif.alu_op_i = minu_op;
+	       v_vmin_funct6: vif.alu_op_i = min_op;       
+	       v_merge_funct6: begin
+		   vif.type_of_masking_i = 1'b1;
+		   vif.mem_to_vrf_i = 2'b10;	       
+		   vif.alu_op_i = add_op;
+		   if(vm) begin // vmv and v_merge share the same encodings except for vm and vs2
+		       vif.mem_to_vrf_i = 2'b11;
+		   end
+	       end
+	       default:
+		 `uvm_fatal (get_type_name(), $sformatf("Non supported OPM funct6 generated with value: %x", funct6))
+	   endcase; // case funct6
+       end // if (funct3 == OPIVI_funct3 || funct3 == OPIVX_funct3 || funct3 == OPIVI_funct3)
+       else if (funct3 == OPMVV_funct3 || funct3 == OPMVX_funct3) begin
+	   case (funct6)
+	       v_mul_funct6: vif.alu_op_i = muls_op;		   
+	       v_mulhsu_funct6: vif.alu_op_i = mulhsu_op;
+	       v_mulhs_funct6: vif.alu_op_i = mulhs_op;
+	       v_mulhu_funct6: vif.alu_op_i = mulhu_op;
+	       default:
+		 `uvm_fatal (get_type_name(), $sformatf("Non supported OPM funct6 generated with value: %x", funct6))
+	   endcase		    
+       end
+       else 
+	 `uvm_fatal (get_type_name(), $sformatf("Non supported OPM funct3 generated with value: %x", funct3))
+       
+       // depending on funct3 set alu_src_a_i
+       case (funct3)
+	   OPIVV_funct3:begin
+	       vif.alu_src_a_i = 2'b00;
+	   end
+	   OPIVX_funct3: begin
+	       vif.alu_src_a_i = 2'b01;
+	   end
+	   OPIVI_funct3: begin
+	       vif.alu_src_a_i = 2'b11;
+	   end
+	   OPMVV_funct3: begin
+	       vif.alu_src_a_i = 2'b00;		       
+	   end
+	   OPMVX_funct3: begin
+	       vif.alu_src_a_i = 2'b01;		       
+	   end
+	   default:
+	     `uvm_error (get_type_name(), $sformatf("Non supported funct3 generated when setting src_a with value: %x", funct3))
+       endcase // case (funct3)	       
+   endtask: generate_arith_control_signals;
+   
+/* -----\/----- EXCLUDED -----\/-----
+   function logic[4 : 0] alu_op_decode(logic[5 : 0] funct6, logic [2 : 0] funct 3);
+   endfunction: alu_op_decode;
+ -----/\----- EXCLUDED -----/\----- */
+   
 endclass : control_if_driver
+
+
 
 `endif
 

@@ -49,11 +49,11 @@ class control_if_monitor extends uvm_monitor;
            curr_instr_item = control_if_seq_item::type_id::create("curr_instr_item", this);
 	   curr_store_item = store_data_seq_item::type_id::create("curr_store_item", this);
 
-	   if (vif.reset)begin
-	       /*wait for ready, and after one clock cycle collect instruction, vmul, vector length and 
-		send it to scoreboard*/
+	   if (vif.reset)begin	       
 	       fork
 		   begin
+		       /*wait for ready, and after one clock cycle collect instruction, vmul, vector length and 
+			send it to scoreboard*/
 		       case (v_lane_mon_stages)
 			   wait_for_ready:begin
 			       if(vif.ready_o)
@@ -69,7 +69,7 @@ class control_if_monitor extends uvm_monitor;
 			       // This here is so wrong but i cant lose any more time.
 			       // This is neccessary because if we dont wait for 3 clock
 			       // cycles, store will not be able to finish extracting data from
-			       // VRF, and referent model will update the data that has not
+			       // VRF, and referent model will update expected data  that has not
 			       // yet been compared, and missmatch will ocurr where it shouldn't
 			       // be
 			       @(posedge(vif.clk));
@@ -81,9 +81,10 @@ class control_if_monitor extends uvm_monitor;
 
 		       endcase // case (v_lane_mon_stages)
 		   end
-		   /*If read enable is set, wait for one clock cycle and then collect 
-		    item on data_to_mem poert and send it to scoreboard*/
+		   
 		   begin
+		       /*If read enable is set, wait for one clock cycle and then collect 
+			item on data_to_mem poert and send it to scoreboard*/
 		       case (v_lane_store_stages)
 			   wait_for_re:begin
 			       if(vif.store_fifo_re_i) begin
