@@ -12,7 +12,7 @@
 -- K has value 16
 
 -- To calculate this equation 6 DSP slices were used. Each DSP was used to calculate
--- one part of previous equation. Order in which calculation take places is:
+-- one part of previous equation. Order in which calculation takes places is:
 
 -- In clock 0:
           -- DSP1 is calculating: X1*Y1.
@@ -169,7 +169,8 @@ begin
    end process;
 
    
-   output_sign_clk0_s <= a(DATA_WIDTH - 1) xor b(DATA_WIDTH - 1);
+   output_sign_clk0_s <= a(DATA_WIDTH - 1) xor b(DATA_WIDTH - 1) when op /= mulhu_op else
+                         '0';
    process (clk) is
    begin
       if (rising_edge(clk))then
