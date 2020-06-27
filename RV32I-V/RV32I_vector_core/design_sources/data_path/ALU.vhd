@@ -63,10 +63,10 @@ begin
    neq_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(a_i) /= signed(b_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
    --min max
-   min_res <= a_i when (signed(b_i) < signed(a_i)) else
-              b_i;
-   minu_res <= a_i when (unsigned(b_i) < unsigned(a_i)) else
-              b_i;
+   min_res <= b_i when (signed(b_i) < signed(a_i)) else
+              a_i;
+   minu_res <= b_i when (unsigned(b_i) < unsigned(a_i)) else
+              a_i;
    
    -- less then signed
    lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) < signed(a_i)) else

@@ -23,6 +23,9 @@ entity vector_lane is
         store_fifo_re_i      : in std_logic;
         
         -- from vector control unit
+        -- if immediate_sign_i = 1 immediate is treated as unsigned else, it
+        -- is treated as signed
+        immediate_sign_i: in    std_logic;
         alu_op_i                : in  std_logic_vector(4 downto 0);
         mem_to_vrf_i            : in  std_logic_vector(1 downto 0);
         store_fifo_we_i         : in  std_logic;
@@ -103,7 +106,8 @@ begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
 
-   sign_extension <= (others => vector_instruction_i(19));
+   sign_extension <= (others => vector_instruction_i(19)) when immediate_sign_i = '0'else
+                     (others => '0') ;
    immediate_sign_ext <= sign_extension & vector_instruction_i(18 downto 15);
    
    --chosing what to write into VRF vs1 or vs2

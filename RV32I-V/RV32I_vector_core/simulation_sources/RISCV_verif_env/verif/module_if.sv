@@ -19,6 +19,8 @@ interface v_lane_if (input clk, logic reset);
    
 
    // from vector control unit
+   logic 			     immediate_sign_i;
+   
    logic [4 : 0] 		     alu_op_i;   
    logic [1 : 0] 		     mem_to_vrf_i;   
    logic 			     store_fifo_we_i = 0;   

@@ -124,6 +124,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	   end // case: arith_opcode	   
 	   store_opcode: begin
 	       vif.type_of_masking_i = 1'b0;
+	       vif.immediate_sign_i = 1'b0;	       
 	       vif.vs1_addr_src_i = 1;
 	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
 	       vif.alu_op_i = add_op;	       
@@ -131,6 +132,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	   end
 	   default: begin
 	       vif.vrf_type_of_access_i = vrf_no_access;
+	       vif.immediate_sign_i = 1'b0;
 	       vif.vs1_addr_src_i = 0;
 	       vif.type_of_masking_i = 1'b0;
 	       vif.mem_to_vrf_i = 2'b00;
@@ -161,7 +163,8 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        vif.vs1_addr_src_i = 0;
        vif.type_of_masking_i = 1'b0;
        vif.mem_to_vrf_i = 2'b00;
-
+       vif.immediate_sign_i = 1'b0;
+       
        
        // Next line need's to be handled better. One
        // Clock cycles delay is neccessary after receiveng new
@@ -178,9 +181,18 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       v_and_funct6: vif.alu_op_i = and_op;
 	       v_or_funct6: vif.alu_op_i = or_op;
 	       v_xor_funct6: vif.alu_op_i = xor_op;		       
-	       v_shll_funct6: vif.alu_op_i = sll_op;
-	       v_shrl_funct6: vif.alu_op_i = srl_op;
-	       v_shra_funct6: vif.alu_op_i = sra_op;
+	       v_shll_funct6: begin
+		   vif.immediate_sign_i = 1'b1;		   
+		   vif.alu_op_i = sll_op;
+	       end
+	       v_shrl_funct6: begin
+		   vif.immediate_sign_i = 1'b1;
+		   vif.alu_op_i = srl_op;
+	       end
+	       v_shra_funct6: begin
+		   vif.immediate_sign_i = 1'b1;
+		   vif.alu_op_i = sra_op;
+	       end
 	       v_vmseq_funct6: vif.alu_op_i = eq_op;
 	       v_vmsne_funct6: vif.alu_op_i = neq_op;		   
 	       v_vmsltu_funct6: vif.alu_op_i = slt_op;		   

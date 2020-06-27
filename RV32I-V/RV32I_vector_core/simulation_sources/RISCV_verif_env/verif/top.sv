@@ -27,7 +27,8 @@ module vector_lane_verif_top;
 		   
 		   .load_fifo_we_i(v_lane_vif.load_fifo_we_i),
 		   .store_fifo_re_i(v_lane_vif.store_fifo_re_i),
-		   
+
+		   .immediate_sign_i(v_lane_vif.immediate_sign_i),
 		   .alu_op_i(v_lane_vif.alu_op_i),
 		   .mem_to_vrf_i(v_lane_vif.mem_to_vrf_i),
 		   .store_fifo_we_i(v_lane_vif.store_fifo_we_i),

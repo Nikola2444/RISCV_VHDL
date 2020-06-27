@@ -28,8 +28,8 @@ package v_alu_ops_pkg;
    const logic [4 : 0] sll_op= 5'b10110; //-> shift left logic      
    const logic [4 : 0] eq_op= 5'b10111; //->  set equal
    const logic [4 : 0] neq_op=5'b11000; //->  set not equal
-   const logic [4 : 0] sle_op=5'b11001; //->  set less then_or_equal_signed
-   const logic [4 : 0] sleu_op=5'b11010; //->  set less then_or_equal_unsigned
+   const logic [4 : 0] sleu_op=5'b11001; //->  set less then_or_equal_signed
+   const logic [4 : 0] sle_op=5'b11010; //->  set less then_or_equal_unsigned
    const logic [4 : 0] sgtu_op=5'b11011; //->  set less then_or_equal_signed
    const logic [4 : 0] sgt_op=5'b11100; //->  set less then_or_equal_unsigne
    const logic [4 : 0] min_op=5'b11101; //->  set less then_or_equal_signed

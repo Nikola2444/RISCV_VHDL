@@ -212,10 +212,10 @@ class vector_lane_scoreboard extends uvm_scoreboard;
 	    sra_op: return b >>>a[5 : 0];
 	    eq_op: return a == b;
 	    neq_op: return a != b;
-	    sle_op: return (signed'(a) != signed'(b) || signed'(b) < signed'(a));
-	    sleu_op: return (unsigned'(a) != unsigned'(b) || unsigned'(b) < unsigned'(a));
-	    sle_op: return (signed'(b) < signed'(a));
-	    sleu_op: return (unsigned'(b) < unsigned'(a));
+	    sle_op: return (signed'(a) == signed'(b) || signed'(b) < signed'(a));
+	    sleu_op: return (unsigned'(a) == unsigned'(b) || unsigned'(b) < unsigned'(a));
+	    slt_op: return (signed'(b) < signed'(a));
+	    sltu_op: return (unsigned'(b) < unsigned'(a));
 	    sgt_op: return (signed'(b) > signed'(a));
 	    sgtu_op: return (unsigned'(b) > unsigned'(a));
 	    min_op: begin 
