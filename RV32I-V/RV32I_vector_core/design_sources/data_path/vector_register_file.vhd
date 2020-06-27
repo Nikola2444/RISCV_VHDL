@@ -12,7 +12,8 @@ entity vector_register_file is
          -- Control_signals
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
 
-         vector_length_i : in std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
+         -- VECTOR_LENGTH * 8 because we need to take into account vmul
+         vector_length_i : in std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
          alu_exe_time_i  : in std_logic_vector (2 downto 0);
          vmul_i          : in std_logic_vector(1 downto 0);
          masked_we_i: in std_logic;
@@ -45,7 +46,7 @@ architecture structural of vector_register_file is
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
          alu_exe_time_i       : in std_logic_vector (2 downto 0);
          vmul_i               :    std_logic_vector(1 downto 0);
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH*8) downto 0);
          -- input signals
          vs1_address_i        : in std_logic_vector(4 downto 0);
          vs2_address_i        : in std_logic_vector(4 downto 0);

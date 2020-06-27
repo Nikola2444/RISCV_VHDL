@@ -16,7 +16,7 @@ entity VRF_BRAM_addr_generator is
       alu_exe_time_i       : in std_logic_vector(2 downto 0);
       vmul_i : in std_logic_vector (1 downto 0);
       --vector_length_i tells us how many elements there are per vector register
-      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
+      vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
       -- input signals
       vs1_address_i        : in std_logic_vector(4 downto 0);
       vs2_address_i        : in std_logic_vector(4 downto 0);
@@ -123,23 +123,24 @@ begin
 
    
    --generate v_len_s taking vmul into account.
-   process (vector_length_i, vmul_i)is
-   begin
-      case vmul_i is
-         when "00"=>
-            vector_len_shifted_s <= "000"&vector_length_i;
-         when "01" =>            
-            vector_len_shifted_s <= "00"&vector_length_i&'0';
-         when "10" =>
-            vector_len_shifted_s <= "0"&vector_length_i&"00";
-         when "11" =>
-            vector_len_shifted_s <= vector_length_i&"000";
-         when others =>
-      end case;
-   end process;
+   -- process (vector_length_i, vmul_i)is
+   -- begin
+   --    case vmul_i is
+   --       when "00"=>
+   --          vector_len_shifted_s <= "000"&vector_length_i;
+   --       when "01" =>            
+   --          vector_len_shifted_s <= "00"&vector_length_i&'0';
+   --       when "10" =>
+   --          vector_len_shifted_s <= "0"&vector_length_i&"00";
+   --       when "11" =>
+   --          vector_len_shifted_s <= vector_length_i&"000";
+   --       when others =>
+   --    end case;
+   -- end process;
    
    -------------------------------------------------------------------------------------------------------------------------------------------------------
-   v_len_s <= std_logic_vector(unsigned(vector_len_shifted_s) - one_c);
+   v_len_s <= std_logic_vector(unsigned(vector_length_i) - one_c);
+   --v_len_s <= std_logic_vector(unsigned(vector_len_shifted_s) - one_c);
    
    counter_increment : process (counter1_reg_s, v_len_s, vrf_type_of_access_i, counter2_reg_s)
    begin
@@ -155,7 +156,6 @@ begin
             counter1_next_s <= (others => '0');
          end if;      
       end if;
-
    end process;
    -------------------------------------------------------------------------------------------------------------------------------------------------------
    --counter 1 enables counting of counter 2

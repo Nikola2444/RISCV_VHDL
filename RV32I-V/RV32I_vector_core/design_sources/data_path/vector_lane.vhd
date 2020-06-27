@@ -15,7 +15,7 @@ entity vector_lane is
         vector_instruction_i : in std_logic_vector(31 downto 0);
         data_from_mem_i      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         vmul_i               : in std_logic_vector (1 downto 0);
-        vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH) downto 0);
+        vector_length_i      : in std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
         rs1_data_i: in std_logic_vector(DATA_WIDTH - 1 downto 0);
         --*************control signals***********************************
         -- from memory control unit        
@@ -72,11 +72,11 @@ architecture structural of vector_lane is
        --no_op             sub      shr
        "000", "000", "000", "000",
        -- shra    mulu  mulhs  mulhsu
-       "001", "100", "100", "100",
+       "000", "100", "100", "100",
        --mulhu  divu    divs     remu
        "100", "000", "000", "000",
        --rems    muls  setLtu  shl     
-       "000", "100", "000", "001",
+       "000", "100", "000", "000",
        --seteq
        "000", others => "000");
 

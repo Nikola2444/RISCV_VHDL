@@ -24,7 +24,7 @@ class control_if_simple_seq extends control_if_base_seq;
 	  $display("instruction[%d]: %b", i, instr_queue_1[i]);
        foreach (instr_queue_1[i]) begin
 	   //req.vector_instruction_i = instr_queue_1[i];
-	   `uvm_do_with(req, {req.vector_instruction_i == instr_queue_1[i]; req.vector_length_i == 32; req.vmul_i == 00;});
+	   `uvm_do_with(req, {req.vector_instruction_i == instr_queue_1[i]; req.vmul_i == 00;});
        end
        
        
