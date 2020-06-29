@@ -231,11 +231,11 @@ begin
 
    -- extend data based on type of load instruction
    with load_type_i select
-      extended_data_wb_s <= (31 downto 8 => data_mem_read_i(7)) & data_mem_read_i(7 downto 0)   when "000",
-      (31 downto 16                      => data_mem_read_i(15)) & data_mem_read_i(15 downto 0) when "001",
-      std_logic_vector(to_unsigned(0, 24)) & data_mem_read_i(7 downto 0)                        when "100",
-      std_logic_vector(to_unsigned(0, 16)) & data_mem_read_i(15 downto 0)                       when "101",
-      data_mem_read_i                                                                           when others;
+      extended_data_wb_s <= (31 downto 8 => data_mem_wb_s(7)) & data_mem_wb_s(7 downto 0)   when "000",
+      (31 downto 16                      => data_mem_wb_s(15)) & data_mem_wb_s(15 downto 0) when "001",
+      std_logic_vector(to_unsigned(0, 24)) & data_mem_wb_s(7 downto 0)                        when "100",
+      std_logic_vector(to_unsigned(0, 16)) & data_mem_wb_s(15 downto 0)                       when "101",
+      data_mem_wb_s                                                                           when others;
 
    -- extract operand adresses from instruction
    rs1_address_id_s <= instr_mem_read_i(19 downto 15);
