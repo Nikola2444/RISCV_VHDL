@@ -211,7 +211,7 @@ architecture Behavioral of cache_contr_dm is
 
 
 	-- Cache controler state
-	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data);
+	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data, update_data_ts, update_instr_ts);
 	type mc_state is (idle, flush, fetch); 
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
@@ -438,14 +438,11 @@ begin
 				--lvl2a_c_tag_s <= lvl2ia_c_tag_s;
 
 				if(cc_counter_reg = COUNTER_MAX)then 
-					-- finished with writing entire block
-					cc_state_next <= idle;
-						-- write new tag to tag store, set valid, reset dirty
-					dwritea_instr_tag_s <= "01" & lvl1i_c_tag_s; 
-					wea_instr_tag_s <= '1';
+					cc_state_next <= update_instr_ts;
 				else
 					cc_state_next <= fetch_instr;
 				end if;
+
 
 			when fetch_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
@@ -462,10 +459,7 @@ begin
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
-					cc_state_next <= idle;
-						-- write new tag to tag store, set valid, reset dirty
-					dwritea_data_tag_s <= "01" & lvl1d_c_tag_s; 
-					wea_data_tag_s <= '1';
+					cc_state_next <= update_data_ts;
 				else
 					cc_state_next <= fetch_data;
 				end if;
@@ -494,6 +488,20 @@ begin
 				else
 					cc_state_next <= flush_data;
 				end if;
+
+			when update_instr_ts => 
+				cc_state_next <= idle;
+					-- write new tag to tag store, set valid, reset dirty
+				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
+				dwritea_instr_tag_s <= "01" & lvl1i_c_tag_s; 
+				wea_instr_tag_s <= '1';
+
+			when update_data_ts => 
+				cc_state_next <= idle;
+					-- write new tag to tag store, set valid, reset dirty
+				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
+				dwritea_data_tag_s <= "01" & lvl1d_c_tag_s; 
+				wea_data_tag_s <= '1';
 
 			when others =>
 		end case;
@@ -641,7 +649,7 @@ begin
 	-- TODO double check this address logic!, change if unaligned accesses are implemented
 	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
-	rsta_data_cache_s <= reset;
+	rsta_data_cache_s <= '0';
 	ena_data_cache_s <= data_access_s; -- check if this shit works *thought* enable only on data acess
 	regcea_data_cache_s <= '0';
 	-- Instantiation of data cache

@@ -158,34 +158,36 @@ begin
    id_ex : process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
-            branch_type_ex_s <= (others => '0');
-            funct3_ex_s      <= (others => '0');
-            funct7_ex_s      <= (others => '0');
-            set_a_zero_ex_s  <= '0';
-            alu_src_a_ex_s   <= '0';
-            alu_src_b_ex_s   <= '0';
-            mem_to_reg_ex_s  <= (others => '0');
-            alu_2bit_op_ex_s <= (others => '0');
-            rs1_address_ex_s <= (others => '0');
-            rs2_address_ex_s <= (others => '0');
-            rd_address_ex_s  <= (others => '0');
-            rd_we_ex_s       <= '0';
-            data_mem_we_ex_s <= '0';
-         elsif (data_ready_i = '1')then
-            branch_type_ex_s <= branch_type_id_s;
-            funct7_ex_s      <= funct7_id_s;
-            funct3_ex_s      <= funct3_id_s;
-            set_a_zero_ex_s  <= set_a_zero_id_s;
-            alu_src_a_ex_s   <= alu_src_a_id_s;
-            alu_src_b_ex_s   <= alu_src_b_id_s;
-            mem_to_reg_ex_s  <= mem_to_reg_id_s;
-            alu_2bit_op_ex_s <= alu_2bit_op_id_s;
-            rs1_address_ex_s <= rs1_address_id_s; 
-				rs2_address_ex_s <= rs2_address_id_s;
-            rd_address_ex_s  <= rd_address_id_s;
-            rd_we_ex_s       <= rd_we_id_s;
-            data_mem_we_ex_s <= data_mem_we_id_s;
+			if (data_ready_i = '1')then
+				if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
+					branch_type_ex_s <= (others => '0');
+					funct3_ex_s      <= (others => '0');
+					funct7_ex_s      <= (others => '0');
+					set_a_zero_ex_s  <= '0';
+					alu_src_a_ex_s   <= '0';
+					alu_src_b_ex_s   <= '0';
+					mem_to_reg_ex_s  <= (others => '0');
+					alu_2bit_op_ex_s <= (others => '0');
+					rs1_address_ex_s <= (others => '0');
+					rs2_address_ex_s <= (others => '0');
+					rd_address_ex_s  <= (others => '0');
+					rd_we_ex_s       <= '0';
+					data_mem_we_ex_s <= '0';
+				else
+					branch_type_ex_s <= branch_type_id_s;
+					funct7_ex_s      <= funct7_id_s;
+					funct3_ex_s      <= funct3_id_s;
+					set_a_zero_ex_s  <= set_a_zero_id_s;
+					alu_src_a_ex_s   <= alu_src_a_id_s;
+					alu_src_b_ex_s   <= alu_src_b_id_s;
+					mem_to_reg_ex_s  <= mem_to_reg_id_s;
+					alu_2bit_op_ex_s <= alu_2bit_op_id_s;
+					rs1_address_ex_s <= rs1_address_id_s; 
+					rs2_address_ex_s <= rs2_address_id_s;
+					rd_address_ex_s  <= rd_address_id_s;
+					rd_we_ex_s       <= rd_we_id_s;
+					data_mem_we_ex_s <= data_mem_we_id_s;
+				end if;
          end if;
       end if;
    end process;
@@ -194,19 +196,21 @@ begin
    ex_mem : process (clk) is
    begin
       if (rising_edge(clk)) then
-         if (reset = '0')then
-            funct3_mem_s      <= (others => '0');
-            data_mem_we_mem_s <= '0';
-            rd_we_mem_s       <= '0';
-            mem_to_reg_mem_s  <= (others => '0');
-            rd_address_mem_s  <= (others => '0');
-         elsif (data_ready_i = '1')then
-            funct3_mem_s      <= funct3_ex_s;
-            data_mem_we_mem_s <= data_mem_we_ex_s;
-            rd_we_mem_s       <= rd_we_ex_s;
-            mem_to_reg_mem_s  <= mem_to_reg_ex_s;
-            rd_address_mem_s  <= rd_address_ex_s;
-         end if;
+			if (data_ready_i = '1')then
+				if (reset = '0')then
+					funct3_mem_s      <= (others => '0');
+					data_mem_we_mem_s <= '0';
+					rd_we_mem_s       <= '0';
+					mem_to_reg_mem_s  <= (others => '0');
+					rd_address_mem_s  <= (others => '0');
+				else
+					funct3_mem_s      <= funct3_ex_s;
+					data_mem_we_mem_s <= data_mem_we_ex_s;
+					rd_we_mem_s       <= rd_we_ex_s;
+					mem_to_reg_mem_s  <= mem_to_reg_ex_s;
+					rd_address_mem_s  <= rd_address_ex_s;
+				end if;
+			end if;
       end if;
    end process;
 
