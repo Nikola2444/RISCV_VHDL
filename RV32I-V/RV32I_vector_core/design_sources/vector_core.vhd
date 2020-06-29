@@ -7,7 +7,7 @@ use work.custom_functions_pkg.all;
 entity vector_core is
    generic (DATA_WIDTH        : natural := 32;
             VECTOR_LENGTH : natural := 32; -- num of elements per vector register
-            NUM_OF_LANES      : natural := 1
+            NUM_OF_LANES      : natural := 4
             );
 
    port(clk   : in std_logic;
@@ -20,7 +20,7 @@ entity vector_core is
         vector_stall_o : out std_logic;
         -- Vector_length should not be among input ports of vector core !! It
         -- is for now here so synthesis is possible
-        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/NUM_OF_LANES) downto 0)
+        vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH/NUM_OF_LANES*8) downto 0)
         --TODO: memory interface to be added
         );
 
@@ -34,10 +34,16 @@ architecture struct of vector_core is
    signal vrf_type_of_access_s : std_logic_vector(1 downto 0);
    signal alu_op_s             : std_logic_vector(4 downto 0);
    signal mem_to_vrf_s         : std_logic_vector(1 downto 0);
-   signal V_CU_store_fifo_we_s : std_logic;
+   signal V_CU_store_fifo_we_s : std_logic;   
    signal V_CU_load_fifo_re_s  : std_logic;
+   signal immediate_sign_s: std_logic;
    signal combined_lanes_ready_s              : std_logic_vector(NUM_OF_LANES - 1 downto 0);
+   signal alu_src_a_s: std_logic_vector(1 downto 0);
+   signal type_of_masking_s: std_logic;
+   signal vs1_addr_src_s: std_logic;
    signal ready_s: std_logic;
+   
+   signal rs1_data_s: std_logic_vector (31 downto 0);
 
 
    -- Signals needed for communication between of Vector lanes and M_CU
@@ -73,6 +79,8 @@ begin
    ready_s <= '1' when combined_lanes_ready_s = std_logic_vector(to_unsigned(2**(NUM_OF_LANES + 1) - 1, NUM_OF_LANES))
  else
               '0';
+
+
    gen_vector_lanes : for i in 0 to NUM_OF_LANES - 1 generate
       vector_lane_1 : entity work.vector_lane
          generic map (
@@ -85,20 +93,26 @@ begin
             data_from_mem_i         => data_from_mem_s,
             vmul_i => vmul_i,
             vector_length_i => vector_length_i,
+            rs1_data_i => rs1_data_s,            
             --Control singnals from M_CU
             load_fifo_we_i          => M_CU_load_fifo_we_s,
             store_fifo_re_i         => M_CU_store_fifo_re_s,
             --Control singnals from V_CU
+            immediate_sign_i => immediate_sign_s,
             alu_op_i                => alu_op_s,
             mem_to_vrf_i            => mem_to_vrf_s,
             store_fifo_we_i         => V_CU_store_fifo_we_s,
             vrf_type_of_access_i    => vrf_type_of_access_s,
+            alu_src_a_i => alu_src_a_s,
+            type_of_masking_i => type_of_masking_s,
+            vs1_addr_src_i => vs1_addr_src_s,
             load_fifo_re_i          => V_CU_load_fifo_re_s,
             -- Output data
             data_to_mem_o           => data_to_mem_s,
             -- Status signals
             ready_o                 => combined_lanes_ready_s(i),
-            load_fifo_almostmpty_o  => open,
+            
+            load_fifo_almostempty_o  => open,
             load_fifo_almostfull_o  => open,
             load_fifo_empty_o       => open,
             load_fifo_full_o        => open,
@@ -106,7 +120,8 @@ begin
             load_fifo_rderr_o       => open,
             load_fifo_wrcount_o     => open,
             load_fifo_wrerr_o       => open,
-            store_fifo_almostmpty_o => open,
+            
+            store_fifo_almostempty_o => open,
             store_fifo_almostfull_o => open,
             store_fifo_empty_o      => open,
             store_fifo_full_o       => open,

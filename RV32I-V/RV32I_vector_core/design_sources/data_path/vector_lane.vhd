@@ -31,8 +31,8 @@ entity vector_lane is
         store_fifo_we_i         : in  std_logic;
         vrf_type_of_access_i    : in  std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
         alu_src_a_i: in std_logic_vector(1 downto 0);
-        -- 1: all elements in VRF are updated
-        -- 0: only masked elements in VRF are updated
+        -- 1: all elements in VRF are updated (merge and move instructions)
+        -- 0: only masked elements in VRF are updated 
         type_of_masking_i: in std_logic;                                         
         load_fifo_re_i          : in  std_logic;
         vs1_addr_src_i          : in  std_logic;
