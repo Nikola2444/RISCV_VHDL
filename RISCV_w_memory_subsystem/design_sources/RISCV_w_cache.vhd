@@ -31,8 +31,8 @@ architecture Behavioral of RISCV_w_cache is
 		signal addr_instr_cache_s : std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 		signal addr_instr_cache_32_s : std_logic_vector(31 downto 0);
 		signal dread_instr_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
-		signal en_instr_cache_s : std_logic;
-		signal rst_instr_cache_s : std_logic;
+		--signal en_instr_cache_s : std_logic;
+		--signal rst_instr_cache_s : std_logic;
 
 
 	-- Data cache signals
@@ -64,8 +64,8 @@ begin
 
          instr_mem_read_i    => dread_instr_cache_s,
          instr_mem_address_o => addr_instr_cache_32_s,
-         instr_mem_flush_o   => rst_instr_cache_s,
-         instr_mem_en_o      => en_instr_cache_s,
+         --instr_mem_flush_o   => rst_instr_cache_s,
+         --instr_mem_en_o      => en_instr_cache_s,
 
          data_mem_we_o      => we_data_cache_s,
          data_mem_re_o      => re_data_cache_s,
@@ -99,8 +99,8 @@ begin
 			-- Instruction cache
 			addr_instr_i => addr_instr_cache_s,
 			dread_instr_o => dread_instr_cache_s,
-			rst_instr_cache_i => rst_instr_cache_s,
-			en_instr_cache_i => en_instr_cache_s,
+			--rst_instr_cache_i => rst_instr_cache_s,
+			--en_instr_cache_i => en_instr_cache_s,
 			-- Data cache
 			addr_data_i => addr_data_cache_s,
 			dread_data_o => dread_data_cache_s,

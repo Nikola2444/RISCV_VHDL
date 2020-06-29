@@ -13,8 +13,8 @@ entity TOP_RISCV is
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
       instr_mem_read_i    : in  std_logic_vector(31 downto 0);
-      instr_mem_flush_o   : out std_logic;
-      instr_mem_en_o      : out std_logic;
+      --instr_mem_flush_o   : out std_logic;
+      --instr_mem_en_o      : out std_logic;
       -- Data memory interface
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_read_i     : in  std_logic_vector(31 downto 0);
@@ -45,9 +45,10 @@ architecture structural of TOP_RISCV is
    signal pc_en_s            : std_logic;
    signal if_id_en_s         : std_logic;
          
-   
+   signal instr_mem_id_s   : std_logic_vector(31 downto 0);
+
 begin
-   -- Data_path instance
+   -- data_path instance
    data_path_1: entity work.data_path
       port map (
          -- global synchronization signals
@@ -58,6 +59,7 @@ begin
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
          instr_mem_read_i    => instr_mem_read_i,
+         instr_mem_id_o    => instr_mem_id_s,
          -- interface towards data memory
          data_mem_address_o  => data_mem_address_o,
          data_mem_write_o    => data_mem_write_o,
@@ -84,9 +86,9 @@ begin
          if_id_en_i          => if_id_en_s); 
 
       --flush current instruction
-      instr_mem_flush_o <=  '1' when (if_id_flush_s = '1' or instr_ready_i ='0') else '0';
+      --instr_mem_flush_o <=  '1' when (if_id_flush_s = '1' or instr_ready_i ='0') else '0';
    -- stall currnet instruction
-		instr_mem_en_o <= '0' when (if_id_en_s = '0' or data_ready_i = '0') else '1';
+		--instr_mem_en_o <= '0' when (if_id_en_s = '0' or data_ready_i = '0') else '1';
 
 
    -- Control_path instance
@@ -98,7 +100,7 @@ begin
          data_ready_i    => data_ready_i,
          reset               => reset,
          -- instruction is read from memory
-         instruction_i       => instr_mem_read_i,
+         instruction_i       => instr_mem_id_s,
          -- control signals are forwarded to data_path
          set_a_zero_o        => set_a_zero_s,
          mem_to_reg_o        => mem_to_reg_s,

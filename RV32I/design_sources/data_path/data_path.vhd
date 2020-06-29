@@ -15,6 +15,7 @@ entity data_path is
       -- instruction memory interface
       instr_mem_address_o : out std_logic_vector (31 downto 0);
       instr_mem_read_i    : in  std_logic_vector(31 downto 0);
+      instr_mem_id_o      : out  std_logic_vector(31 downto 0);
       -- data memory interface
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_write_o    : out std_logic_vector(31 downto 0);
@@ -60,6 +61,7 @@ architecture Behavioral of data_path is
    signal rs2_address_id_s        : std_logic_vector (4 downto 0);
    signal rd_address_id_s         : std_logic_vector (4 downto 0);
    signal if_id_reg_flush_s       : std_logic;
+   signal instr_mem_id_s 			 : std_logic_vector (31 downto 0);
 
    --*********       EXECUTE       **************
    signal pc_adder_ex_s           : std_logic_vector (31 downto 0);
@@ -82,6 +84,7 @@ architecture Behavioral of data_path is
    signal rs2_data_mem_s          : std_logic_vector (31 downto 0);
 
    --*********      WRITEBACK      **************
+   signal data_mem_wb_s     		 : std_logic_vector (31 downto 0);
    signal pc_adder_wb_s           : std_logic_vector (31 downto 0);
    signal alu_result_wb_s         : std_logic_vector(31 downto 0);
    signal extended_data_wb_s      : std_logic_vector (31 downto 0);
@@ -107,13 +110,15 @@ begin
    if_id : process (clk) is
    begin
       if (rising_edge(clk)) then
-         if(if_id_en_i = '1' and instr_ready_i ='1' and data_ready_i = '1')then
-            if (reset = '0' or if_id_flush_i = '1')then
+         if(if_id_en_i = '1' and data_ready_i = '1')then
+            if (reset = '0' or if_id_flush_i = '1' or instr_ready_i ='0')then
                pc_reg_id_s   <= (others => '0');
                pc_adder_id_s <= (others => '0');
+					instr_mem_id_s <= (others => '0');
             else
                pc_reg_id_s   <= pc_reg_if_s;
                pc_adder_id_s <= pc_adder_if_s;
+					instr_mem_id_s <= instr_mem_read_i;
             end if;
          end if;
       end if;
@@ -168,10 +173,12 @@ begin
    begin
       if (rising_edge(clk)) then
          if (reset = '0' or data_ready_i = '0')then
+				data_mem_wb_s <= (others => '0');
             alu_result_wb_s <= (others => '0');
             pc_adder_wb_s   <= (others => '0');
             rd_address_wb_s <= (others => '0');
          else
+				data_mem_wb_s <= data_mem_read_i;
             alu_result_wb_s <= alu_result_mem_s;
             pc_adder_wb_s   <= pc_adder_mem_s;
             rd_address_wb_s <= rd_address_mem_s;
@@ -276,6 +283,7 @@ begin
    --***********  Outputs  ***************
    --From instruction memory
    instr_mem_address_o <= pc_reg_if_s;
+	instr_mem_id_o <= instr_mem_id_s;
    --To data memory
    data_mem_address_o  <= alu_result_mem_s;
    data_mem_write_o    <= rs2_data_mem_s;

@@ -1,7 +1,19 @@
-Zybo has 240KB of block RAM memory, distributed in 60 equal blocks of 4KB.
+Zybo has 240KB of block RAM memory, distributed in 60 equal blocks of 4.5KB.
 
-In this directory there will be multiple synthesizable versions of BRAM vhdl code.
+In this directory there will be multiple synthesizable versions of RAM vhdl code, some for distributed (LUTRAM) use, others for BRAM.
 
-BRAM_sp_rf_bw - Block RAM, single port, read first, byte write
-BRAM_tdp_rf_bw - Block RAM, trure dual port, read first, byte write
+# PORTS
+sp - single port
+sdp - simple dual port
+tdp - true dual port
+
+# TYPE OF READ
+ar - asynchronous read
+wf - write first synchronous
+rf - read first synchronous
+nc - no change synchronous
+
+# WRITE ENABLE
+bw - byte write
+
 

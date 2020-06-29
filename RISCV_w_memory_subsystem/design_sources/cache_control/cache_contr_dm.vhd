@@ -21,8 +21,8 @@ generic (PHY_ADDR_SPACE : natural := 512*1024*1024; -- 512 MB
          we_phy_o				: out std_logic_vector(3 downto 0);
 			-- Level 1 caches
 			-- Instruction cache
-			rst_instr_cache_i : in std_logic;
-			en_instr_cache_i  : in std_logic;
+			--rst_instr_cache_i : in std_logic;
+			--en_instr_cache_i  : in std_logic;
 			addr_instr_i 		: in std_logic_vector(PHY_ADDR_WIDTH-1 downto 0);
 			dread_instr_o 		: out std_logic_vector(31 downto 0);
 			-- Data cache
@@ -492,14 +492,12 @@ begin
 			when update_instr_ts => 
 				cc_state_next <= idle;
 					-- write new tag to tag store, set valid, reset dirty
-				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
 				dwritea_instr_tag_s <= "01" & lvl1i_c_tag_s; 
 				wea_instr_tag_s <= '1';
 
 			when update_data_ts => 
 				cc_state_next <= idle;
 					-- write new tag to tag store, set valid, reset dirty
-				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 				dwritea_data_tag_s <= "01" & lvl1d_c_tag_s; 
 				wea_data_tag_s <= '1';
 
@@ -593,11 +591,11 @@ begin
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
 	--we_instr_cache_s <= "0000"; NOTE nah
 	regcea_instr_cache_s <= '0';
-	ena_instr_cache_s <= en_instr_cache_i;
-	rsta_instr_cache_s <= rst_instr_cache_i;
+	ena_instr_cache_s <= '1';
+	rsta_instr_cache_s <= '0';
 	-- TODO make a driver for dina, wea, douta
 	-- Instantiation of instruction cache
-	instruction_cache : entity work.RAM_sp_rf_bw(rtl)
+	instruction_cache : entity work.RAM_sp_ar_bw(rtl)
 		generic map (
 			NB_COL => LVL1C_NUM_COL,
 			COL_WIDTH => LVL1C_COL_WIDTH,
@@ -653,7 +651,7 @@ begin
 	ena_data_cache_s <= data_access_s; -- check if this shit works *thought* enable only on data acess
 	regcea_data_cache_s <= '0';
 	-- Instantiation of data cache
-	data_cache : entity work.RAM_sp_rf_bw(rtl)
+	data_cache : entity work.RAM_sp_ar_bw(rtl)
 		generic map (
 				NB_COL => LVL1C_NUM_COL,
 				COL_WIDTH => LVL1C_COL_WIDTH,
