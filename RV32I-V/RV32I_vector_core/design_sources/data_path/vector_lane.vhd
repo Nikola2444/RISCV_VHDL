@@ -87,7 +87,7 @@ architecture structural of vector_lane is
 
 -- VRF input signals
    signal sign_extension: std_logic_vector(DATA_WIDTH - 1 - 4 downto 0);
-   signal immediate_sign_ext: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal immediate_sign_ext_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal masked_we_s:std_logic;
    alias vm_s: std_logic is vector_instruction_i(25);
    signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
@@ -102,13 +102,16 @@ architecture structural of vector_lane is
    signal fifo_reset_s                      : std_logic;
 
    signal vs1_address_s: std_logic_vector(4 downto 0);
+
+   signal immediate_sign_ext_ex_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal rs1_data_ex_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
 begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
-
+   -- "ID_PHASE"
    sign_extension <= (others => vector_instruction_i(19)) when immediate_sign_i = '0'else
                      (others => '0') ;
-   immediate_sign_ext <= sign_extension & vector_instruction_i(18 downto 15);
+   immediate_sign_ext_s <= sign_extension & vector_instruction_i(18 downto 15);
    
    --chosing what to write into VRF vs1 or vs2
    merge_data_s <= alu_a_input_s when mask_s  = '1' else
@@ -136,10 +139,25 @@ begin
    masked_we_s <= mask_s when vm_or_update_el_s = '0' else
                   '1';
 
+
+   -- EX PHASE
    -- Multiplexing source operand "a" of ALU unit
+   process (clk)is
+   begin
+      if(rising_edge(clk)) then
+         if (reset = '0') then
+            immediate_sign_ext_ex_s <= (others => '0');
+            rs1_data_ex_s <= (others => '0');
+         else
+            immediate_sign_ext_ex_s <= immediate_sign_ext_s;
+            rs1_data_ex_s <= rs1_data_i;
+         end if;
+      end if;
+   end process;
+   
    alu_a_input_s <= vs1_data_s when alu_src_a_i = "00" else
-                    rs1_data_i when alu_src_a_i = "01" else
-                    immediate_sign_ext;
+                    rs1_data_ex_s when alu_src_a_i = "01" else
+                    immediate_sign_ext_ex_s;
                   
 
 --****************************INSTANTIATIONS*********************************

@@ -7,7 +7,7 @@ use work.custom_functions_pkg.all;
 entity vector_core is
    generic (DATA_WIDTH        : natural := 32;
             VECTOR_LENGTH : natural := 32; -- num of elements per vector register
-            NUM_OF_LANES      : natural := 4
+            NUM_OF_LANES      : natural := 2
             );
 
    port(clk   : in std_logic;
