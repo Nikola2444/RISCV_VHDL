@@ -238,9 +238,9 @@ begin
       data_mem_wb_s                                                                           when others;
 
    -- extract operand adresses from instruction
-   rs1_address_id_s <= instr_mem_read_i(19 downto 15);
-   rs2_address_id_s <= instr_mem_read_i(24 downto 20);
-   rd_address_id_s  <= instr_mem_read_i(11 downto 7);
+   rs1_address_id_s <= instr_mem_id_s(19 downto 15);
+   rs2_address_id_s <= instr_mem_id_s(24 downto 20);
+   rd_address_id_s  <= instr_mem_id_s(11 downto 7);
 
 
 
@@ -264,7 +264,7 @@ begin
    --Immediate unit instance
    immediate_1 : entity work.immediate
       port map (
-         instruction_i        => instr_mem_read_i,
+         instruction_i        => instr_mem_id_s,
          immediate_extended_o => immediate_extended_id_s);
 
    --ALU unit instance
