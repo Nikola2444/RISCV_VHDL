@@ -209,6 +209,7 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2a_c_hit_s  : std_logic; -- hit in lvl 2 cache
 	signal lvl2b_c_hit_s  : std_logic; -- hit in lvl 2 cache
 
+	signal check_lvl2_s  : std_logic; -- hit in instruction cache
 
 	-- Cache controler state
 	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data, update_data_ts, update_instr_ts);
@@ -348,6 +349,7 @@ begin
 		lvl2ia_c_tag_s, lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,
 		lvl1d_c_tag_s,lvl2a_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s) is
 	begin
+		check_lvl2_s <= '0';
 		-- for FSM
 		cc_state_next <= idle;
 		cc_counter_next <= (others => '0');
@@ -404,6 +406,7 @@ begin
 				
 
 			when check_lvl2_instr => 
+				check_lvl2_s <= '1';
 				addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 				lvl2a_c_idx_s <= lvl2ia_c_idx_s;
 				lvl2a_c_tag_s <= lvl2ia_c_tag_s;
@@ -415,6 +418,7 @@ begin
 				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg;
 
 			when check_lvl2_data => 
+				check_lvl2_s <= '1';
 				addra_lvl2_tag_s <= lvl2da_c_idx_s;
 				lvl2a_c_idx_s <= lvl2da_c_idx_s;
 				lvl2a_c_tag_s <= lvl2da_c_tag_s;
@@ -435,8 +439,10 @@ begin
 				cc_counter_next <= cc_counter_incr;
 
 				-- TODO depending on mc fsm, see if this is needed or not
-				--addra_lvl2_tag_s <= lvl2ia_c_idx_s;
-				--lvl2a_c_tag_s <= lvl2ia_c_tag_s;
+				-- NOTE this is needed because fetching in cc and mc are overlapped
+				addra_lvl2_tag_s <= lvl2ia_c_idx_s;
+				lvl2a_c_tag_s <= lvl2ia_c_tag_s;
+				lvl2a_c_idx_s <= lvl2ia_c_idx_s;
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					cc_state_next <= update_instr_ts;
@@ -447,16 +453,18 @@ begin
 
 			when fetch_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
+				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_incr;
 				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 				dwritea_data_cache_s <= dreada_lvl2_cache_s;
 				wea_data_cache_s <= "1111";
 
 				cc_counter_next <= cc_counter_incr;
 
-				-- TODO depending on mc fsm, see if this is needed or not
-				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
-				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
+				-- TODO depending on mc fsm, see if this is needed or not 
+				-- NOTE this is needed because fetching in cc and mc are overlapped
+				addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				lvl2a_c_tag_s <= lvl2da_c_tag_s; 
+				lvl2a_c_idx_s <= lvl2da_c_idx_s;
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
@@ -476,8 +484,10 @@ begin
 				cc_counter_next <= cc_counter_incr;
 
 				-- TODO depending on mc fsm, see if this is needed or not
-				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
-				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
+				-- NOTE this is needed because fetching in cc and mc are overlapped
+				addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				lvl2a_c_tag_s <= lvl2da_c_tag_s;
+				lvl2a_c_idx_s <= lvl2da_c_idx_s;
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
@@ -491,12 +501,22 @@ begin
 				end if;
 
 			when update_instr_ts => 
+				-- NOTE this is needed because fetching in cc and mc are overlapped
+				--addra_lvl2_tag_s <= lvl2ia_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2ia_c_tag_s;
+				--lvl2a_c_idx_s <= lvl2ia_c_idx_s;
+
 				cc_state_next <= idle;
 					-- write new tag to tag store, set valid, reset dirty
 				dwritea_instr_tag_s <= "01" & lvl1i_c_tag_s; 
 				wea_instr_tag_s <= '1';
 
 			when update_data_ts => 
+				-- NOTE this is needed because fetching in cc and mc are overlapped
+				--addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2da_c_tag_s;
+				--lvl2a_c_idx_s <= lvl2da_c_idx_s;
+
 				cc_state_next <= idle;
 					-- write new tag to tag store, set valid, reset dirty
 				dwritea_data_tag_s <= "01" & lvl1d_c_tag_s; 
@@ -508,7 +528,7 @@ begin
 
 
 	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, lvl2a_c_idx_s, lvl2a_c_tag_s,
-									 lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i, lvl2a_ts_tag_s) is
+									 lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i, lvl2a_ts_tag_s, check_lvl2_s) is
 	begin
 		-- for FSM
 		mc_state_next <= idle;
@@ -528,7 +548,7 @@ begin
 
 		case (mc_state_reg) is
 			when idle =>
-				if(lvl2a_c_hit_s = '0')then
+				if(lvl2a_c_hit_s = '0' and check_lvl2_s = '1')then
 					if (lvl2a_ts_bkk_s(1) = '1')then -- dirty
 						mc_state_next <= flush;
 						addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;
