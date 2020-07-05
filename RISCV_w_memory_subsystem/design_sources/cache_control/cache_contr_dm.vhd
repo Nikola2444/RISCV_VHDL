@@ -309,7 +309,7 @@ begin
 
 	-- TODO check if this shit can even work outside of fsm
    data_access_s <= '1' when ((we_data_i /= "0000") or (re_data_i='1')) else '0';
-	data_ready_o <= (lvl1d_c_hit_s or (not data_access_s)) and data_mem_available_s;
+	data_ready_o <= (lvl1d_c_hit_s or (not data_access_s)); --and data_mem_available_s;
 	instr_ready_o <= lvl1i_c_hit_s;
 
 	-- Adder for counters 
@@ -344,7 +344,7 @@ begin
 	-- TODO if this somehow saves logic in end product remove it
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
-		data_mem_available_s <= '1'; --not (invalidate_lvl1d_s or flush_lvl1d_s); TODO CHECK IF NOT NEEDED???
+		--data_mem_available_s <= '1'; --not (invalidate_lvl1d_s or flush_lvl1d_s); TODO CHECK IF NOT NEEDED???
 
 	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
 	fsm_cache : process(cc_state_reg, lvl1i_c_addr_s, lvl1d_c_addr_s, lvl2ia_c_tag_s, dreada_instr_cache_s, lvl1i_c_tag_s,
