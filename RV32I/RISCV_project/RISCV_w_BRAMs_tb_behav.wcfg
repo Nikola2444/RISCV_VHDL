@@ -1914,12 +1914,6 @@
       <obj_property name="CustomSignalColor">#A52A2A</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_RISCV_w_cache/RISCV_w_cache_inst/cc_directly_mapped/addra_data_tag_s">
-      <obj_property name="ElementShortName">addra_data_tag_s[4:0]</obj_property>
-      <obj_property name="ObjectShortName">addra_data_tag_s[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#A52A2A</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/tb_RISCV_w_cache/RISCV_w_cache_inst/cc_directly_mapped/wea_data_tag_s">
       <obj_property name="ElementShortName">wea_data_tag_s</obj_property>
       <obj_property name="ObjectShortName">wea_data_tag_s</obj_property>
