@@ -29,7 +29,7 @@ package cache_pkg is
 	-- Number of bits needed to address all blocks inside the cache
 		constant LVL1C_INDEX_WIDTH : integer := LVL1C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant LVL1C_TAG_WIDTH : integer := 32 - LVL1C_ADDR_WIDTH;
+		constant LVL1C_TAG_WIDTH : integer := PHY_ADDR_WIDTH - LVL1C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
 		constant LVL1DC_BKK_WIDTH : integer := 2;
 		constant LVL1IC_BKK_WIDTH : integer := 2;
@@ -50,9 +50,14 @@ package cache_pkg is
 	-- Number of bits needed to address all blocks inside the cache
 		constant LVL2C_INDEX_WIDTH : integer := LVL2C_ADDR_WIDTH - BLOCK_ADDR_WIDTH;
 	-- Number of bits needed to represent which block is currently in cache
-		constant LVL2C_TAG_WIDTH : integer := 32 - LVL2C_ADDR_WIDTH;
+		constant LVL2C_TAG_WIDTH : integer := PHY_ADDR_WIDTH - LVL2C_ADDR_WIDTH;
 	-- Number of bits needed to save bookkeeping, 1 for valid, 1 for dirty
-		constant LVL2C_BKK_WIDTH : integer := 2;
+		constant LVL2C_BKK_WIDTH : integer := 4;
+
+		constant LVL2C_BKK_VALID : integer := 0;
+		constant LVL2C_BKK_DIRTY : integer := 1;
+		constant LVL2C_BKK_INSTR : integer := 2;
+		constant LVL2C_BKK_DATA : integer := 3;
 
 end cache_pkg;
 
