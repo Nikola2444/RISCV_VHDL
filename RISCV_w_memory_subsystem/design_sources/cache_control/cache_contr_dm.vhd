@@ -586,7 +586,7 @@ begin
 						addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 					end if;
 						-- write new tag to tag store, set valid, reset dirty
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s and "0011") & lvl2a_ts_tag_s; -- valid and dirty
+					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s or "0011") & lvl2a_ts_tag_s; -- valid and dirty
 					wea_lvl2_tag_s <= '1';
 				else
 					cc_state_next <= flush_data;
