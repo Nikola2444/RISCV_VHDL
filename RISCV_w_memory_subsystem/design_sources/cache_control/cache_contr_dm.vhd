@@ -219,11 +219,14 @@ architecture Behavioral of cache_contr_dm is
 	signal lvl2a_c_hit_s  : std_logic; -- hit in lvl 2 cache
 	signal lvl2b_c_hit_s  : std_logic; -- hit in lvl 2 cache
 
+	signal data_ready_s  : std_logic; -- hit in lvl 2 cache
+	signal instr_ready_s  : std_logic; -- hit in lvl 2 cache
+
 	signal check_lvl2_s  : std_logic; -- hit in instruction cache
 	signal flush_lvl1d_s  : std_logic; -- hit in instruction cache
 	signal invalidate_lvl1d_s  : std_logic; -- hit in instruction cache
 	signal invalidate_lvl1i_s  : std_logic; -- hit in instruction cache
-	-- signal lvl1_valid_s  : std_logic; -- hit in instruction cache
+	signal lvl1_valid_s  : std_logic; -- hit in instruction cache
 
 	-- Cache controler state
 	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data, update_data_ts, update_instr_ts);
@@ -330,8 +333,12 @@ begin
 
 	-- TODO check if this shit can even work outside of fsm
    data_access_s <= '1' when ((we_data_i /= "0000") or (re_data_i='1')) else '0';
-	data_ready_o <= (lvl1d_c_hit_s or (not data_access_s)) ; -- and lvl1_valid_s;
-	instr_ready_o <= lvl1i_c_hit_s;
+
+	data_ready_s <= ((lvl1d_c_hit_s or (not data_access_s)) and lvl1_valid_s);
+	data_ready_o <= data_ready_s;
+
+	instr_ready_s <= (lvl1i_c_hit_s and lvl1_valid_s);
+	instr_ready_o <= instr_ready_s;
 
 	-- Adder for counters 
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
@@ -365,7 +372,7 @@ begin
 	-- TODO if this somehow saves logic in end product remove it
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
-	-- lvl1_valid_s <= '1'; --not (invalidate_lvl1d_s or flush_lvl1d_s); TODO CHECK IF NOT NEEDED???
+	--lvl1_valid_s <= '1'; --not (invalidate_lvl1d_s or flush_lvl1d_s); TODO CHECK IF NOT NEEDED???
 
 	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
 	fsm_cache : process(cc_state_reg, lvl1i_c_addr_s, lvl1d_c_addr_s, lvl2ia_c_tag_s, dreada_instr_cache_s, lvl1i_c_tag_s,
@@ -375,7 +382,7 @@ begin
 		lvl1d_c_tag_s,lvl2a_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s, invalidate_lvl1d_s, invalidate_lvl1i_s, flush_lvl1d_s, lvl2il_c_idx_s ) is
 	begin
 		check_lvl2_s <= '0';
-		-- lvl1_valid_s <= '1';
+		lvl1_valid_s <= '1';
 		-- for FSM
 		cc_state_next <= idle;
 		cc_counter_next <= (others => '0');
@@ -402,7 +409,7 @@ begin
 		addra_lvl2_cache_s <= lvl2ia_c_addr_s((LVL2C_ADDR_WIDTH-1) downto 2);
 		wea_lvl2_cache_s <= (others => '0');
 		dwritea_lvl2_cache_s <= (others => '0'); 
-		addra_lvl2_tag_s <= lvl2ia_c_idx_s;
+		addra_lvl2_tag_s <= lvl2da_c_idx_s;
 		wea_lvl2_tag_s <= '0';
 		dwritea_lvl2_tag_s <= (others => '0'); 
 				
@@ -421,13 +428,13 @@ begin
 							dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s(3 downto 2) & "10" & lvl2a_ts_tag_s); -- dirty but invalid, as the newer data is in data cache
 						end if;
 					else -- data cache miss
+						addra_lvl2_tag_s <= lvl2da_c_idx_s;
 						if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
 							-- flush needed, prepare address one clk before
 							cc_state_next <= flush_data;
 							addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 						else
 							cc_state_next <= check_lvl2_data;
-							addra_lvl2_tag_s <= lvl2da_c_idx_s;
 						end if;
 					end if;
 				end if;
@@ -458,12 +465,13 @@ begin
 
 				if (invalidate_lvl1d_s = '1') then
 					addra_data_tag_s <= lvl1i_c_idx_s;
-					dwritea_data_tag_s <= "00" & lvl1d_c_tag_s; 
+					dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
 					wea_data_tag_s <= '1';
+					lvl1_valid_s <= '0';
 				end if;
 				if (invalidate_lvl1i_s = '1') then 
 					addra_instr_tag_s <= lvl1i_c_idx_s;
-					dwritea_instr_tag_s <= "00" & lvl1i_c_tag_s; 
+					dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
 					wea_instr_tag_s <= '1';
 				end if;
 
@@ -480,20 +488,21 @@ begin
 					cc_state_next <= fetch_data;
 					-- block is going to be removed from lvl1ic
 					addra_lvl2_tag_s <= lvl2dl_c_idx_s;
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s and "1011") & lvl2a_ts_tag_s; -- block is not anymore in lvl1ic
+					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s and "0111") & lvl2a_ts_tag_s; -- block is not anymore in lvl1ic
 					wea_lvl2_tag_s <= '1';
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
 
 				if (invalidate_lvl1i_s = '1') then
-					addra_instr_tag_s <= lvl1i_c_idx_s;
-					dwritea_instr_tag_s <= "00" & lvl1i_c_tag_s; 
+					addra_instr_tag_s <= lvl1d_c_idx_s;
+					dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
 					wea_instr_tag_s <= '1';
+					lvl1_valid_s <= '0';
 				end if;
 				if (invalidate_lvl1d_s = '1') then
-					addra_data_tag_s <= lvl1i_c_idx_s;
-					dwritea_data_tag_s <= "00" & lvl1d_c_tag_s; 
+					addra_data_tag_s <= lvl1d_c_idx_s;
+					dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
 					wea_data_tag_s <= '1';
 				end if;
 
@@ -628,7 +637,7 @@ begin
 		addrb_lvl2_cache_s <= (others => '0');
 		web_lvl2_cache_s <= (others => '0');
 		dwriteb_lvl2_cache_s <= (others => '0'); 
-		addrb_lvl2_tag_s <= lvl2a_c_idx_s;
+		addrb_lvl2_tag_s <= lvl2a_c_idx_s; -- NOTE can remove this signal as it's the same as addra_lvl2_tag_s ? is this version more readable?
 		web_lvl2_tag_s <= '0';
 		dwriteb_lvl2_tag_s <= (others => '0'); 
 		-- MEMORY interface signals (bus)
@@ -648,6 +657,7 @@ begin
 						when "11" => -- dirty and valid lvl2, flush to physical
 							mc_state_next <= flush; 
 							addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;
+							addrb_lvl2_tag_s <= lvl2a_c_idx_s;
 							invalidate_lvl1d_s <= '1';
 						when "10" => -- dirty but not valid lvl2, data lvl1 has updated values
 							mc_state_next <= idle; 
@@ -675,7 +685,9 @@ begin
 				if(mc_counter_reg = COUNTER_MIN)then  -- because of read first mode
 					-- invalidate so the next state after idle is fetch
 					addrb_lvl2_tag_s <= lvl2a_c_idx_s;
-					dwriteb_lvl2_tag_s <= "0000" & lvl2a_c_tag_s; --(3 downto 2) & "00"
+					-- NOTE: when invalidating, tag doesn't matter? 
+					--UPDATE NOTE: Yes it does, cunt.
+					dwriteb_lvl2_tag_s <= "0000" & lvl2b_ts_tag_s; --(3 downto 2) & "00" 
 					web_lvl2_tag_s <= '1';
 				end if;
 
@@ -774,7 +786,8 @@ begin
 	-- TODO CC shouldn't send 32 bit address if it will be cut here, send the minimum bits needed
 	-- TODO decide if cutting 2 LSB bits is done here or in cache controller
 	rsta_data_cache_s <= '0';
-	ena_data_cache_s <= data_access_s; -- check if this shit works *thought* enable only on data acess
+	-- TODO check if this can be just data_access? Can there be flush while data acess is zero?
+	ena_data_cache_s <= '1'; -- data_access_s; -- check if this shit works *thought* enable only on data acess
 	regcea_data_cache_s <= '0';
 	-- Instantiation of data cache
 	data_cache : entity work.RAM_sp_ar_bw(rtl)
