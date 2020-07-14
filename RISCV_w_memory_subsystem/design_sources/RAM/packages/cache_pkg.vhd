@@ -59,6 +59,9 @@ package cache_pkg is
 		constant LVL2C_BKK_INSTR : integer := 2;
 		constant LVL2C_BKK_DATA : integer := 3;
 
+		constant	LVL2C_ASSOCIATIVITY : natural := 4;
+		constant	LVL2C_ASSOC_LOG2 : natural := clogb2(LVL2C_ASSOCIATIVITY);
+		constant LVL2C_NWAY_BKK_WIDTH : integer := 2;
 end cache_pkg;
 
 package body cache_pkg is
