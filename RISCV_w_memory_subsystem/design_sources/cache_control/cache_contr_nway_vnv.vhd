@@ -345,7 +345,7 @@ begin
 	--lvl1di_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1ib_ts_tag_s else '0';
 	lvl1ii_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1ia_ts_tag_s else '0';
 	--lvl1id_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1db_ts_tag_s else '0';
-	lvl2a_tag_cmp_s <= '1' when lvl2a_c_tag_s = lvl2a_ts_tag_s else '0'; 
+	--lvl2a_tag_cmp_s <= '1' when lvl2a_c_tag_s = lvl2a_ts_tag_s else '0'; 
 	lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
 	
 	-- Cache hit/miss indicator flags => same tag + valid
@@ -355,7 +355,7 @@ begin
 	--lvl1d_c_dup_s <= lvl1di_tag_cmp_s and lvl1ib_ts_bkk_s(0);
 	--lvl1i_c_dup_s <= lvl1id_tag_cmp_s and lvl1db_ts_bkk_s(0);
 	--lvl1i_c_haz_s <= lvl1i_c_dup_s and lvl1db_ts_bkk_s(1);
-	lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
+	--lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
 	lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(0);
 
 	-- TODO check if this shit can even work outside of fsm
@@ -371,11 +371,16 @@ begin
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 
-	loopr: process is
+	pcoder_hit_detect: process is
 	begin
-		for i in LVL2C_ASSOCIATIVITY-1 downto 0 loop
-			if (lvl2a_c_tag_s = lvl2a_ts_tag_s and lvl2a_ts_bkk_s(0)='1') then
-				lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(0)(0)='1') then
+				lvl2_hit_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2a_c_hit_s <= '1';
+				exit;
+			else
+				lvl2_hit_index <= (others => '0');
+				lvl2a_c_hit_s <= '0';
 			end if;
 		end loop;
 		
