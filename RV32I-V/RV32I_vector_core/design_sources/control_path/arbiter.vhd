@@ -142,11 +142,14 @@ begin
    --genereting read enable and write enable for fifo block that are necessary
    --for storing load data that M_CU needs
    ld_instr_fifo_re_s <= (rdy_for_load_i and inverted_ld_re_s and (not(rs1_rs2_ld_fifo_empty_s))) when reset = '1' else '0';
-   ld_instr_fifo_we_s <= '1' when (rs1_rs2_ld_fifo_empty_s = '0' and vector_instr_check_s = "11") and reset = '1' else
-                         '1' when ld_from_fifo_is_valid = '1' and vector_instr_check_s = "11" and reset = '1' else
-                         '1' when rdy_for_load_i = '0' and vector_instr_check_s = "11" and reset = '1'else
-                         '0';   
+   -- ld_instr_fifo_we_s <= '1' when (rs1_rs2_ld_fifo_empty_s = '0' and vector_instr_check_s = "11") and reset = '1' else
+   --                       '1' when ld_from_fifo_is_valid = '1' and vector_instr_check_s = "11" and reset = '1' else
+   --                       '1' when rdy_for_load_i = '0' and vector_instr_check_s = "11" and reset = '1'else
+   --                       '0';
+
    
+   ld_instr_fifo_we_s <= '1' when (not(rs1_rs2_ld_fifo_empty_s) = '1' or (not(rs1_rs2_ld_fifo_empty_s)) = '1' or not(rdy_for_load_i) = '1') and vector_instr_check_s = "11" and reset = '1' else
+                         '0';
    --reset needs to be inverted because fifo blocks expect a logic 1 when reset
    --is aplied and system expects logic 0
    fifo_reset_s <= not(reset);
