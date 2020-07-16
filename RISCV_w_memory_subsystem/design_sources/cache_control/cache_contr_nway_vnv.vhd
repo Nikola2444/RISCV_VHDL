@@ -220,6 +220,8 @@ architecture Behavioral of cache_contr_nway_vnv is
 	signal lvl2_victim_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
 	signal lvl2_nextv_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
 
+	signal lvl2_invalid_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+
 
 
 	-- SIGNALS FOR COMPARING TAG VALUES
@@ -339,6 +341,12 @@ begin
 		
 	end process;
 
+	invalid_maps: process (lvl2_ts_bkk_s) is
+	begin
+		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
+				lvl2_invalid_map(i) <= not lvl2_ts_bkk_s(i)(LVL2C_BKK_VALID);
+		end loop;
+	end process;
 	
 	-- Compare tags
 	lvl1dd_tag_cmp_s <= '1' when lvl1d_c_tag_s = lvl1da_ts_tag_s else '0';
@@ -385,7 +393,7 @@ begin
 		end loop;
 	end process;
 
-	pcoder_victim_detect: process is
+	pcoder_victim_detect: process (lvl2_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
 			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
@@ -396,7 +404,7 @@ begin
 			end if;
 	end process;
 
-	pcoder_nvictim_detect: process is
+	pcoder_nvictim_detect: process (lvl2_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
 			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
