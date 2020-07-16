@@ -371,10 +371,10 @@ begin
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 
-	pcoder_hit_detect: process is
+	pcoder_hit_detect: process(lvl2a_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(0)(0)='1') then
+			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='1') then
 				lvl2_hit_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2a_c_hit_s <= '1';
 				exit;
@@ -383,7 +383,28 @@ begin
 				lvl2a_c_hit_s <= '0';
 			end if;
 		end loop;
-		
+	end process;
+
+	pcoder_victim_detect: process is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
+				lvl2_victim_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				exit;
+			else
+				lvl2_victim_index <= (others => '0');
+			end if;
+	end process;
+
+	pcoder_nvictim_detect: process is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
+				lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				exit;
+			else
+				lvl2_nextv_index <= (others => '0');
+			end if;
 	end process;
 
 	-- Sequential logic - regs
