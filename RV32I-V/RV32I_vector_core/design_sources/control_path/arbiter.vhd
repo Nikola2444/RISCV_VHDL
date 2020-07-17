@@ -21,8 +21,8 @@ entity arbiter is
       rs2_i                   : in std_logic_vector(31 downto 0);
       --Status signals
       scalar_core_stall_i     : in std_logic;
-      load_fifo_empty_i :    std_logic;
-      store_fifo_empty_i      :    std_logic;
+      load_fifo_empty_i : in    std_logic;
+      store_fifo_empty_i      : in    std_logic;
 
       --M_CU interface
       rdy_for_load_i : in std_logic;
@@ -43,6 +43,7 @@ entity arbiter is
       comparison_o: out std_logic;
       vector_id_ex_en_o      : out std_logic;
       vector_stall_o         : out std_logic;
+      vmul_to_V_CU_o: out std_logic_vector(1 downto 0);
       vl_to_V_CU_o: out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
       vector_instr_to_V_CU_o : out std_logic_vector(31 downto 0));
       
@@ -74,6 +75,7 @@ architecture beh of arbiter is
    -- Interconnections necessary for fifos that store rs1, rs2, vl, vmul when
    -- LOAD instructions arive
    ----------------------------------------------------------------------------------------------------------------------
+   signal all_stores_executed_s: std_logic;
    -- rs1_rs2 and vmul_vl fifo enable signals
    signal ld_instr_fifo_re_s : std_logic;
    signal ld_instr_fifo_we_s : std_logic;
@@ -114,12 +116,13 @@ architecture beh of arbiter is
    ----------------------------------------------------------------------------------------------------------------------
    -- Configuration registers
    ----------------------------------------------------------------------------------------------------------------------
-   constant vl_reg_s            : std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0) := (others => '1');
-   constant vmul_reg_s          : std_logic_vector(1 downto 0):= "00";
+   signal vl_reg_s            : std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0) := (others => '1');
+   signal vmul_reg_s          : std_logic_vector(1 downto 0):= "00";
    
    ----------------------------------------------------------------------------------------------------------------------
    -- Signals necessary for resolving dependecies with vector load
    ----------------------------------------------------------------------------------------------------------------------
+   signal V_CU_rdy_for_load_s: std_logic;
    --18 bits are necessary because that's how much vector loads can be
    --stored inside load fifo in vector lanes
    signal reg_write_enables_s: std_logic_vector(17 downto 0);
@@ -147,33 +150,63 @@ begin
       "01" when vector_arith_c,
       "11" when vector_load_c,
       "00" when others;
+
+   -- Seting vl and vmul logic
+   process (clk)is
+   begin
+      if (rising_edge(clk))then
+         if (reset = '0') then
+            vl_reg_s <= std_logic_vector(to_unsigned(32, clogb2(VECTOR_LENGTH * 8) + 1));
+            vmul_reg_s <= "00";
+         else
+            if (vector_instr_check_s = "01" and vector_instruction_i (14 downto  12) = "111") then
+               --this part of vector instruction represents vmul
+               vmul_reg_s <= vector_instruction_i(21 downto 20);
+               if (vector_instruction_i (19 downto 15) /= std_logic_vector(to_unsigned(0, 5))) then
+                  vl_reg_s <= rs1_i(clogb2(VECTOR_LENGTH * 8) downto 0);
+               elsif(vector_instruction_i (11 downto 7) = std_logic_vector(to_unsigned(0,5 ))) then
+                  vl_reg_s <= std_logic_vector(to_unsigned(32, clogb2(VECTOR_LENGTH * 8) + 1));
+               end if;
+            end if;
+         end if;
+      end if;
+   end process;
+
    
    --Vector instruction to V_CU
-
+   -- Code segment below sends correct instructions to V_CU. First it checks if
+   -- there are vector loads stored inside arbiter that need to be executed. If
+   -- there are, send that instruction to V_CU (as can be seen from the code
+   -- only vm, vd and opcode fields are sent).
    process (clk)is
    begin
       if (rising_edge(clk))then
          if (reset = '0')then
-            vector_instr_to_V_CU_o <= (others => '0');
+            vector_instr_to_V_CU_s <= (others => '0');
          else
-            if (ready_i = '1' and dependency_check_s = '1') then
-               vector_instr_to_V_CU_o <= "000000"&load_dependency_regs(0)(25)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
-            elsif (ready_i = '1') then
-               vector_instr_to_V_CU_o <= vector_instruction_i;
+            if (V_CU_rdy_for_load_s = '1' and vector_instr_check_s /= "11") then
+               vl_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 downto 13);
+               vmul_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 +2 downto clogb2(VECTOR_LENGTH*8) + 14);
+               -- sending to V_CU what  necessary fields from a vector load instruction
+               vector_instr_to_V_CU_s <= "000000"&load_dependency_regs(0)(12)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
+            elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
+               vl_to_V_CU_o <= vl_reg_s;
+               vmul_to_V_CU_o <= vmul_reg_s;
+               vector_instr_to_V_CU_s <= vector_instruction_i;
             end if;
          end if;            
       end if;
    end process;
+   vector_instr_to_V_CU_o <= vector_instr_to_V_CU_s;
+
    
    --logic that handles generation of stall signal
-   process (ready_i, vector_instr_check_s)is
+   process (ready_i, dependency_check_s)is
    begin
-      if (ready_i = '0')then
-         vector_stall_s <= '1';
-      elsif(dependency_check_s = '1' and ready_i = '1') then
+      if (not(ready_i) = '1' or dependency_check_s = '1' or (reg_write_enables_s(17) = '1' and vector_instr_check_s = "11"))then
          vector_stall_s <= '1';
       else
-         vector_stall_s <= '1';
+         vector_stall_s <= '0';
       end if;
    end process;
    vector_stall_o <= vector_stall_s;
@@ -206,17 +239,22 @@ begin
    --Logic that generates valid signal to indicate that the data sent to M_CU
    --is valid.
    M_CU_load_valid_o <= ld_from_fifo_is_valid or current_ld_is_valid_s;
+
+   -- this here checks if all stores have executed and stored the data from VRF
+   -- to memory. This is necessary to check because no load should execute
+   -- until all storess have finished. In this manner data dependecy is avoided
+   all_stores_executed_s <= rs1_rs2_st_fifo_empty_s and store_fifo_empty_i;
    
-   process (rs1_rs2_ld_fifo_empty_s, vector_instr_check_s, ld_instr_fifo_re_s, clk, rdy_for_load_i, rs1_rs2_ld_fifo_empty_s) is
+   process (rs1_rs2_ld_fifo_empty_s, vector_instr_check_s, ld_instr_fifo_re_s, clk, rdy_for_load_i, rs1_rs2_ld_fifo_empty_s, all_stores_executed_s) is
    begin
-      if (rs1_rs2_ld_fifo_empty_s = '1' and vector_instr_check_s = "11" and rdy_for_load_i = '1' and rs1_rs2_st_fifo_empty_s = '1') then
+      if (rs1_rs2_ld_fifo_empty_s = '1' and vector_instr_check_s = "11" and rdy_for_load_i = '1' and all_stores_executed_s = '1') then
          current_ld_is_valid_s <= '1';
       else
          current_ld_is_valid_s <= '0';
       end if;
       -- if data is read from ld fifo generate a valid pulse
       if (rising_edge(clk)) then
-         if (ld_instr_fifo_re_s = '1' and ld_from_fifo_is_valid = '0' and rs1_rs2_st_fifo_empty_s = '1') then
+         if (ld_instr_fifo_re_s = '1' and ld_from_fifo_is_valid = '0' and all_stores_executed_s = '1') then
             ld_from_fifo_is_valid <= '1';
          else
             ld_from_fifo_is_valid <= '0';
@@ -227,7 +265,7 @@ begin
 
    --generating read enable and write enable for fifo block that are necessary
    --for storing load data that M_CU needs
-   ld_instr_fifo_re_s <= (rs1_rs2_st_fifo_empty_s and rdy_for_load_i and not (ld_from_fifo_is_valid) and (not(rs1_rs2_ld_fifo_empty_s))) when reset = '1' else '0';
+   ld_instr_fifo_re_s <= (all_stores_executed_s and rdy_for_load_i and not (ld_from_fifo_is_valid) and (not(rs1_rs2_ld_fifo_empty_s))) when reset = '1' else '0';
    -- ld_instr_fifo_we_s <= '1' when (rs1_rs2_ld_fifo_empty_s = '0' and vector_instr_check_s = "11") and reset = '1' else
    --                       '1' when ld_from_fifo_is_valid = '1' and vector_instr_check_s = "11" and reset = '1' else
    --                       '1' when rdy_for_load_i = '0' and vector_instr_check_s = "11" and reset = '1'else
@@ -237,7 +275,7 @@ begin
    -- empty (other loads need to be executed first), or if M_CU is not ready for
    -- load or if store fifo is not empty(all stores need to be executed before
    -- load because of data dependency)
-   ld_instr_fifo_we_s <= '1' when (not(rs1_rs2_ld_fifo_empty_s) = '1' or not(rdy_for_load_i) = '1' or  not(rs1_rs2_st_fifo_empty_s) = '1') and vector_instr_check_s = "11" and reset = '1' else
+   ld_instr_fifo_we_s <= '1' when (not(rs1_rs2_ld_fifo_empty_s) = '1' or not(rdy_for_load_i) = '1' or  not(all_stores_executed_s) = '1') and vector_instr_check_s = "11" and reset = '1' else
                          '0';
    --reset needs to be inverted because fifo blocks expect a logic 1 when reset
    --is aplied and system expects logic 0
@@ -308,18 +346,19 @@ begin
    st_instr_fifo_we_s <= '1' when vector_stall_s = '0' and vector_instr_check_s = "10" else '0';
 
    --logic for generating read enable signals for store fifos
-   st_instr_fifo_re_s <= rdy_for_store_i and not(store_fifo_empty_i) and not(rs1_rs2_ld_fifo_empty_s);
+   st_instr_fifo_re_s <= rdy_for_store_i and not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
 
    --logic for generating valid signal to signalaze that valid data has been
    --read from fifo.
-
+   
+   M_CU_store_valid_o <= M_CU_store_valid_s;
    process (clk)is
    begin
       if (rising_edge(clk))then
          if (reset = '0') then
             M_CU_store_valid_s <= '0';
          else
-            if (not(M_CU_store_valid_s) = '1' and rs1_rs2_ld_fifo_empty_s = '1')then
+            if (not(M_CU_store_valid_s) = '1' and st_instr_fifo_re_s = '1')then
                M_CU_store_valid_s <= '1';
             else
                M_CU_store_valid_s <= '0';
@@ -327,8 +366,9 @@ begin
          end if;
       end if;        
    end process;
-   
-   process (rs1_rs2_st_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_st_fifo_o_s, vl_vmul_st_fifo_o_s) is                                                       
+
+
+   process (rs1_i, rs2_i, rs1_rs2_st_fifo_o_s, vl_vmul_st_fifo_o_s, M_CU_store_valid_s) is                                                       
    begin
       if (M_CU_store_valid_s = '0') then
          M_CU_st_rs1_o  <= (others => '0') ;
@@ -342,6 +382,12 @@ begin
          M_CU_st_vmul_o <= vl_vmul_st_fifo_o_s(1 downto 0);
       end if;
    end process;
+
+      --concatanating vl and vmul
+   vl_vmul_st_fifo_i_s <= vl_reg_s & vmul_reg_s;
+
+   --concatanating rs1 and rs2
+   rs1_rs2_st_fifo_i_s <= rs1_i & rs2_i;
    
    STORE_RS1_RS2_FIFO : FIFO_SYNC_MACRO
       generic map (
@@ -397,6 +443,8 @@ begin
    -- Code that handles vector instruction dependecies
 ---------------------------------------------------------------------------------------------------------------------------------
 
+   --logic that checks if V_CU is ready to execute load instruction
+   V_CU_rdy_for_load_s <= dependency_check_s and ready_i and not(load_fifo_empty_i);
    -- comparison_o register write en
    process (clk)is
    begin
@@ -405,9 +453,9 @@ begin
             reg_write_enables_s <= std_logic_vector(to_unsigned(1, 18));
          else   
             if (vector_instr_check_s = "11") then
-               reg_write_enables_s<= reg_write_enables_s(17 downto 1) & '0';               
-            elsif(dependency_check_s = '1' and ready_i = '1') then
-               reg_write_enables_s<= '0' & reg_write_enables_s(17 downto 1);
+               reg_write_enables_s <= reg_write_enables_s(16 downto 0) & '0';               
+            elsif(V_CU_rdy_for_load_s = '1') then
+               reg_write_enables_s <= '0' & reg_write_enables_s(17 downto 1);
             end if;
          end if;
       end if;
@@ -421,8 +469,8 @@ begin
             comparator_enables_reg <= (others => '0');
          else   
             if (vector_instr_check_s = "11") then
-               comparator_enables_reg<= comparator_enables_reg(17 downto 1) & '1';               
-            elsif(dependency_check_s = '1' and ready_i = '1') then
+               comparator_enables_reg<= comparator_enables_reg(16 downto 0) & '1';               
+             elsif(V_CU_rdy_for_load_s = '1') then
                comparator_enables_reg<= '0' & comparator_enables_reg(17 downto 1);
             end if;
          end if;
@@ -438,7 +486,7 @@ begin
    process (clk)is
    begin
       if (rising_edge(clk))then
-         if (reset = '1') then
+         if (reset = '0') then
             load_dependency_regs <= (others => (others =>'0'));
          else 
             for i in 0 to 17 loop
@@ -446,7 +494,7 @@ begin
                   if (reg_write_enables_s(i) = '1') then
                      load_dependency_regs(i) <= vmul_reg_s & vl_reg_s & vector_instruction_i(25) & vector_instruction_i(11 downto 0);                   
                   end if;
-               elsif (dependency_check_s = '1') then
+               elsif (V_CU_rdy_for_load_s = '1') then
                   if (i = 0) then 
                      load_dependency_regs(0) <= load_dependency_regs(i + 1);
                   elsif (i = 17) then
@@ -464,10 +512,10 @@ begin
    --Code segment bellow generates 18 comparators that check whether or not
    --there are dependecies between load instructions that have not yet executed
    --and incoming instructions
-   process (comparator_enables_reg, vs1_i, vs2_i, vs3_i, load_dependency_regs) is
+   process (comparator_enables_reg, vs1_i, vs2_i, vs3_i, load_dependency_regs, vector_instr_check_s) is
    begin
       for i in 0 to 17 loop
-         if (comparator_enables_reg(i) = '1' and (vs1_i = load_dependency_regs(i)(11 downto 7) or
+         if (vector_instr_check_s /= "11" and comparator_enables_reg(i) = '1' and (vs1_i = load_dependency_regs(i)(11 downto 7) or
                                                   vs2_i = load_dependency_regs(i)(11 downto 7) or
                                                   vs3_i = load_dependency_regs(i)(11 downto 7)))  then
             load_comparators(i) <= '1';
@@ -484,8 +532,7 @@ begin
       else
          dependency_check_s <= '1';
       end if ;
-   end process;
-   
+   end process;   
    comparison_o <= dependency_check_s;
 end architecture;
 
