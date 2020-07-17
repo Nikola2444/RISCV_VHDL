@@ -116,7 +116,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	type lvl2_data_c_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_NUM_COL*LVL2C_COL_WIDTH-1 downto 0);
 	type lvl2_we_c_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_NUM_COL-1 downto 0);
 	type lvl2_addr_ts_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(clogb2(LVL2C_NB_BLOCKS)-1 downto 0);
-	type lvl2_data_ts_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH - 1 downto 0);
+	type lvl2_data_ts_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH + LVL2C_NWAY_BKK_WIDTH - 1 downto 0);
 	type lvl2_we_ts_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic;
 
 	signal addra_lvl2_cache_s : lvl2_addr_c_t;
@@ -205,20 +205,33 @@ architecture Behavioral of cache_contr_nway_vnv is
 	signal lvl2b_c_bib_s : std_logic_vector(BLOCK_ADDR_WIDTH-1 downto 0);
 	signal lvl2b_c_addr_s : std_logic_vector(LVL2C_ADDR_WIDTH-1 downto 0);
 	-- 'tag' and 'bookkeeping bits: MSB - dirty, LSB - valid' fields from level 2 tag store
-	signal lvl2a_ts_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
-	signal lvl2a_ts_bkk_s : std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
-	signal lvl2a_ts_ass_s : std_logic_vector(LVL2C_NWAY_BKK_WIDTH-1 downto 0);
+
+	type lvl2_ts_tag_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
+	type lvl2_ts_bk_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
+	type lvl2_ts_ass_t is array (0 to LVL2C_ASSOCIATIVITY-1) of std_logic_vector(LVL2C_NWAY_BKK_WIDTH-1 downto 0);
+
+	signal lvl2a_ts_tag_s : lvl2_ts_tag_t;
+	signal lvl2a_ts_bkk_s : lvl2_ts_bk_t;
+	signal lvl2a_ts_ass_s : lvl2_ts_ass_t;
 	-- 'tag' and 'bookkeeping bits: MSB - dirty, LSB - valid' fields from level 2 tag store
-	signal lvl2b_ts_tag_s : std_logic_vector(LVL2C_TAG_WIDTH-1 downto 0);
-	signal lvl2b_ts_bkk_s : std_logic_vector(LVL2C_BKK_WIDTH-1 downto 0);
-	signal lvl2b_ts_ass_s : std_logic_vector(LVL2C_NWAY_BKK_WIDTH-1 downto 0);
+	signal lvl2b_ts_tag_s : lvl2_ts_tag_t;
+	signal lvl2b_ts_bkk_s : lvl2_ts_bk_t;
+	signal lvl2b_ts_ass_s : lvl2_ts_ass_t;
 
 
 	-- singals that find index of wanted way in n-way level2 cache
-	signal lvl2_hit_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
-	signal lvl2_invalid_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
-	signal lvl2_victim_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
-	signal lvl2_nextv_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	--signal lvl2_hit_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	--signal lvl2_dirty_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	--signal lvl2_invalid_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	--hsignal lvl2_victim_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	--signal lvl2_nextv_index : std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	-- TODO Check if i can use integers
+	signal lvl2_hit_index : integer;
+	signal lvl2_dirty_index : integer;
+	signal lvl2_invalid_index : integer;
+	signal lvl2_victim_index : integer;
+	signal lvl2_nextv_index : integer;
+
 
 	signal lvl2_invalid_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 
@@ -326,25 +339,25 @@ begin
 	-- lvl2 tag store, for LVL1
 	--addra_lvl2_tag_s <= lvl2a_c_idx_s; -- TODO set either data or instruction cache address in FSM  (the one that missed)
 
-			lvl2b_ts_tag_s <= dreadb_lvl2_tag_s(LVL2C_TAG_WIDTH-1 downto 0); -- TODO CHANGE NWAY
-			lvl2b_ts_bkk_s <= dreadb_lvl2_tag_s(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH); -- TODO CHANGE NWAY
-	-- lvl2 tag store, for interconect
-	--addrb_lvl2_tag_o <= lvl2b_c_idx_s;
-
 	extract_ts_fields: process (dreada_lvl2_tag_s) is
 	begin
 		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
+			-- PORT A
 			lvl2a_ts_tag_s(i) <= dreada_lvl2_tag_s(i)(LVL2C_TAG_WIDTH-1 downto 0); 
 			lvl2a_ts_bkk_s(i) <= dreada_lvl2_tag_s(i)(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH); 
 			lvl2a_ts_ass_s(i) <= dreada_lvl2_tag_s(i)(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH+LVL2C_NWAY_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH);
+			-- PORT B
+			lvl2b_ts_tag_s(i) <= dreadb_lvl2_tag_s(i)(LVL2C_TAG_WIDTH-1 downto 0); 
+			lvl2b_ts_bkk_s(i) <= dreadb_lvl2_tag_s(i)(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH); 
+			lvl2b_ts_ass_s(i) <= dreadb_lvl2_tag_s(i)(LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH+LVL2C_NWAY_BKK_WIDTH-1 downto LVL2C_TAG_WIDTH+LVL2C_BKK_WIDTH);
 		end loop;
 		
 	end process;
 
-	invalid_maps: process (lvl2_ts_bkk_s) is
+	invalid_maps: process (lvl2a_ts_bkk_s) is
 	begin
 		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
-				lvl2_invalid_map(i) <= not lvl2_ts_bkk_s(i)(LVL2C_BKK_VALID);
+				lvl2_invalid_map(i) <= not lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID);
 		end loop;
 	end process;
 	
@@ -354,7 +367,7 @@ begin
 	lvl1ii_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1ia_ts_tag_s else '0';
 	--lvl1id_tag_cmp_s <= '1' when lvl1i_c_tag_s = lvl1db_ts_tag_s else '0';
 	--lvl2a_tag_cmp_s <= '1' when lvl2a_c_tag_s = lvl2a_ts_tag_s else '0'; 
-	lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
+	--lvl2b_tag_cmp_s <= '1' when lvl2b_c_tag_s = lvl2b_ts_tag_s else '0'; 
 	
 	-- Cache hit/miss indicator flags => same tag + valid
 	lvl1d_c_hit_s <= lvl1dd_tag_cmp_s and lvl1da_ts_bkk_s(0); 
@@ -364,7 +377,7 @@ begin
 	--lvl1i_c_dup_s <= lvl1id_tag_cmp_s and lvl1db_ts_bkk_s(0);
 	--lvl1i_c_haz_s <= lvl1i_c_dup_s and lvl1db_ts_bkk_s(1);
 	--lvl2a_c_hit_s <= lvl2a_tag_cmp_s and lvl2a_ts_bkk_s(0); 
-	lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(0);
+	--lvl2b_c_hit_s <= lvl2b_tag_cmp_s and lvl2b_ts_bkk_s(0);
 
 	-- TODO check if this shit can even work outside of fsm
    data_access_s <= '1' when ((we_data_i /= "0000") or (re_data_i='1')) else '0';
@@ -383,36 +396,58 @@ begin
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
 			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='1') then
-				lvl2_hit_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				--lvl2_hit_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2_hit_index <= i;
 				lvl2a_c_hit_s <= '1';
 				exit;
 			else
-				lvl2_hit_index <= (others => '0');
+				--lvl2_hit_index <= (others => '0');
+				lvl2_hit_index <= 0;
 				lvl2a_c_hit_s <= '0';
 			end if;
 		end loop;
 	end process;
 
-	pcoder_victim_detect: process (lvl2_ts_bkk_s) is
+	pcoder_tag_cmp_detect: process(lvl2a_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
-				lvl2_victim_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' and lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='1') then
+				--lvl2_dirty_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2_dirty_index <= i;
 				exit;
 			else
-				lvl2_victim_index <= (others => '0');
+				--lvl2_dirty_index <= (others => '0');
+				lvl2_dirty_index <= 0;
 			end if;
+		end loop;
 	end process;
 
-	pcoder_nvictim_detect: process (lvl2_ts_bkk_s) is
+	pcoder_victim_detect: process (lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
-				lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
+				--lvl2_victim_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2_victim_index <= i;
 				exit;
 			else
-				lvl2_nextv_index <= (others => '0');
+				--lvl2_victim_index <= (others => '0');
+				lvl2_victim_index <= 0;
 			end if;
+		end loop;
+	end process;
+
+	pcoder_nextv_detect: process (lvl2a_ts_bkk_s) is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
+				--lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2_nextv_index <= i;
+				exit;
+			else
+				--lvl2_nextv_index <= (others => '0');
+				lvl2_nextv_index <= 0;
+			end if;
+		end loop;
 	end process;
 
 	-- Sequential logic - regs
@@ -477,12 +512,14 @@ begin
 		dwritea_data_cache_s <= dwrite_data_i;
 		dread_data_o <= dreada_data_cache_s;
 		-- LVL2 cache and tag
-		addra_lvl2_cache_s <= lvl2ia_c_addr_s((LVL2C_ADDR_WIDTH-1) downto 2);
-		wea_lvl2_cache_s <= (others => '0');
-		dwritea_lvl2_cache_s <= (others => '0'); 
 		addra_lvl2_tag_s <= lvl2da_c_idx_s;
-		wea_lvl2_tag_s <= '0';
-		dwritea_lvl2_tag_s <= (others => '0'); 
+		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
+			addra_lvl2_cache_s(i) <= lvl2ia_c_addr_s((LVL2C_ADDR_WIDTH-1) downto 2);
+			wea_lvl2_cache_s(i) <= (others => '0');
+			dwritea_lvl2_cache_s(i) <= (others => '0'); 
+			wea_lvl2_tag_s(i) <= '0';
+			dwritea_lvl2_tag_s(i) <= (others => '0'); 
+		end loop;
 				
 		case (cc_state_reg) is
 			when idle =>
@@ -495,8 +532,10 @@ begin
 							dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
 							-- invalidate lvl2
 							addra_lvl2_tag_s <= lvl2da_c_idx_s;
-							wea_lvl2_tag_s <= '1';
-							dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s(3 downto 2) & "10" & lvl2a_ts_tag_s); -- dirty but invalid, as the newer data is in data cache
+							wea_lvl2_tag_s(lvl2_hit_index) <= '1';
+														-- dirty but invalid, as the newer data is in data cache
+
+						dwritea_lvl2_tag_s(lvl2_hit_index) <= lvl2a_ts_ass_s(lvl2_hit_index) & lvl2a_ts_bkk_s(lvl2_hit_index)(3 downto 2) & "10" & lvl2a_ts_tag_s(lvl2_hit_index);
 						end if;
 					else -- data cache miss
 						addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -526,8 +565,8 @@ begin
 					cc_state_next <= fetch_instr;
 					-- block is going to be removed from lvl1ic
 					addra_lvl2_tag_s <= lvl2il_c_idx_s;
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s and "1011") & lvl2a_ts_tag_s; -- block is not anymore in lvl1ic
-					wea_lvl2_tag_s <= '1';
+					dwritea_lvl2_tag_s(lvl2_hit_index) <= lvl2a_ts_ass_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) and "1011") & lvl2a_ts_tag_s(lvl2_hit_index); -- block is not anymore in lvl1ic
+					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				elsif (flush_lvl1d_s = '1') then
 					cc_state_next <= flush_data;
 				else
@@ -546,7 +585,7 @@ begin
 					wea_instr_tag_s <= '1';
 				end if;
 
-				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg;
+				addra_lvl2_cache_s(lvl2_hit_index) <= lvl2ia_c_idx_s & cc_counter_reg;
 
 
 			when check_lvl2_data => 
@@ -559,8 +598,8 @@ begin
 					cc_state_next <= fetch_data;
 					-- block is going to be removed from lvl1ic
 					addra_lvl2_tag_s <= lvl2dl_c_idx_s;
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s and "0111") & lvl2a_ts_tag_s; -- block is not anymore in lvl1ic
-					wea_lvl2_tag_s <= '1';
+					dwritea_lvl2_tag_s(lvl2_hit_index) <=  lvl2a_ts_ass_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) and "0111") & lvl2a_ts_tag_s(lvl2_hit_index); -- block is not anymore in lvl1ic
+					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
@@ -577,13 +616,13 @@ begin
 					wea_data_tag_s <= '1';
 				end if;
 
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
+				addra_lvl2_cache_s(lvl2_hit_index) <= lvl2da_c_idx_s & cc_counter_reg;
 
 			when fetch_instr => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_incr;
+				addra_lvl2_cache_s(lvl2_hit_index) <= lvl2ia_c_idx_s & cc_counter_incr;
 				addra_instr_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
-				dwritea_instr_cache_s <= dreada_lvl2_cache_s;
+				dwritea_instr_cache_s <= dreada_lvl2_cache_s(lvl2_hit_index);
 				wea_instr_cache_s <= "1111";
 
 				cc_counter_next <= cc_counter_incr;
@@ -596,8 +635,8 @@ begin
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					cc_state_next <= update_instr_ts;
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s or "0100") & lvl2a_ts_tag_s; -- block is in lvl1 instr
-					wea_lvl2_tag_s <= '1';
+					dwritea_lvl2_tag_s(lvl2_hit_index) <= lvl2a_ts_ass_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "0100") & lvl2a_ts_tag_s(lvl2_hit_index); -- block is in lvl1 instr
+					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				else
 					cc_state_next <= fetch_instr;
 				end if;
@@ -605,9 +644,9 @@ begin
 
 			when fetch_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
-				addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_incr;
+				addra_lvl2_cache_s(lvl2_hit_index) <= lvl2da_c_idx_s & cc_counter_incr;
 				addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
-				dwritea_data_cache_s <= dreada_lvl2_cache_s;
+				dwritea_data_cache_s <= dreada_lvl2_cache_s(lvl2_hit_index);
 				wea_data_cache_s <= "1111";
 
 				cc_counter_next <= cc_counter_incr;
@@ -621,8 +660,9 @@ begin
 				if(cc_counter_reg = COUNTER_MAX)then 
 					-- finished with writing entire block
 					cc_state_next <= update_data_ts;
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s or "1000") & lvl2a_ts_tag_s; -- block is in lvl1 data
-					wea_lvl2_tag_s <= '1';
+					dwritea_lvl2_tag_s(lvl2_hit_index) <= lvl2a_ts_ass_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
+					-- block is in lvl1 data
+					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				else
 					cc_state_next <= fetch_data;
 				end if;
@@ -632,26 +672,26 @@ begin
 
 				-- lvl1i cache is asking for this data from level 2, or this block in lvl2 is being evicted
 				if (flush_lvl1d_s = '1') then 
-					addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg;
+					addra_lvl2_cache_s(lvl2_dirty_index) <= lvl2ia_c_idx_s & cc_counter_reg;
 					addra_data_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
 					-- self - flush
-					-- TODO depending on mc fsm, see if this is needed or not
+					-- NOTE depending on mc fsm, see if this is needed or not
 					-- NOTE this is needed because fetching in cc and mc are overlapped
 					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 					lvl2a_c_tag_s <= lvl2ia_c_tag_s;
 					lvl2a_c_idx_s <= lvl2ia_c_idx_s;
 				else
-					addra_lvl2_cache_s <= lvl2dl_c_idx_s & cc_counter_reg;
+					addra_lvl2_cache_s(lvl2_dirty_index) <= lvl2dl_c_idx_s & cc_counter_reg;
 					addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
-					-- TODO depending on mc fsm, see if this is needed or not
+					-- NOTE depending on mc fsm, see if this is needed or not
 					-- NOTE this is needed because fetching in cc and mc are overlapped
 					addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 					lvl2a_c_tag_s <= lvl2dl_c_tag_s;
 					lvl2a_c_idx_s <= lvl2dl_c_idx_s;
 				end if;
 
-				dwritea_lvl2_cache_s <= dreada_data_cache_s;
-				wea_lvl2_cache_s <= "1111";
+				dwritea_lvl2_cache_s(lvl2_dirty_index) <= dreada_data_cache_s;
+				wea_lvl2_cache_s(lvl2_dirty_index)<= "1111";
 
 				cc_counter_next <= cc_counter_incr;
 
@@ -666,8 +706,8 @@ begin
 						addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 					end if;
 						-- write new tag to tag store, set valid, reset dirty
-					dwritea_lvl2_tag_s <= (lvl2a_ts_bkk_s or "0011") & lvl2a_ts_tag_s; -- valid and dirty
-					wea_lvl2_tag_s <= '1';
+					dwritea_lvl2_tag_s(lvl2_dirty_index) <= lvl2a_ts_ass_s(lvl2_dirty_index) & (lvl2a_ts_bkk_s(lvl2_dirty_index) or "0011") & lvl2a_ts_tag_s(lvl2_dirty_index); -- valid and dirty
+					wea_lvl2_tag_s(lvl2_dirty_index) <= '1';
 				else
 					cc_state_next <= flush_data;
 				end if;
