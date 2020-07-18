@@ -92,13 +92,14 @@ architecture beh of arbiter is
    -- Signals neccessary for load valid signal generation when M_CU tries to
    -- get information necessary for load execution
    signal current_ld_is_valid_s : std_logic;
-   signal ld_from_fifo_is_valid : std_logic;
+   signal ld_from_fifo_is_valid_s : std_logic;
    ----------------------------------------------------------------------------------------------------------------------
 
    ----------------------------------------------------------------------------------------------------------------------
    -- Interconnections necessary for fifos that store rs1, rs2, vl, vmul when
    -- STORE instructions arive
    ----------------------------------------------------------------------------------------------------------------------   
+   signal stall_reg_s: std_logic;
    -- rs1_rs2 and vmul_vl fifo enable signals
    signal st_instr_fifo_re_s : std_logic;
    signal st_instr_fifo_we_s : std_logic;
@@ -201,9 +202,11 @@ begin
 
    
    --logic that handles generation of stall signal
-   process (ready_i, dependency_check_s)is
+   process (ready_i, dependency_check_s, vector_instr_check_s, reg_write_enables_s)is
    begin
-      if (not(ready_i) = '1' or dependency_check_s = '1' or (reg_write_enables_s(17) = '1' and vector_instr_check_s = "11"))then
+      if (reg_write_enables_s(17) = '1' and vector_instr_check_s = "11")then
+         vector_stall_s <= '1';
+      elsif ((not(ready_i) = '1' or dependency_check_s = '1') and vector_instr_check_s /= "11") then
          vector_stall_s <= '1';
       else
          vector_stall_s <= '0';
@@ -221,9 +224,9 @@ begin
    -- else if fifo is not empty send stored load information.
 
    --vl_reg_s, vmul_reg_s add these when they are not constants
-   process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_vmul_ld_fifo_o_s, ld_from_fifo_is_valid) is                                                       
+   process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_vmul_ld_fifo_o_s, ld_from_fifo_is_valid_s) is                                                       
    begin
-      if (ld_from_fifo_is_valid = '0') then
+      if (ld_from_fifo_is_valid_s = '0') then
          M_CU_ld_rs1_o  <= rs1_i;
          M_CU_ld_rs2_o  <= rs2_i;
          M_CU_ld_vl_o   <= vl_reg_s;
@@ -238,7 +241,7 @@ begin
 
    --Logic that generates valid signal to indicate that the data sent to M_CU
    --is valid.
-   M_CU_load_valid_o <= ld_from_fifo_is_valid or current_ld_is_valid_s;
+   M_CU_load_valid_o <= ld_from_fifo_is_valid_s;
 
    -- this here checks if all stores have executed and stored the data from VRF
    -- to memory. This is necessary to check because no load should execute
@@ -246,18 +249,17 @@ begin
    all_stores_executed_s <= rs1_rs2_st_fifo_empty_s and store_fifo_empty_i;
    
    process (rs1_rs2_ld_fifo_empty_s, vector_instr_check_s, ld_instr_fifo_re_s, clk, rdy_for_load_i, rs1_rs2_ld_fifo_empty_s, all_stores_executed_s) is
-   begin
-      if (rs1_rs2_ld_fifo_empty_s = '1' and vector_instr_check_s = "11" and rdy_for_load_i = '1' and all_stores_executed_s = '1') then
-         current_ld_is_valid_s <= '1';
-      else
-         current_ld_is_valid_s <= '0';
-      end if;
+   begin      
       -- if data is read from ld fifo generate a valid pulse
       if (rising_edge(clk)) then
-         if (ld_instr_fifo_re_s = '1' and ld_from_fifo_is_valid = '0' and all_stores_executed_s = '1') then
-            ld_from_fifo_is_valid <= '1';
+         if (reset = '0') then
+            ld_from_fifo_is_valid_s <= '0';
          else
-            ld_from_fifo_is_valid <= '0';
+            if (ld_instr_fifo_re_s = '1' and ld_from_fifo_is_valid_s = '0') then
+               ld_from_fifo_is_valid_s <= '1';
+            elsif (ld_from_fifo_is_valid_s = '1' and rdy_for_load_i = '1') then
+               ld_from_fifo_is_valid_s <= '0';
+            end if;
          end if;
       end if;      
    end process;
@@ -265,9 +267,10 @@ begin
 
    --generating read enable and write enable for fifo block that are necessary
    --for storing load data that M_CU needs
-   ld_instr_fifo_re_s <= (all_stores_executed_s and rdy_for_load_i and not (ld_from_fifo_is_valid) and (not(rs1_rs2_ld_fifo_empty_s))) when reset = '1' else '0';
+   ld_instr_fifo_re_s <= all_stores_executed_s and not(ld_from_fifo_is_valid_s) and (not(rs1_rs2_ld_fifo_empty_s)) when reset = '1' else '0';
+   --ld_instr_fifo_re_s <= (all_stores_executed_s and rdy_for_load_i and not (ld_from_fifo_is_valid_s) and (not(rs1_rs2_ld_fifo_empty_s))) when reset = '1' else '0';
    -- ld_instr_fifo_we_s <= '1' when (rs1_rs2_ld_fifo_empty_s = '0' and vector_instr_check_s = "11") and reset = '1' else
-   --                       '1' when ld_from_fifo_is_valid = '1' and vector_instr_check_s = "11" and reset = '1' else
+   --                       '1' when ld_from_fifo_is_valid_s = '1' and vector_instr_check_s = "11" and reset = '1' else
    --                       '1' when rdy_for_load_i = '0' and vector_instr_check_s = "11" and reset = '1'else
    --                       '0';
 
@@ -275,7 +278,12 @@ begin
    -- empty (other loads need to be executed first), or if M_CU is not ready for
    -- load or if store fifo is not empty(all stores need to be executed before
    -- load because of data dependency)
-   ld_instr_fifo_we_s <= '1' when (not(rs1_rs2_ld_fifo_empty_s) = '1' or not(rdy_for_load_i) = '1' or  not(all_stores_executed_s) = '1') and vector_instr_check_s = "11" and reset = '1' else
+   -- ld_instr_fifo_we_s <= '1' when (not(rs1_rs2_ld_fifo_empty_s) = '1' or not(rdy_for_load_i) = '1' or  not(all_stores_executed_s) = '1') and vector_instr_check_s = "11" and reset = '1' else
+   --                       '0';
+   
+   --check if received instructions i load and check if load_dependency_regs is
+   --full.
+   ld_instr_fifo_we_s <= '1' when vector_instr_check_s = "11" and reg_write_enables_s(17) = '0' and reset = '1' else
                          '0';
    --reset needs to be inverted because fifo blocks expect a logic 1 when reset
    --is aplied and system expects logic 0
@@ -341,12 +349,22 @@ begin
 ---------------------------------------------------------------------------------------------------------------------------------
    -- Code that handles sending STORE instructions to the M_CU and V_CU.
 ---------------------------------------------------------------------------------------------------------------------------------
-   
+   --logic that checks if in previous clock cycle stall wass 1;
+   process (clk) is
+   begin
+      if (rising_edge(clk))then
+         if (reset = '0')then
+            stall_reg_s <= '0';
+         else
+            stall_reg_s <= vector_stall_s;                           
+         end if;
+      end if;
+   end process;
    --logic for generating write enable signals for store fifos
-   st_instr_fifo_we_s <= '1' when vector_stall_s = '0' and vector_instr_check_s = "10" else '0';
+   st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and stall_reg_s = '0' else '0';
 
    --logic for generating read enable signals for store fifos
-   st_instr_fifo_re_s <= rdy_for_store_i and not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
+   st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
 
    --logic for generating valid signal to signalaze that valid data has been
    --read from fifo.
@@ -360,7 +378,7 @@ begin
          else
             if (not(M_CU_store_valid_s) = '1' and st_instr_fifo_re_s = '1')then
                M_CU_store_valid_s <= '1';
-            else
+            elsif (M_CU_store_valid_s = '1' and rdy_for_store_i = '1') then
                M_CU_store_valid_s <= '0';
             end if;
          end if;
@@ -383,7 +401,7 @@ begin
       end if;
    end process;
 
-      --concatanating vl and vmul
+   --concatanating vl and vmul
    vl_vmul_st_fifo_i_s <= vl_reg_s & vmul_reg_s;
 
    --concatanating rs1 and rs2
