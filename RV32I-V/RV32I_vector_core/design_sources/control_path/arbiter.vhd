@@ -31,13 +31,11 @@ entity arbiter is
       M_CU_ld_rs1_o             : out std_logic_vector(31 downto 0);
       M_CU_ld_rs2_o             : out std_logic_vector(31 downto 0);
       M_CU_ld_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length
-      M_CU_ld_vmul_o            : out std_logic_vector(1 downto 0);
       M_CU_load_valid_o      : out std_logic;
       -- M_CU data necessary for store exe
       M_CU_st_rs1_o             : out std_logic_vector(31 downto 0);
       M_CU_st_rs2_o             : out std_logic_vector(31 downto 0);
-      M_CU_st_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length
-      M_CU_st_vmul_o            : out std_logic_vector(1 downto 0);
+      M_CU_st_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector       
       M_CU_store_valid_o      : out std_logic;
       -- outputs
       comparison_o: out std_logic;
@@ -63,6 +61,7 @@ architecture beh of arbiter is
    alias vs1_i: std_logic_vector(4 downto 0) is vector_instruction_i(24 downto 20);
    alias vs2_i: std_logic_vector(4 downto 0) is vector_instruction_i(19 downto 15);
    alias vs3_i: std_logic_vector(4 downto 0) is vector_instruction_i(11 downto 7);
+   alias mop_i: std_logic_vector (1 downto 0) is vector_instruction_i(27 downto 26);
    signal opcode_s             : std_logic_vector (6 downto 0);
    signal vector_instr_check_s : std_logic_vector(1 downto 0);
    signal vector_stall_s: std_logic;
@@ -85,9 +84,8 @@ architecture beh of arbiter is
    signal rs1_rs2_ld_fifo_i_s     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
    signal rs1_rs2_ld_fifo_o_s     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
-   --vmul_vl_ld_fifo interconnectionsa   
-   signal vl_vmul_ld_fifo_i_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) + 2 downto 0);
-   signal vl_vmul_ld_fifo_o_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) + 2 downto 0);
+   --vl_ld_fifo interconnectionsa      
+   signal vl_ld_fifo_o_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
 
    -- Signals neccessary for load valid signal generation when M_CU tries to
    -- get information necessary for load execution
@@ -110,8 +108,8 @@ architecture beh of arbiter is
    signal rs1_rs2_st_fifo_o_s     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
 
    --vmul_vl_st_fifo interconnectionsa   
-   signal vl_vmul_st_fifo_i_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) + 2 downto 0);
-   signal vl_vmul_st_fifo_o_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) + 2 downto 0);
+   
+   signal vl_st_fifo_o_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
 
    signal M_CU_store_valid_s: std_logic;
    ----------------------------------------------------------------------------------------------------------------------
@@ -190,7 +188,7 @@ begin
                vmul_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 +2 downto clogb2(VECTOR_LENGTH*8) + 14);
                -- sending to V_CU what  necessary fields from a vector load instruction
                vector_instr_to_V_CU_s <= "000000"&load_dependency_regs(0)(12)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
-            elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
+           elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
                vl_to_V_CU_o <= vl_reg_s;
                vmul_to_V_CU_o <= vmul_reg_s;
                vector_instr_to_V_CU_s <= vector_instruction_i;
@@ -224,18 +222,16 @@ begin
    -- else if fifo is not empty send stored load information.
 
    --vl_reg_s, vmul_reg_s add these when they are not constants
-   process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_vmul_ld_fifo_o_s, ld_from_fifo_is_valid_s) is                                                       
+   process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_ld_fifo_o_s, ld_from_fifo_is_valid_s) is                                                       
    begin
       if (ld_from_fifo_is_valid_s = '0') then
          M_CU_ld_rs1_o  <= rs1_i;
          M_CU_ld_rs2_o  <= rs2_i;
-         M_CU_ld_vl_o   <= vl_reg_s;
-         M_CU_ld_vmul_o <= vmul_reg_s;
+         M_CU_ld_vl_o   <= vl_reg_s;         
       else
          M_CU_ld_rs1_o  <= rs1_rs2_ld_fifo_o_s(2*DATA_WIDTH - 1 downto DATA_WIDTH);
          M_CU_ld_rs2_o  <= rs1_rs2_ld_fifo_o_s(DATA_WIDTH - 1 downto 0);
-         M_CU_ld_vl_o   <= vl_vmul_ld_fifo_o_s(clogb2(VECTOR_LENGTH * 8) + 2 downto 2);
-         M_CU_ld_vmul_o <= vl_vmul_ld_fifo_o_s(1 downto 0);
+         M_CU_ld_vl_o   <= vl_ld_fifo_o_s(clogb2(VECTOR_LENGTH * 8) downto 0);
       end if;
    end process;
 
@@ -289,11 +285,11 @@ begin
    --is aplied and system expects logic 0
    fifo_reset_s <= not(reset);
 
-   --concatanating vl and vmul
-   vl_vmul_ld_fifo_i_s <= vl_reg_s & vmul_reg_s;
+   --concatanating vl and vmul.
 
    --concatanating rs1 and rs2
-   rs1_rs2_ld_fifo_i_s <= rs1_i & rs2_i;
+   rs1_rs2_ld_fifo_i_s <= rs1_i & rs2_i when mop_i(1) = '1' else
+                          rs1_i & std_logic_vector(to_unsigned(4, 32));
 
    
    LOAD_RS1_RS2_FIFO : FIFO_SYNC_MACRO
@@ -322,17 +318,17 @@ begin
 
 
    
-   LOAD_VL_VMUL_FIFO : FIFO_SYNC_MACRO
+   LOAD_VL_FIFO : FIFO_SYNC_MACRO
       generic map (
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
          ALMOST_FULL_OFFSET  => X"0080",    -- Sets almost full threshold
          ALMOST_EMPTY_OFFSET => X"0080",    -- Sets the almost empty threshold
-         DATA_WIDTH          => clogb2(VECTOR_LENGTH * 8) + 1 + 2,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
+         DATA_WIDTH          => clogb2(VECTOR_LENGTH * 8) + 1,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")     -- Target BRAM, "18Kb" or "36Kb" 
       port map (
          ALMOSTEMPTY => open,           -- 1-bit output almost empty
          ALMOSTFULL  => open,           -- 1-bit output almost full
-         DO          => vl_vmul_ld_fifo_o_s,  -- Output data, width defined by DATA_WIDTH parameter
+         DO          => vl_ld_fifo_o_s,  -- Output data, width defined by DATA_WIDTH parameter
          EMPTY       => open,           -- 1-bit output empty
          FULL        => open,           -- 1-bit output full
          RDCOUNT     => open,  -- Output read count, width determined by FIFO depth
@@ -340,7 +336,7 @@ begin
          WRCOUNT     => open,  -- Output write count, width determined by FIFO depth
          WRERR       => open,           -- 1-bit output write error
          CLK         => clk,            -- 1-bit input clock
-         DI          => vl_vmul_ld_fifo_i_s,  -- Input data, width defined by DATA_WIDTH parameter
+         DI          => vl_reg_s,  -- Input data, width defined by DATA_WIDTH parameter
          RDEN        => ld_instr_fifo_re_s,   -- 1-bit input read enable
          RST         => fifo_reset_s,   -- 1-bit input reset
          WREN        => ld_instr_fifo_we_s  -- 1-bit input write enable
@@ -386,23 +382,21 @@ begin
    end process;
 
 
-   process (rs1_i, rs2_i, rs1_rs2_st_fifo_o_s, vl_vmul_st_fifo_o_s, M_CU_store_valid_s) is                                                       
+   process (rs1_i, rs2_i, rs1_rs2_st_fifo_o_s, vl_st_fifo_o_s, M_CU_store_valid_s) is                                                       
    begin
       if (M_CU_store_valid_s = '0') then
          M_CU_st_rs1_o  <= (others => '0') ;
          M_CU_st_rs2_o  <= (others => '0');
-         M_CU_st_vl_o   <= (others => '0');
-         M_CU_st_vmul_o <= (others => '0');
+         M_CU_st_vl_o   <= (others => '0');         
       else
          M_CU_st_rs1_o  <= rs1_rs2_st_fifo_o_s(2*DATA_WIDTH - 1 downto DATA_WIDTH);
          M_CU_st_rs2_o  <= rs1_rs2_st_fifo_o_s(DATA_WIDTH - 1 downto 0);
-         M_CU_st_vl_o   <= vl_vmul_st_fifo_o_s(clogb2(VECTOR_LENGTH * 8) + 2 downto 2);
-         M_CU_st_vmul_o <= vl_vmul_st_fifo_o_s(1 downto 0);
+         M_CU_st_vl_o   <= vl_st_fifo_o_s(clogb2(VECTOR_LENGTH * 8) downto 0);        
       end if;
    end process;
 
    --concatanating vl and vmul
-   vl_vmul_st_fifo_i_s <= vl_reg_s & vmul_reg_s;
+   
 
    --concatanating rs1 and rs2
    rs1_rs2_st_fifo_i_s <= rs1_i & rs2_i;
@@ -438,12 +432,12 @@ begin
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
          ALMOST_FULL_OFFSET  => X"0080",    -- Sets almost full threshold
          ALMOST_EMPTY_OFFSET => X"0080",    -- Sets the almost empty threshold
-         DATA_WIDTH          => clogb2(VECTOR_LENGTH * 8) + 1 + 2,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
+         DATA_WIDTH          => clogb2(VECTOR_LENGTH * 8) + 1,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")     -- Target BRAM, "18Kb" or "36Kb" 
       port map (
          ALMOSTEMPTY => open,           -- 1-bit output almost empty
          ALMOSTFULL  => open,           -- 1-bit output almost full
-         DO          => vl_vmul_st_fifo_o_s,  -- Output data, width defined by DATA_WIDTH parameter
+         DO          => vl_st_fifo_o_s,  -- Output data, width defined by DATA_WIDTH parameter
          EMPTY       => open,           -- 1-bit output empty
          FULL        => open,           -- 1-bit output full
          RDCOUNT     => open,  -- Output read count, width determined by FIFO depth
@@ -451,7 +445,7 @@ begin
          WRCOUNT     => open,  -- Output write count, width determined by FIFO depth
          WRERR       => open,           -- 1-bit output write error
          CLK         => clk,            -- 1-bit input clock
-         DI          => vl_vmul_st_fifo_i_s,  -- Input data, width defined by DATA_WIDTH parameter
+         DI          => vl_reg_s,  -- Input data, width defined by DATA_WIDTH parameter
          RDEN        => st_instr_fifo_re_s,   -- 1-bit input read enable
          RST         => fifo_reset_s,   -- 1-bit input reset
          WREN        => st_instr_fifo_we_s  -- 1-bit input write enable
