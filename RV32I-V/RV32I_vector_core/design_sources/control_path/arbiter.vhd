@@ -37,10 +37,10 @@ entity arbiter is
       M_CU_st_rs2_o             : out std_logic_vector(31 downto 0);
       M_CU_st_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector       
       M_CU_store_valid_o      : out std_logic;
-      -- outputs
-      comparison_o: out std_logic;
-      vector_id_ex_en_o      : out std_logic;
+      -- outputs      
       vector_stall_o         : out std_logic;
+      -- V_CU interface
+      rs1_to_V_CU_i                   : out std_logic_vector(31 downto 0);
       vmul_to_V_CU_o: out std_logic_vector(1 downto 0);
       vl_to_V_CU_o: out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
       vector_instr_to_V_CU_o : out std_logic_vector(31 downto 0));
@@ -188,7 +188,8 @@ begin
                vmul_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 +2 downto clogb2(VECTOR_LENGTH*8) + 14);
                -- sending to V_CU what  necessary fields from a vector load instruction
                vector_instr_to_V_CU_s <= "000000"&load_dependency_regs(0)(12)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
-           elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
+            elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
+                rs1_to_V_CU_i <= rs1_i;                
                vl_to_V_CU_o <= vl_reg_s;
                vmul_to_V_CU_o <= vmul_reg_s;
                vector_instr_to_V_CU_s <= vector_instruction_i;
@@ -545,7 +546,7 @@ begin
          dependency_check_s <= '1';
       end if ;
    end process;   
-   comparison_o <= dependency_check_s;
+   
 end architecture;
 
 

@@ -21,7 +21,7 @@ entity VRF_BRAM_addr_generator is
       vs1_address_i        : in std_logic_vector(4 downto 0);
       vs2_address_i        : in std_logic_vector(4 downto 0);
       vd_address_i         : in std_logic_vector(4 downto 0);
-            
+      
       -- output signals
       BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
       BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
@@ -121,24 +121,7 @@ begin
 
 --********************************COMBINATION LOGIC*************************************
 
-   
-   --generate v_len_s taking vmul into account.
-   -- process (vector_length_i, vmul_i)is
-   -- begin
-   --    case vmul_i is
-   --       when "00"=>
-   --          vector_len_shifted_s <= "000"&vector_length_i;
-   --       when "01" =>            
-   --          vector_len_shifted_s <= "00"&vector_length_i&'0';
-   --       when "10" =>
-   --          vector_len_shifted_s <= "0"&vector_length_i&"00";
-   --       when "11" =>
-   --          vector_len_shifted_s <= vector_length_i&"000";
-   --       when others =>
-   --    end case;
-   -- end process;
-   
-   -------------------------------------------------------------------------------------------------------------------------------------------------------
+
    v_len_s <= std_logic_vector(unsigned(vector_length_i) - one_c);
    --v_len_s <= std_logic_vector(unsigned(vector_len_shifted_s) - one_c);
    
