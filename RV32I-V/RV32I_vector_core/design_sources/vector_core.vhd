@@ -20,7 +20,7 @@ entity vector_core is
          rs2_i : in std_logic_vector(31 downto 0);
 
          --Signals coming from scalar core
-         scalar_core_stall_i : in std_logic;
+         --scalar_core_stall_i : in std_logic;
          scalar_load_req_i   : in std_logic;
          scalar_store_req_i  : in std_logic;
          scalar_address_i    : in std_logic_vector(31 downto 0);
@@ -34,11 +34,7 @@ entity vector_core is
          data_to_mem_o   : out    std_logic_vector(31 downto 0);
 
          --output data        
-         vector_stall_o  : out std_logic;
-         -- Vector_length should not be among input ports of vector core !! It
-         -- is for now here so synthesis is possible
-         vector_length_i : in  std_logic_vector(clogb2(VECTOR_LENGTH/NUM_OF_LANES*8) downto 0)
-     --TODO: memory interface to be added
+         vector_stall_o  : out std_logic
          );
 
 end entity;
@@ -112,17 +108,20 @@ begin
     -----------------------------------------------------------------------------------------------------------------
     -- CONTROL PATH
     -----------------------------------------------------------------------------------------------------------------
-    vector_control_path_1 : entity work.vector_control_path
+    Vector_control_path_1 : entity work.vector_control_path
         port map (
             clk                  => clk,
             reset                => reset,
             vector_instruction_i => instruction_i,
             vrf_type_of_access_o => vrf_type_of_access_s,
+            immediate_sign_o     => immediate_sign_s,
             alu_op_o             => alu_op_s,
             mem_to_vrf_o         => mem_to_vrf_s,
             store_fifo_we_o      => V_CU_store_fifo_we_s,
-            load_fifo_re_o       => V_CU_load_fifo_re_s,
-            ready_i              => ready_s);
+            alu_src_a_o          => alu_src_a_s,
+            type_of_masking_o    => type_of_masking_s,
+            vs1_addr_src_o => vs1_addr_src_s,
+            load_fifo_re_o       => V_CU_load_fifo_re_s);
 
 
     M_CU_1 : entity work.M_CU
@@ -164,7 +163,7 @@ begin
             vector_instruction_i   => vector_instruction_i,
             rs1_i                  => rs1_i,
             rs2_i                  => rs2_i,
-            scalar_core_stall_i    => scalar_core_stall_i,
+            --scalar_core_stall_i    => --scalar_core_stall_i,
             load_fifo_empty_i      => load_fifo_empty_s,
             store_fifo_empty_i     => store_fifo_empty_s,
             rdy_for_load_i         => rdy_for_load_s,
@@ -266,7 +265,7 @@ begin
     --data to mem logic
     process (store_fifos_en_s)is
     begin
-        data_to_mem_o <= (others => '0');
+        data_to_mem_o <= data_to_mem_s(0);
         for i in 0 to NUM_OF_LANES - 1 loop
             if (store_fifos_en_s(i) = '1') then
                 data_to_mem_o <= data_to_mem_s(i);

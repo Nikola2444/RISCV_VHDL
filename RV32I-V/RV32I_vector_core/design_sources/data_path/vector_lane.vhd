@@ -194,7 +194,7 @@ begin
          op_i  => alu_op_i,
          res_o => alu_result_s);
 
-
+   
    fifo_reset_s <= not(reset);
    LOAD_FIFO_SYN_inst : FIFO_SYNC_MACRO
       generic map (

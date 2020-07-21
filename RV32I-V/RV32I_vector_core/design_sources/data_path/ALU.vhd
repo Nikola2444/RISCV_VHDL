@@ -5,6 +5,7 @@ use ieee.math_real.all;
 use work.vector_alu_ops_pkg.all;
 
 
+
 ENTITY V_ALU IS
    GENERIC(
       WIDTH : NATURAL := 32);
@@ -22,7 +23,7 @@ END V_ALU;
 ARCHITECTURE behavioral OF V_ALU IS
 
    constant  l2WIDTH : natural := integer(ceil(log2(real(WIDTH))));
-   signal    lts_res,ltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
+   signal    slt_res,sltu_res,add_res,sub_res,or_res,and_res,res_s,xor_res  :  STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
 
    signal    eq_res,sll_res,srl_res,sra_res : STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
    signal    neq_res, sle_res, sleu_res, sgtu_res, sgt_res: STD_LOGIC_VECTOR(WIDTH-1 DOWNTO 0);
@@ -69,10 +70,10 @@ begin
               a_i;
    
    -- less then signed
-   lts_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) < signed(a_i)) else
+   slt_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (signed(b_i) < signed(a_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
    -- less then unsigned
-   ltu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) < unsigned(a_i)) else
+   sltu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) < unsigned(a_i)) else
               std_logic_vector(to_unsigned(0,WIDTH));
    -- less then or equal unsigned
    sleu_res <= std_logic_vector(to_unsigned(1,WIDTH)) when (unsigned(b_i) < unsigned(a_i) or unsigned(b_i) = unsigned(a_i)) else
@@ -118,8 +119,8 @@ begin
       neq_res when neq_op,
       min_res when min_op,
       minu_res when minu_op,
-      lts_res when lts_op, -- set less than signed
-      ltu_res when ltu_op, -- set less than unsigned
+      slt_res when slt_op, -- set less than signed
+      sltu_res when sltu_op, -- set less than unsigned
       sleu_res when sleu_op,
       sle_res when sle_op,
       sgtu_res when sgtu_op,

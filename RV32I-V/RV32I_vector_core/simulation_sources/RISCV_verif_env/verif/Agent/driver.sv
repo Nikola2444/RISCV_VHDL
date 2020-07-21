@@ -195,8 +195,8 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       end
 	       v_vmseq_funct6: vif.alu_op_i = eq_op;
 	       v_vmsne_funct6: vif.alu_op_i = neq_op;		   
-	       v_vmsltu_funct6: vif.alu_op_i = slt_op;		   
-	       v_vmslt_funct6: vif.alu_op_i = sltu_op;
+	       v_vmslt_funct6: vif.alu_op_i = slt_op;		   
+	       v_vmsltu_funct6: vif.alu_op_i = sltu_op;
 	       v_vmsleu_funct6: vif.alu_op_i = sleu_op;		   
 	       v_vmsle_funct6: vif.alu_op_i = sle_op;		   
 	       v_vmsgtu_funct6: vif.alu_op_i = sgtu_op;

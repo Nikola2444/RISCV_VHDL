@@ -20,8 +20,8 @@ package vector_alu_ops_pkg is
    constant remu_op: std_logic_vector (4 downto 0):="01111"; ---> reminder unsigned
    constant rems_op: std_logic_vector (4 downto 0):="10000"; ---> reminder signed
    constant muls_op: std_logic_vector (4 downto 0):="10001"; ---> multiply lower_signed   
-   constant lts_op: std_logic_vector (4 downto 0):="10100"; ---> set less than signed
-   constant ltu_op: std_logic_vector (4 downto 0):="10101"; ---> set less than unsigned
+   constant slt_op: std_logic_vector (4 downto 0):="10100"; ---> set less than signed
+   constant sltu_op: std_logic_vector (4 downto 0):="10101"; ---> set less than unsigned
    constant sll_op: std_logic_vector (4 downto 0):="10110"; ---> shift left logic      
    constant eq_op: std_logic_vector (4 downto 0):="10111"; --->  set equal
    constant neq_op: std_logic_vector (4 downto 0):="11000"; --->  set not equal
