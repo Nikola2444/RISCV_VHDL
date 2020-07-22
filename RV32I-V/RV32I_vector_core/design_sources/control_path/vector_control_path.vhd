@@ -33,9 +33,9 @@ architecture behavioral of vector_control_path is
     signal OPMVV_instr_check_s:std_logic;
     signal store_fifo_we_s: std_logic;
 
-    alias opcode_i: std_logic_vector(5 downto 0) is vector_instruction_i(6 downto 0);
+    alias opcode_i: std_logic_vector(6 downto 0) is vector_instruction_i(6 downto 0);
     alias funct6_i: std_logic_vector(5 downto 0) is vector_instruction_i(31 downto 26);
-    alias funct3_i: std_logic_vector(5 downto 0) is vector_instruction_i(14 downto 12);
+    alias funct3_i: std_logic_vector(2 downto 0) is vector_instruction_i(14 downto 12);
     alias vm_i: std_logic is vector_instruction_i(25);
     --signals between alu_decoder and ctrl_decoder    
 
