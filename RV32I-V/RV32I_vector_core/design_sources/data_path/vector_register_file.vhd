@@ -15,7 +15,7 @@ entity vector_register_file is
          -- VECTOR_LENGTH * 8 because we need to take into account vmul
          vector_length_i : in std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
          alu_exe_time_i  : in std_logic_vector (2 downto 0);
-         vmul_i          : in std_logic_vector(1 downto 0);
+         vmul_i          : in std_logic_vector(1 downto 0);         
          masked_we_i: in std_logic;
          -- input data
          vs1_address_i   : in std_logic_vector(4 downto 0);  --number of vector registers is 32
@@ -46,7 +46,7 @@ architecture structural of vector_register_file is
          vrf_type_of_access_i : in std_logic_vector(1 downto 0);  --there are r/w, r, w,and /
          alu_exe_time_i       : in std_logic_vector (2 downto 0);
          vmul_i               :    std_logic_vector(1 downto 0);
-         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH*8) downto 0);
+         vector_length_i   : in  std_logic_vector(clogb2(VECTOR_LENGTH*8) downto 0);         
          -- input signals
          vs1_address_i        : in std_logic_vector(4 downto 0);
          vs2_address_i        : in std_logic_vector(4 downto 0);
@@ -143,7 +143,7 @@ begin
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,
          alu_exe_time_i       => alu_exe_time_i,
-         vmul_i               => vmul_i,    
+         vmul_i               => vmul_i,         
          vs1_address_i        => vs1_address_i,
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,
@@ -158,7 +158,6 @@ begin
          mask_BRAM_r_address_o => mask_BRAM_r_address_s,
          mask_BRAM_re_o => VRF_mask_BRAM_re_s,
          ready_o              => ready_o);
-
 
    BRAM_18KB_1 : entity work.BRAM_18KB
       generic map (

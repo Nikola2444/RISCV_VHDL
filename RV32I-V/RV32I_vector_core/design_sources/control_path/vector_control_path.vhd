@@ -62,7 +62,7 @@ begin
     begin        
         mem_to_vrf_o         <= "00";        
         load_fifo_re_o       <= '0';
-        vrf_type_of_access_o <= (others => '0');
+        vrf_type_of_access_o <= "11"; -- no access
         vs1_addr_src_o <= '0';
         immediate_sign_o <= '0';
         store_fifo_we_s <= '0';

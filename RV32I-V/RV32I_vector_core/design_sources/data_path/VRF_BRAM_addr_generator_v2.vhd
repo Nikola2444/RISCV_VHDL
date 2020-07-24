@@ -146,12 +146,12 @@ begin
    begin
       counter2_next_s <= counter2_reg_s;
       if (counter1_reg_s > (concat_bits&alu_exe_time_i) and vrf_type_of_access_i = read_and_write_c) then
-         counter2_next_s <= std_logic_vector(unsigned(counter2_reg_s) + one_c);
+          counter2_next_s <= std_logic_vector(unsigned(counter2_reg_s) + one_c);
       elsif (counter1_reg_s > counter1_eq_zero and vrf_type_of_access_i = only_write_c) then
-         counter2_next_s <= std_logic_vector(unsigned(counter2_reg_s) + one_c);         
+          counter2_next_s <= std_logic_vector(unsigned(counter2_reg_s) + one_c);         
       end if;
       if (counter2_reg_s = v_len_s) then
-         counter2_next_s <= (others => '0');
+          counter2_next_s <= (others => '0');
       end if;
    end process;
 

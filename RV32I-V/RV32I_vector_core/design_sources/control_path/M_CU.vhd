@@ -19,7 +19,7 @@ entity M_CU is
         M_CU_ld_rs1_i   : in  std_logic_vector(31 downto 0);
         M_CU_ld_rs2_i   : in  std_logic_vector(31 downto 0);
         M_CU_ld_vl_i    : in  std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length      
-
+        M_CU_load_done_i: out std_logic;
         M_CU_load_valid_i  : in std_logic;
         -- M_CU data necessary for store exe
         M_CU_st_rs1_i      : in std_logic_vector(31 downto 0);
@@ -64,7 +64,7 @@ architecture behavioral of M_CU is
     signal vector_st_rs2_next, vector_st_rs2_reg       : std_logic_vector(31 downto 0);
     signal store_start_s                               : std_logic;
     signal store_fifos_en_reg, store_fifos_en_next     : std_logic_vector(NUM_OF_LANES -1 downto 0);
-
+    signal mem_we_s: std_logic;
 
 begin
 
@@ -124,10 +124,11 @@ begin
         load_counter_next  <= load_counter_reg;
         load_address_next  <= load_address_reg;
         load_vl_next       <= load_vl_reg;
+        M_CU_load_done_i <= '0';
         case load_fsm_states_reg is
             when waiting_for_loads =>
+
                 load_fsm_states_next <= waiting_for_loads;
-                load_counter_next    <= (others => '0');
                 -- scalar load have a higher priority because they only extract one
                 -- element from memory, and vector loads extrac VECTOR_LENGTH
                 -- elements from the memory.
@@ -161,8 +162,10 @@ begin
                     load_fsm_states_next <= load_vector_state;
                     load_address_next    <= std_logic_vector (unsigned(vector_ld_rs2_reg) + unsigned(load_address_reg));
                     load_counter_next    <= std_logic_vector(unsigned(load_counter_reg) + to_unsigned(1, clogb2(VECTOR_LENGTH * 8) + 1));
-                    if (load_counter_next = load_vl_reg) then
+                    if (load_counter_reg = std_logic_vector(unsigned(load_vl_reg) - to_unsigned(1, clogb2(VECTOR_LENGTH / NUM_OF_LANES *8) + 1))) then
                         load_fsm_states_next <= waiting_for_loads;
+                        M_CU_load_done_i <= '1';
+                        load_counter_next    <= (others => '0');
                     end if;
                 else
                     load_start_s <= '0';
@@ -201,9 +204,8 @@ begin
              scalar_store_req_i, store_vl_reg, store_vl_next, store_address_next, store_address_reg,
              store_counter_reg, store_counter_next, M_CU_st_vl_i, M_CU_st_rs1_i, M_CU_st_rs2_i) is
     begin
-        vector_st_rs2_next <= vector_st_rs2_reg;
-        mem_re_o           <= '0';
-        mem_we_o           <= '0';
+        vector_st_rs2_next <= vector_st_rs2_reg;        
+        mem_we_s           <= '0';
         rdy_for_store_o    <= '0';
         store_start_s      <= '0';
         store_counter_next <= store_counter_reg;
@@ -211,14 +213,13 @@ begin
         store_vl_next      <= store_vl_reg;
         case store_fsm_states_reg is
             when waiting_for_stores =>
-                store_counter_next    <= (others => '0');
                 store_fsm_states_next <= waiting_for_stores;
                 -- scalar store have a higher priority because they only extract one
                 -- element from memory, and vector stores extrac VECTOR_LENGTH
                 -- elements from the memory.
                 if (scalar_store_req_i = '1') then
                     store_address_next <= scalar_address_i;
-                    mem_we_o        <= '1';
+                    mem_we_s        <= '1';
                 elsif (M_CU_store_valid_i = '1' and M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1))) then
                     -- if there is a valid vector store start reading data from the memory.
                     store_fsm_states_next <= store_vector_state;
@@ -226,7 +227,7 @@ begin
                     -- handshake the arbiter expects)
 
                     rdy_for_store_o <= '1';
-                    mem_we_o        <= '1';
+                    mem_we_s        <= '1';
 
                     store_vl_next      <= M_CU_st_vl_i;
                     vector_st_rs2_next <= M_CU_st_rs2_i;
@@ -236,7 +237,7 @@ begin
                     store_start_s      <= '1';
                 end if;
             when store_vector_state =>
-                mem_we_o              <= '1';
+                mem_we_s              <= '1';
                 store_start_s         <= '1';
                 store_fsm_states_next <= store_vector_state;
                 -- if there is a scalar store pending, stop with vector store
@@ -246,8 +247,9 @@ begin
                     store_fsm_states_next <= store_vector_state;
                     store_address_next    <= std_logic_vector (unsigned(vector_st_rs2_reg) + unsigned(store_address_reg));
                     store_counter_next    <= std_logic_vector(unsigned(store_counter_reg) + to_unsigned(1, clogb2(VECTOR_LENGTH * 8) + 1));
-                    if (store_counter_next = store_vl_reg) then
+                    if (store_counter_reg = std_logic_vector(unsigned(store_vl_reg) - to_unsigned(1, clogb2(VECTOR_LENGTH / NUM_OF_LANES *8) + 1))) then
                         store_fsm_states_next <= waiting_for_stores;
+                        store_counter_next    <= (others => '0');
                     end if;
                 else
                     store_start_s <= '0';
@@ -280,14 +282,25 @@ begin
     ---------------------------------------------------------------------------------------------------------------------------------------------
     -- OUTPUTS
     ---------------------------------------------------------------------------------------------------------------------------------------------
-
+    
     load_address_o <= load_address_next when scalar_load_req_i = '0' else
                       scalar_address_i;
-    store_address_o <= store_address_next when scalar_store_req_i = '0' else
+    store_address_o <= store_address_reg when scalar_store_req_i = '0' else
                        scalar_address_i;
 
-    store_fifos_en_o <= store_fifos_en_reg;
+    store_fifos_en_o <= store_fifos_en_next;
     load_fifos_en_o <= load_fifos_en_reg;
+
+    process (clk) is
+    begin
+        if (rising_edge(clk))then
+            if (reset = '0')then
+                mem_we_o <= '0';
+            else
+                mem_we_o <= mem_we_s;
+            end if;
+        end if;
+    end process;
     --generating enables for load and store fifos inside vector lanes
 
     

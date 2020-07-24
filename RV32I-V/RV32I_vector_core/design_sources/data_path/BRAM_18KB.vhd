@@ -56,6 +56,7 @@ architecture rtl of BRAM_18KB is
         variable bitvec      : bit_vector(C_RAM_WIDTH-1 downto 0);
         variable i: integer := 0;
     begin
+        ram_name := (others => (others => '0'));
         while (not endfile(ramfile))loop
             readline (ramfile, ramfileline);
             read (ramfileline, bitvec);

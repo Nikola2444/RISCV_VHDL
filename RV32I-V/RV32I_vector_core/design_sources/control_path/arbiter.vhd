@@ -183,18 +183,20 @@ begin
             if (reset = '0')then
                 vector_instr_to_V_CU_s <= (others => '0');
             else
-                if (V_CU_rdy_for_load_s = '1' and vector_instr_check_s /= "11") then
+                if (V_CU_rdy_for_load_s = '1') then
                     vl_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 downto 13);
                     vmul_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 +2 downto clogb2(VECTOR_LENGTH*8) + 14);
-                    -- sending to V_CU what  necessary fields from a vector load instruction
+                    -- sending to V_CU  necessary fields from a vector load instruction
                     vector_instr_to_V_CU_s <= "000000"&load_dependency_regs(0)(12)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
                 elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
                     rs1_to_V_CU_i <= rs1_i;                
                     vl_to_V_CU_o <= vl_reg_s;
                     vmul_to_V_CU_o <= vmul_reg_s;
                     vector_instr_to_V_CU_s <= vector_instruction_i;
-                end if;
-            end if;            
+                elsif (ready_i = '1' and not(V_CU_rdy_for_load_s) = '1') then
+                    vector_instr_to_V_CU_s <= (others => '0');
+                end if;            
+            end if;
         end if;
     end process;
     vector_instr_to_V_CU_o <= vector_instr_to_V_CU_s;
@@ -223,7 +225,7 @@ begin
     -- else if fifo is not empty send stored load information.
 
     --vl_reg_s, vmul_reg_s add these when they are not constants
-    process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_ld_fifo_o_s, ld_from_fifo_is_valid_s) is                                                       
+    process (rs1_rs2_ld_fifo_empty_s, rs1_i, rs2_i, rs1_rs2_ld_fifo_o_s, vl_ld_fifo_o_s, ld_from_fifo_is_valid_s, vl_reg_s) is                                                       
     begin
         if (ld_from_fifo_is_valid_s = '0') then
             M_CU_ld_rs1_o  <= rs1_i;
@@ -275,7 +277,9 @@ begin
     fifo_reset_s <= not(reset);
     
     
-    --concatanating rs1 and offset (this can be either rs2 or a constant)
+    --concatanating rs1 and and offset. Depenending on received load
+    --instruction (strided or non-strided) offset is rs2 or a constant equal to
+    --4 (minimum distance beetween two 32 bit elements).
     rs1_rs2_ld_fifo_i_s <= rs1_i & rs2_i when mop_i(1) = '1' else
                            rs1_i & std_logic_vector(to_unsigned(4, 32));
 
@@ -383,11 +387,11 @@ begin
         end if;
     end process;
 
-    --concatanating vl and vmul
-    
-
-    --concatanating rs1 and rs2
-    rs1_rs2_st_fifo_i_s <= rs1_i & rs2_i;
+    --concatanating rs1 and and offset. Depenending on received store
+    --instruction (strided or non-strided) offset is rs2 or a constant equal to
+    --4 (minimum distance beetween two 32 bit elements).
+    rs1_rs2_st_fifo_i_s <= rs1_i & rs2_i when mop_i(1) = '1' else
+                           rs1_i & std_logic_vector(to_unsigned(4, 32));
     
     STORE_RS1_RS2_FIFO : FIFO_SYNC_MACRO
         generic map (

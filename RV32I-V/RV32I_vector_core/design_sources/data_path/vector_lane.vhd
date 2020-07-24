@@ -81,9 +81,12 @@ architecture structural of vector_lane is
        "000", others => "000");
 
 --****************************INTERCONNECTIONS*******************************
+
+   
 --VRF output signals
    signal vs1_data_s, vs2_data_s, vd_data_s : std_logic_vector (DATA_WIDTH - 1 downto 0);
    signal mask_s: std_logic;
+   signal ready_s: std_logic;
 
 -- VRF input signals
    signal sign_extension: std_logic_vector(DATA_WIDTH - 1 - 4 downto 0);
@@ -97,6 +100,7 @@ architecture structural of vector_lane is
    signal alu_a_input_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    
 -- LOAD FIFO I/O signals
+   constant load_fifo_empty_threshhold: std_logic_vector(15 downto 0) := std_logic_vector(to_unsigned(VECTOR_LENGTH - 1, 16));
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_exe_time_s                    : std_logic_vector(2 downto 0);
    signal fifo_reset_s                      : std_logic;
@@ -182,7 +186,9 @@ begin
          vs1_data_o           => vs1_data_s,
          vs2_data_o           => vs2_data_s,
          mask_o => mask_s,
-         ready_o              => ready_o);
+         ready_o              => ready_s);
+
+   ready_o <= ready_s;
    ALU_1 : entity work.V_ALU
       generic map (
          WIDTH => DATA_WIDTH)
@@ -200,7 +206,7 @@ begin
       generic map (
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
          ALMOST_FULL_OFFSET  => X"0080",  -- Sets almost full threshold
-         ALMOST_EMPTY_OFFSET => X"0080",  -- Sets the almost empty threshold
+         ALMOST_EMPTY_OFFSET => to_bitvector(load_fifo_empty_threshhold),  -- Sets the almost empty threshold
          DATA_WIDTH          => DATA_WIDTH,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")   -- Target BRAM, "18Kb" or "36Kb" 
       port map (
@@ -215,7 +221,7 @@ begin
          WRERR       => load_fifo_wrerr_o,  -- 1-bit output write error
          CLK         => clk,            -- 1-bit input clock
          DI          => data_from_mem_i,  -- Input data, width defined by DATA_WIDTH parameter
-         RDEN        => load_fifo_re_i,   -- 1-bit input read enable
+         RDEN        => (load_fifo_re_i and not(ready_s)),   -- 1-bit input read enable
          RST         => fifo_reset_s,   -- 1-bit input reset
          WREN        => load_fifo_we_i  -- 1-bit input write enable
          );
@@ -224,7 +230,7 @@ begin
       generic map (
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
          ALMOST_FULL_OFFSET  => X"0080",    -- Sets almost full threshold
-         ALMOST_EMPTY_OFFSET => X"0080",    -- Sets the almost empty threshold
+         ALMOST_EMPTY_OFFSET => X"000F",    -- Sets the almost empty threshold
          DATA_WIDTH          => DATA_WIDTH,  -- Valid values are 1-72 (37-72 only valid when FIFO_SIZE="36Kb")
          FIFO_SIZE           => "18Kb")     -- Target BRAM, "18Kb" or "36Kb" 
       port map (
