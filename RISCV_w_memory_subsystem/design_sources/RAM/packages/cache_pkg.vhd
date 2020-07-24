@@ -58,8 +58,8 @@ package cache_pkg is
 		constant LVL2C_BKK_DIRTY : integer := 1;
 		constant LVL2C_BKK_INSTR : integer := 2;
 		constant LVL2C_BKK_DATA : integer := 3;
-		constant LVL2C_BKK_VICTIM : integer := 4;
-		constant LVL2C_BKK_NEXTV : integer := 5;
+		constant LVL2C_BKK_NEXTV : integer := 0; -- 4th bit
+		constant LVL2C_BKK_VICTIM : integer := 1; -- 5th bit
 
 		constant	LVL2C_ASSOCIATIVITY : natural := 4;
 		constant	LVL2C_ASSOC_LOG2 : natural := clogb2(LVL2C_ASSOCIATIVITY);
