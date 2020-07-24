@@ -105,6 +105,10 @@ architecture structural of vector_lane is
    signal alu_exe_time_s                    : std_logic_vector(2 downto 0);
    signal fifo_reset_s                      : std_logic;
 
+   -- STORE FIFO I/O signals
+   signal store_fifo_we_s: std_logic;
+   signal ready_reg:std_logic;
+   
    signal vs1_address_s: std_logic_vector(4 downto 0);
 
    signal immediate_sign_ext_ex_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -148,15 +152,18 @@ begin
    -- Multiplexing source operand "a" of ALU unit
    process (clk)is
    begin
-      if(rising_edge(clk)) then
-         if (reset = '0') then
-            immediate_sign_ext_ex_s <= (others => '0');
-            rs1_data_ex_s <= (others => '0');
-         else
-            immediate_sign_ext_ex_s <= immediate_sign_ext_s;
-            rs1_data_ex_s <= rs1_data_i;
-         end if;
-      end if;
+       if(rising_edge(clk)) then
+           if (reset = '0') then
+               immediate_sign_ext_ex_s <= (others => '0');
+               rs1_data_ex_s <= (others => '0');
+               --ready reg
+               ready_reg <= '0';
+           else
+               ready_reg <= ready_s;
+               immediate_sign_ext_ex_s <= immediate_sign_ext_s;
+               rs1_data_ex_s <= rs1_data_i;
+           end if;
+       end if;
    end process;
    
    alu_a_input_s <= vs1_data_s when alu_src_a_i = "00" else
@@ -165,8 +172,9 @@ begin
                   
 
 --****************************INSTANTIATIONS*********************************
-   
+  
 
+   
    vector_register_file_1 : entity work.vector_register_file
       generic map (
          DATA_WIDTH    => DATA_WIDTH,
@@ -226,6 +234,20 @@ begin
          WREN        => load_fifo_we_i  -- 1-bit input write enable
          );
 
+
+   process (clk) is
+   begin
+       if (rising_edge(clk)) then
+           if (reset = '0') then
+               store_fifo_we_s <= '0';
+           else               
+               store_fifo_we_s <= store_fifo_we_i;
+               if (ready_reg = '1' and store_fifo_we_s = '1') then
+                   store_fifo_we_s <= '0';
+               end if;
+           end if;
+       end if;       
+   end process;   
    STORE_FIFO_SYNC_inst : FIFO_SYNC_MACRO
       generic map (
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
@@ -247,7 +269,7 @@ begin
          DI          => vs1_data_s,  -- Input data, width defined by DATA_WIDTH parameter
          RDEN        => store_fifo_re_i,    -- 1-bit input read enable
          RST         => fifo_reset_s,   -- 1-bit input reset
-         WREN        => store_fifo_we_i     -- 1-bit input write enable
+         WREN        => store_fifo_we_s      -- 1-bit input write enable
          );
 
 

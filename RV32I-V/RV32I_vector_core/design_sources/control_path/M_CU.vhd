@@ -26,6 +26,7 @@ entity M_CU is
         M_CU_st_rs2_i      : in std_logic_vector(31 downto 0);
         M_CU_st_vl_i       : in std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length
         M_CU_store_valid_i : in std_logic;
+        store_fifos_empty_i: in std_logic;
         --scalar core interface
         scalar_load_req_i  : in std_logic;
         scalar_store_req_i : in std_logic;
@@ -202,7 +203,7 @@ begin
     process (store_fsm_states_next, store_fsm_states_reg, vector_st_rs2_next,
              vector_st_rs2_reg, M_CU_store_valid_i, scalar_address_i,
              scalar_store_req_i, store_vl_reg, store_vl_next, store_address_next, store_address_reg,
-             store_counter_reg, store_counter_next, M_CU_st_vl_i, M_CU_st_rs1_i, M_CU_st_rs2_i) is
+             store_counter_reg, store_counter_next, M_CU_st_vl_i, M_CU_st_rs1_i, M_CU_st_rs2_i, store_fifos_empty_i) is
     begin
         vector_st_rs2_next <= vector_st_rs2_reg;        
         mem_we_s           <= '0';
@@ -220,15 +221,13 @@ begin
                 if (scalar_store_req_i = '1') then
                     store_address_next <= scalar_address_i;
                     mem_we_s        <= '1';
-                elsif (M_CU_store_valid_i = '1' and M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1))) then
+                elsif (M_CU_store_valid_i = '1' and M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1)) and store_fifos_empty_i = '0') then
                     -- if there is a valid vector store start reading data from the memory.
                     store_fsm_states_next <= store_vector_state;
                     -- Raise rdy_for_store_o for one clock cycle (that is the
                     -- handshake the arbiter expects)
-
                     rdy_for_store_o <= '1';
                     mem_we_s        <= '1';
-
                     store_vl_next      <= M_CU_st_vl_i;
                     vector_st_rs2_next <= M_CU_st_rs2_i;
 

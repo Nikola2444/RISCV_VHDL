@@ -44,7 +44,12 @@ architecture struct of vector_core is
 
 
     -- Signals needed for communication between of Vector lanes and V_CU
-    signal vrf_type_of_access_s   : std_logic_vector(1 downto 0);
+    type lane_type_of_access is array(0 to NUM_OF_LANES - 1) of std_logic_vector(1 downto 0);
+    signal lane_type_of_access_s: lane_type_of_access;
+    signal vrf_type_of_access_s: std_logic_vector(1 downto 0);
+    signal lane_done_s: std_logic_vector(NUM_OF_LANES - 1 downto 0);
+
+    
     signal alu_op_s               : std_logic_vector(4 downto 0);
     signal mem_to_vrf_s           : std_logic_vector(1 downto 0);
     signal V_CU_store_fifo_we_s   : std_logic;
@@ -138,7 +143,8 @@ begin
 
     -- All vector lanes must set ready to one, because that indicates
     -- that all vector lanes finished with execution of received instruction
-    ready_s <= '1' when combined_lanes_ready_s = std_logic_vector(to_unsigned(2**(NUM_OF_LANES) - 1, NUM_OF_LANES)) else '0';
+    --ready_s <= '1' when combined_lanes_ready_s = std_logic_vector(to_unsigned(2**(NUM_OF_LANES) - 1, NUM_OF_LANES)) else '0';
+    ready_s <= '1' when combined_lanes_ready_s(0) = '1' else '0';
 
     -- This status signal reports to M_CU when vector store instruction has written
     -- elements from VRF into store fifo buffers inside vector lanes
@@ -188,6 +194,7 @@ begin
             M_CU_st_rs2_i      => M_CU_st_rs2_s,
             M_CU_st_vl_i       => M_CU_st_vl_s,
             M_CU_store_valid_i => M_CU_store_valid_s,
+            store_fifos_empty_i => store_fifo_empty_s,
             scalar_load_req_i  => scalar_load_req_i,
             scalar_store_req_i => scalar_store_req_i,
             scalar_address_i   => scalar_address_i,
@@ -258,6 +265,44 @@ begin
             end if;
         end loop;
     end process;
+
+    -- This logic hepls with sinchronization. If any lane finishes before lane0
+    -- it should stop updating VRF. This is neccesary because V_CU will
+    -- continue generating control signals 
+    process (clk)is
+    begin
+        if (rising_edge(clk))then
+            for i in 0 to NUM_OF_LANES - 1 loop                            
+                if (i /= 0 ) then
+                    if (reset = '0') then
+                        lane_done_s(i) <= '0';
+                    else
+                        if (not(combined_lanes_ready_s(0)) = '1' and combined_lanes_ready_s(i) = '1' ) then
+                            lane_done_s(i) <= '1';
+                        else
+                            lane_done_s(i)<= '0';
+                        end if;
+                    end if;
+                end if;
+            end loop;
+        end if;        
+    end process;
+
+    process (lane_done_s, vrf_type_of_access_s) is
+    begin
+        for i in 0 to NUM_OF_LANES - 1 loop
+            if (i /= 0) then
+                if (lane_done_s(i) = '0') then
+                    lane_type_of_access_s(i) <= vrf_type_of_access_s;
+                else
+                    lane_type_of_access_s(i) <= (others => '1');
+                end if;
+            else
+                lane_type_of_access_s(0) <= vrf_type_of_access_s;
+            end if;
+        end loop;
+    end process;
+    
     
     gen_vector_lanes : for i in 0 to NUM_OF_LANES - 1 generate
         vector_lane_1 : entity work.vector_lane
@@ -280,7 +325,7 @@ begin
                 alu_op_i             => alu_op_s,
                 mem_to_vrf_i         => mem_to_vrf_s,
                 store_fifo_we_i      => V_CU_store_fifo_we_s,
-                vrf_type_of_access_i => vrf_type_of_access_s,
+                vrf_type_of_access_i => lane_type_of_access_s(i),
                 alu_src_a_i          => alu_src_a_s,
                 type_of_masking_i    => type_of_masking_s,
                 vs1_addr_src_i       => vs1_addr_src_s,

@@ -46,17 +46,17 @@ architecture behavioral of vector_control_path is
 begin
 
     -- Sequential logig
-    process (clk) is
-    begin
-        if (rising_edge(clk))then
-            if (reset = '0') then
-                store_fifo_we_o <= '0';
-            else
-                store_fifo_we_o <= store_fifo_we_s;
-            end if;
-        end if;
-    end process;
-    
+    -- process (clk) is
+    -- begin
+    --     if (rising_edge(clk))then
+    --         if (reset = '0') then
+    --             store_fifo_we_o <= '0';
+    --         else
+    --             
+    --         end if;
+    --     end if;
+    -- end process;
+    store_fifo_we_o <= store_fifo_we_s;
     -- Combinational logic
     control_dec : process (opcode_i, funct6_i, OPMVV_instr_check_s, vm_i) is
     begin        

@@ -155,7 +155,7 @@ begin
     begin
         if (rising_edge(clk))then
             if (reset = '0') then
-                vl_reg_s <= std_logic_vector(to_unsigned(32, clogb2(VECTOR_LENGTH * 8) + 1));
+                vl_reg_s <= std_logic_vector(to_unsigned(17, clogb2(VECTOR_LENGTH * 8) + 1));
                 vmul_reg_s <= "00";
             else
                 if (vector_instr_check_s = "01" and vector_instruction_i (14 downto  12) = "111") then
@@ -241,7 +241,7 @@ begin
     --Logic that generates valid signal to indicate that the data sent to M_CU
     --is valid.
     M_CU_load_valid_o <= ld_from_fifo_is_valid_s;
-
+    
     -- this here checks if all stores have executed and stored the data from VRF
     -- to memory. This is necessary to check because no load should execute
     -- until all storess have finished. In this manner data dependecy is avoided
@@ -352,7 +352,8 @@ begin
     st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and stall_reg_s = '0' else '0';
 
     --logic for generating read enable signals for store fifos
-    st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
+    --st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
+    st_instr_fifo_re_s <= not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
 
     --logic for generating valid signal to signalaze that valid data has been
     --read from fifo.
