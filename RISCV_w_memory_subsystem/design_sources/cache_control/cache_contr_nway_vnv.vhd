@@ -235,6 +235,9 @@ architecture Behavioral of cache_contr_nway_vnv is
 
 	signal lvl2_invalid_found_s : std_logic;
 	signal lvl2_ordinary_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_victim_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_nextv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_vnv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 
 
 
@@ -274,7 +277,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	-- (-2) because 4 bytes are written at once, 32 bit bus - 4 bytes
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	signal mc_counter_reg, mc_counter_incr, mc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
-	signal evictor_reg, evictor_next, evictor_plus1, evictor_plus2, evictor_sel: std_logic_vector(LVL2C_ASSOC_LOG2-1 downto 0);
+	signal evictor_reg, evictor_next, evictor_rotr1, evictor_rotr2, evictor_rotr3, evictor_sel: std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0);
 	
 	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
 	constant COUNTER_MIN : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'0');
@@ -343,7 +346,7 @@ begin
 	-- lvl2 tag store, for LVL1
 	--addra_lvl2_tag_s <= lvl2a_c_idx_s; -- TODO set either data or instruction cache address in FSM  (the one that missed)
 
-	extract_ts_fields: process (dreada_lvl2_tag_s) is
+	extract_ts_fields: process (dreada_lvl2_tag_s,dreadb_lvl2_tag_s) is
 	begin
 		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
 			-- PORT A
@@ -405,22 +408,52 @@ begin
 	-- Adder for counters 
 	cc_counter_incr <= std_logic_vector(unsigned(cc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
 	mc_counter_incr <= std_logic_vector(unsigned(mc_counter_reg) + to_unsigned(1,BLOCK_ADDR_WIDTH-2));
-	
-	evictor_plus1 <= std_logic_vector(unsigned(evictor_reg) + to_unsigned(1,LVL2C_ASSOC_LOG2));
-	evictor_plus2 <= std_logic_vector(unsigned(evictor_reg) + to_unsigned(2,LVL2C_ASSOC_LOG2));
-	evictor_logic: process(evictor_reg, evictor_plus1, lvl2_victim_index, lvl2_nextv_index) is -- TODO please replace this garbage with better solution
+
+	evictor_rotr1 <= std_logic_vector(rotate_right(unsigned(evictor_reg), 1));
+	evictor_rotr2 <= std_logic_vector(rotate_right(unsigned(evictor_reg), 2));
+	evictor_rotr3 <= std_logic_vector(rotate_right(unsigned(evictor_reg), 3));
+
+	evictor_logic: process(lvl2_vnv_map, evictor_rotr1, evictor_rotr2, evictor_rotr3, lvl2_victim_index, lvl2_nextv_index) is 
+	-- TODO please replace this garbage with better solution, NOTE updated to even worse trash
 	begin
-		if (evictor_reg /= std_logic_vector(to_unsigned(lvl2_victim_index,LVL2C_ASSOC_LOG2)) and
-		  	 evictor_reg /= std_logic_vector(to_unsigned(lvl2_nextv_index,LVL2C_ASSOC_LOG2)))then
-			evictor_next <= evictor_reg;
-		elsif (evictor_plus1 /= std_logic_vector(to_unsigned(lvl2_victim_index,LVL2C_ASSOC_LOG2)) and 
-				 evictor_plus1 /= std_logic_vector(to_unsigned(lvl2_nextv_index,LVL2C_ASSOC_LOG2)))then
-			evictor_next <= evictor_plus1;
-		else
-			evictor_next <= evictor_plus2;
+		if ((evictor_rotr1 and lvl2_vnv_map) = std_logic_vector(to_unsigned(0,LVL2C_ASSOCIATIVITY))) then
+			evictor_next <= evictor_rotr1;
+		elsif ((evictor_rotr2 and lvl2_vnv_map) = std_logic_vector(to_unsigned(0,LVL2C_ASSOCIATIVITY))) then
+			evictor_next <= evictor_rotr2;
+		else 
+			evictor_next <= evictor_rotr3;
 		end if;
+		--if (evictor_rotr1 /= std_logic_vector(to_unsigned(lvl2_victim_index,LVL2C_ASSOC_LOG2)) and
+		  	 --evictor_rotr1 /= std_logic_vector(to_unsigned(lvl2_nextv_index,LVL2C_ASSOC_LOG2)))then
+			--evictor_next <= evictor_reg;
+		--elsif (evictor_rotr1 /= std_logic_vector(to_unsigned(lvl2_victim_index,LVL2C_ASSOC_LOG2)) and 
+				 --evictor_rotr1 /= std_logic_vector(to_unsigned(lvl2_nextv_index,LVL2C_ASSOC_LOG2)))then
+			--evictor_next <= evictor_rotr1;
+		--else
+			--evictor_next <= evictor_rotr2;
+		--end if;
 	end process;
-	lvl2_rando_index <= to_integer(unsigned(evictor_next));
+	
+	extract_vnv_map: process (lvl2a_ts_bkk_s) is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			lvl2_nextv_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV);
+            lvl2_victim_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_VICTIM);
+		end loop;
+	end process;
+	lvl2_vnv_map <= lvl2_victim_map and lvl2_nextv_map;
+
+	pcoder_rando_index: process(evictor_next) is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if (evictor_next(i) = '1') then
+				lvl2_rando_index <= i;
+				exit;
+			else
+				lvl2_rando_index <= 0;
+			end if;
+		end loop;
+	end process;
 
 	pcoder_hit_detect: process(lvl2a_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
 	begin
@@ -454,10 +487,10 @@ begin
 		end loop;
 	end process;
 
-	pcoder_victim_detect: process (lvl2a_ts_ass_s) is
+	pcoder_victim_detect: process (lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2a_ts_ass_s(i)(LVL2C_BKK_VICTIM)= '1') then
+			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
 				--lvl2_victim_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_victim_index <= i;
 				exit;
@@ -468,10 +501,11 @@ begin
 		end loop;
 	end process;
 
-	pcoder_nextv_detect: process (lvl2a_ts_ass_s) is
+	pcoder_nextv_detect: process (lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2a_ts_ass_s(i)(LVL2C_BKK_NEXTV)= '1') then
+			lvl2_nextv_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV);
+			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
 				--lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_nextv_index <= i;
 				exit;
@@ -481,6 +515,9 @@ begin
 			end if;
 		end loop;
 	end process;
+	
+	
+
 
 	-- Sequential logic - regs
 	regs : process(clk)is
@@ -491,7 +528,7 @@ begin
 				cc_counter_reg <= (others => '0');
 				mc_state_reg <= idle;
 				mc_counter_reg <= (others => '0');
-				evictor_reg <= (others => '0');
+				evictor_reg <= std_logic_vector(to_unsigned(1,LVL2C_ASSOCIATIVITY));
 			else
 				cc_state_reg <= cc_state_next;
 				cc_counter_reg <=  cc_counter_next;
@@ -519,7 +556,9 @@ begin
 		we_data_i, dwrite_data_i, dreada_data_cache_s, lvl1i_c_hit_s, lvl2ia_c_addr_s, lvl2a_c_hit_s,
 		lvl1d_c_hit_s, lvl1da_ts_bkk_s, lvl2da_c_idx_s, cc_counter_reg, cc_counter_incr, lvl2ia_c_idx_s, 
 		lvl2ia_c_tag_s, lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,
-		lvl1d_c_tag_s,lvl2a_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s, invalidate_lvl1d_s, invalidate_lvl1i_s, flush_lvl1d_s, lvl2il_c_idx_s ) is
+		lvl1d_c_tag_s,lvl2a_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s, invalidate_lvl1d_s, invalidate_lvl1i_s, flush_lvl1d_s, lvl2il_c_idx_s,
+		lvl2_hit_index, lvl2a_ts_ass_s, lvl1ia_ts_tag_s, lvl2dl_c_idx_s, lvl2dl_c_tag_s,
+		lvl2_nextv_index, lvl2_victim_index, lvl2_rando_index, lvl2_dirty_index) is
 	begin
 		check_lvl2_s <= '0';
 		lvl1_valid_s <= '1';
@@ -819,7 +858,9 @@ begin
 	end process;
 
 	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, lvl2a_c_idx_s, lvl2a_c_tag_s,
-									 lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i, lvl2a_ts_tag_s, check_lvl2_s, flush_lvl1d_s) is
+									 lvl2a_c_hit_s, lvl2a_ts_bkk_s, dreada_lvl2_cache_s, dread_phy_i, lvl2a_ts_tag_s,
+									 check_lvl2_s, flush_lvl1d_s, lvl2b_ts_tag_s, dreadb_lvl2_cache_s, lvl2b_ts_ass_s,
+									 lvl2_victim_index, lvl2_nextv_index, lvl2_rando_index) is
 	begin
 		-- for FSM
 		mc_state_next <= idle;
@@ -1104,7 +1145,7 @@ begin
 
 	level_2_tag_store: entity work.ram_tdp_rf(rtl)
 		generic map (
-			 RAM_WIDTH => LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH,
+			 RAM_WIDTH => LVL2C_TAG_WIDTH + LVL2C_BKK_WIDTH + LVL2C_NWAY_BKK_WIDTH,
 			 RAM_DEPTH => LVL2C_NB_BLOCKS
 		)
 		port map(
