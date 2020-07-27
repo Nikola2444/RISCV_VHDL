@@ -101,7 +101,7 @@ begin
          if (reset = '0')then
             pc_reg_if_s <= (others => '0');
          elsif (pc_en_i = '1' and instr_ready_i = '1' and data_ready_i = '1') then
-					pc_reg_if_s <= pc_next_if_s;
+				pc_reg_if_s <= pc_next_if_s;
          end if;
       end if;
    end process;

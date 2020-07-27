@@ -413,7 +413,7 @@ begin
 	evictor_rotr2 <= std_logic_vector(rotate_right(unsigned(evictor_reg), 2));
 	evictor_rotr3 <= std_logic_vector(rotate_right(unsigned(evictor_reg), 3));
 
-	evictor_logic: process(lvl2_vnv_map, evictor_rotr1, evictor_rotr2, evictor_rotr3, lvl2_victim_index, lvl2_nextv_index) is 
+	evictor_logic: process(lvl2_vnv_map, evictor_rotr1, evictor_rotr2, evictor_rotr3) is 
 	-- TODO please replace this garbage with better solution, NOTE updated to even worse trash
 	begin
 		if ((evictor_rotr1 and lvl2_vnv_map) = std_logic_vector(to_unsigned(0,LVL2C_ASSOCIATIVITY))) then
@@ -434,19 +434,20 @@ begin
 		--end if;
 	end process;
 	
-	extract_vnv_map: process (lvl2a_ts_bkk_s) is
+	extract_vnv_map: process (lvl2a_ts_ass_s) is
 	begin
-		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			lvl2_nextv_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV);
-            lvl2_victim_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_VICTIM);
+		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
+		    lvl2_victim_map(i) <= lvl2a_ts_ass_s(i)(LVL2C_BKK_VICTIM);
+			lvl2_nextv_map(i)  <= lvl2a_ts_ass_s(i)(LVL2C_BKK_NEXTV);
 		end loop;
 	end process;
-	lvl2_vnv_map <= lvl2_victim_map and lvl2_nextv_map;
+	
+	lvl2_vnv_map <= (lvl2_victim_map and lvl2_nextv_map);
 
-	pcoder_rando_index: process(evictor_next) is
+	pcoder_rando_index: process(evictor_reg) is -- Check if this is ok or evictor_next is needed
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (evictor_next(i) = '1') then
+			if (evictor_reg(i) = '1') then
 				lvl2_rando_index <= i;
 				exit;
 			else
@@ -487,10 +488,10 @@ begin
 		end loop;
 	end process;
 
-	pcoder_victim_detect: process (lvl2a_ts_bkk_s) is
+	pcoder_victim_detect: process (lvl2a_ts_ass_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VICTIM)= '1') then
+			if (lvl2a_ts_ass_s(i)(LVL2C_BKK_VICTIM)= '1') then
 				--lvl2_victim_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_victim_index <= i;
 				exit;
@@ -501,10 +502,9 @@ begin
 		end loop;
 	end process;
 
-	pcoder_nextv_detect: process (lvl2a_ts_bkk_s) is
+	pcoder_nextv_detect: process (lvl2a_ts_ass_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			lvl2_nextv_map(i)<= lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV);
 			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
 				--lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_nextv_index <= i;

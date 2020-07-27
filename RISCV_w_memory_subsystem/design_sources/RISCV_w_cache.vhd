@@ -80,7 +80,7 @@ begin
 	addr_instr_cache_s <= addr_instr_cache_32_s((PHY_ADDR_WIDTH-1) downto 0);
 
 	--********** Cache controller **************
-	cc_nway: entity work.cache_contr_nway_vnv(behavioral)
+	cc_nway: entity work.cache_contr_dm(behavioral)
 		generic map (
 			BLOCK_SIZE => BLOCK_SIZE,
 			LVL1_CACHE_SIZE => LVL1_CACHE_SIZE,
