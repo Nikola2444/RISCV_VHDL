@@ -134,7 +134,7 @@ begin
                 if (M_CU_load_done_s = '1') then
                     loads_written_cnt <= std_logic_vector( unsigned(loads_written_cnt) + to_unsigned(1, 5));
                 end if;
-                if (ready_reg = '1' and vector_instr_to_V_CU_s = "0000111") then
+                if (ready_reg = '1' and vector_instr_to_V_CU_s(6 downto 0) = "0000111") then
                     loads_read_cnt <= std_logic_vector( unsigned(loads_read_cnt) + to_unsigned(1, 5));
                 end if;                
             end if;

@@ -97,7 +97,7 @@ architecture beh of arbiter is
     -- Interconnections necessary for fifos that store rs1, rs2, vl, vmul when
     -- STORE instructions arive
     ----------------------------------------------------------------------------------------------------------------------   
-    signal stall_reg_s: std_logic;
+    signal dependency_check_reg: std_logic;
     -- rs1_rs2 and vmul_vl fifo enable signals
     signal st_instr_fifo_re_s : std_logic;
     signal st_instr_fifo_we_s : std_logic;
@@ -245,7 +245,7 @@ begin
     -- this here checks if all stores have executed and stored the data from VRF
     -- to memory. This is necessary to check because no load should execute
     -- until all storess have finished. In this manner data dependecy is avoided
-    all_stores_executed_s <= rs1_rs2_st_fifo_empty_s and store_fifo_empty_i;
+    all_stores_executed_s <= not(M_CU_store_valid_s)  and store_fifo_empty_i;
     
     process (rs1_rs2_ld_fifo_empty_s, vector_instr_check_s, ld_instr_fifo_re_s, clk, rdy_for_load_i, rs1_rs2_ld_fifo_empty_s, all_stores_executed_s) is
     begin      
@@ -342,15 +342,19 @@ begin
     begin
         if (rising_edge(clk))then
             if (reset = '0')then
-                stall_reg_s <= '0';
+                dependency_check_reg <= '0';
             else
-                stall_reg_s <= vector_stall_s;
+                dependency_check_reg <= dependency_check_s;
             end if;
         end if;
     end process;
     --logic for generating write enable signals for store fifos
-    st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and stall_reg_s = '0' else '0';
 
+    
+    st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and vector_stall_s = '0' else
+                          '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and dependency_check_reg = '1' else
+                          '0';
+    
     --logic for generating read enable signals for store fifos
     --st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
     st_instr_fifo_re_s <= not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
@@ -449,7 +453,7 @@ begin
 ---------------------------------------------------------------------------------------------------------------------------------
     
     --logic that checks if V_CU is ready to execute load instruction
-    V_CU_rdy_for_load_s <= dependency_check_s and ready_i and not(load_fifo_empty_i);
+    V_CU_rdy_for_load_s <= dependency_check_s and ready_i and not(load_fifo_empty_i) and all_stores_executed_s;
     -- comparison_o register write en
     process (clk)is
     begin
