@@ -41,8 +41,8 @@ architecture Behavioral of RISCV_w_cache is
 		signal dwrite_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0);
 		signal dread_data_cache_s : std_logic_vector(LVL1C_NUM_COL*LVL1C_COL_WIDTH-1 downto 0); 
 		signal we_data_cache_s : std_logic_vector(LVL1C_NUM_COL-1 downto 0);
-		signal en_data_cache_s : std_logic; 
-		signal rst_data_cache_s : std_logic; 
+		signal en_data_cache_s : std_logic;
+		signal rst_data_cache_s : std_logic;
 		signal re_data_cache_s : std_logic; 
 
 		-- NOTE Just for test bench, to simulate real memory
@@ -80,7 +80,7 @@ begin
 	addr_instr_cache_s <= addr_instr_cache_32_s((PHY_ADDR_WIDTH-1) downto 0);
 
 	--********** Cache controller **************
-	cc_nway: entity work.cache_contr_dm(behavioral)
+	cc_nway: entity work.cache_contr_nway_vnv(behavioral)
 		generic map (
 			BLOCK_SIZE => BLOCK_SIZE,
 			LVL1_CACHE_SIZE => LVL1_CACHE_SIZE,

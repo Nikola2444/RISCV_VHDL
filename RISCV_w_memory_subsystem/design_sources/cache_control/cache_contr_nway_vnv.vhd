@@ -234,7 +234,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	signal lvl2_rando_index : integer;
 
 	signal lvl2_invalid_found_s : std_logic;
-	signal lvl2_ordinary_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	--signal lvl2_ordinary_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 	signal lvl2_victim_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 	signal lvl2_nextv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 	signal lvl2_vnv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
@@ -277,7 +277,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	-- (-2) because 4 bytes are written at once, 32 bit bus - 4 bytes
 	signal cc_counter_reg, cc_counter_incr, cc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
 	signal mc_counter_reg, mc_counter_incr, mc_counter_next: std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0);
-	signal evictor_reg, evictor_next, evictor_rotr1, evictor_rotr2, evictor_rotr3, evictor_sel: std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0);
+	signal evictor_reg, evictor_next, evictor_rotr1, evictor_rotr2, evictor_rotr3 : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0);
 	
 	constant COUNTER_MAX : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'1');
 	constant COUNTER_MIN : std_logic_vector(BLOCK_ADDR_WIDTH-3 downto 0) := (others =>'0');
@@ -442,7 +442,7 @@ begin
 		end loop;
 	end process;
 	
-	lvl2_vnv_map <= (lvl2_victim_map and lvl2_nextv_map);
+	lvl2_vnv_map <= (lvl2_victim_map or lvl2_nextv_map);
 
 	pcoder_rando_index: process(evictor_reg) is -- Check if this is ok or evictor_next is needed
 	begin
@@ -634,7 +634,7 @@ begin
 				elsif (flush_lvl1d_s = '1') then
 					cc_state_next <= flush_depandant_data;
 				else
-					if(lvl2a_ts_bkk_s(LVL2C_BKK_DATA) = '1')then
+					if(invalidate_lvl1d_s = '1')then
 						addra_data_tag_s <= lvl1i_c_idx_s;
 						dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
 						wea_data_tag_s <= '1';
@@ -775,8 +775,8 @@ begin
 				-- NOTE depending on mc fsm, see if this is needed or not
 				-- NOTE this is needed because fetching in cc and mc are overlapped
 				addra_lvl2_tag_s <= lvl2dl_c_idx_s;
-				lvl2a_c_tag_s <= lvl2dl_c_tag_s;
-				lvl2a_c_idx_s <= lvl2dl_c_idx_s;
+				--lvl2a_c_tag_s <= lvl2dl_c_tag_s;
+				--lvl2a_c_idx_s <= lvl2dl_c_idx_s;
 
 				dwritea_lvl2_cache_s(lvl2_dirty_index) <= dreada_data_cache_s;
 				wea_lvl2_cache_s(lvl2_dirty_index)<= "1111";
@@ -870,9 +870,9 @@ begin
 		end case;
 	end process;
 
-	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, 
+	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, dread_phy_i,
 									lvl2a_c_idx_s, lvl2a_c_tag_s, lvl2a_c_hit_s, lvl2a_ts_bkk_s, lvl2a_ts_tag_s,
-									dread_phy_i, check_lvl2_s, lvl2b_ts_tag_s, dreadb_lvl2_cache_s, lvl2b_ts_nbkk_s,
+									check_lvl2_s, lvl2b_ts_tag_s, lvl2b_ts_bkk_s, dreadb_lvl2_cache_s, lvl2b_ts_nbkk_s,
 									lvl2_victim_index, lvl2_nextv_index, lvl2_rando_index) is
 	begin
 		-- for FSM
