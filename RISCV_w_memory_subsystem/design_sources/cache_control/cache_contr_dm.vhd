@@ -364,9 +364,6 @@ begin
 		end if;
 	end process;
 
-	-- TODO everything below this magical line is hot garbage and needs to be double checked and/or reworked ***************************************
-
-
 	-- TODO check this: if processor never writes to instr cache, it doesn't need dirty bit
 	-- TODO second to that, level2 cache can leasurly be simple dual port RAM 
 	-- TODO as one port will never change the contents of lvl2 Cache
@@ -374,14 +371,11 @@ begin
 	-- TODO if this somehow saves logic in end product remove it
 	-- FSM that controls communication between lvl1 instruction cache and lvl2 shared cache
 
-	--lvl1_valid_s <= '1'; --not (invalidate_lvl1d_s or flush_lvl1d_s); TODO CHECK IF NOT NEEDED???
-
-	-- TODO burn down this entire FSM and start again, try to remove data/instruction ready signals out of it if you can
 	fsm_cache : process(cc_state_reg, lvl1i_c_addr_s, lvl1d_c_addr_s, lvl2ia_c_tag_s, dreada_instr_cache_s, lvl1i_c_tag_s,
 		we_data_i, dwrite_data_i, dreada_data_cache_s, lvl1i_c_hit_s, lvl2ia_c_addr_s, lvl2a_c_hit_s,
 		lvl1d_c_hit_s, lvl1da_ts_bkk_s, lvl2da_c_idx_s, cc_counter_reg, cc_counter_incr, lvl2ia_c_idx_s, 
 		lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,
-		lvl1d_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s, invalidate_lvl1d_s, invalidate_lvl1i_s,  flush_lvl1d_s,  -- NOTE TEST
+		lvl1d_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s, flush_lvl1d_s, invalidate_lvl1d_s, invalidate_lvl1i_s, -- NOTE 
 		lvl2il_c_idx_s, lvl2a_ts_bkk_s, lvl1ia_ts_tag_s, lvl2dl_c_idx_s, lvl2dl_c_tag_s) is
 	begin
 		check_lvl2_s <= '0';
@@ -458,28 +452,28 @@ begin
 				if (lvl2a_c_hit_s = '1') then
 					cc_state_next <= fetch_instr;
 					addra_lvl2_cache_s <= lvl2ia_c_idx_s & cc_counter_reg;
-					addra_lvl2_tag_s <= lvl2il_c_idx_s; -- NOTE TESTING ! UNCOMMENT LATER
+					addra_lvl2_tag_s <= lvl2il_c_idx_s;
 				elsif (flush_lvl1d_s = '1') then
 					cc_state_next <= flush_depandant_data;
 				else
-					if(lvl2a_ts_bkk_s(LVL2C_BKK_DIRTY) = '0')then -- either 00 or 01
+					--if(lvl2a_ts_bkk_s(LVL2C_BKK_DIRTY) = '0')then -- either 00 or 01
 
-						if(lvl2a_ts_bkk_s(LVL2C_BKK_DATA) = '1')then
-							addra_data_tag_s <= lvl1i_c_idx_s; 
-							dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
-							wea_data_tag_s <= '1';
-							lvl1_valid_s <= '0';
-						end if;
-
-						if(lvl2a_ts_bkk_s(LVL2C_BKK_INSTR) = '1')then
-							--addra_instr_tag_s <= lvl1i_c_idx_s; --  not needed, this is default value
-							dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
-							wea_instr_tag_s <= '1';
-							lvl1_valid_s <= '0';
-						end if;
-
-
+					if(invalidate_lvl1d_s = '1')then
+						addra_data_tag_s <= lvl1i_c_idx_s; 
+						dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
+						wea_data_tag_s <= '1';
+						lvl1_valid_s <= '0';
 					end if;
+
+					if(invalidate_lvl1i_s = '1')then
+						--addra_instr_tag_s <= lvl1i_c_idx_s; --  not needed, this is default value
+						dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
+						wea_instr_tag_s <= '1';
+						lvl1_valid_s <= '0';
+					end if;
+
+
+					--end if;
 
 					cc_state_next <= check_lvl2_instr; -- stay here if lvl2 is not ready
 				end if;
@@ -495,23 +489,23 @@ begin
 					addra_lvl2_tag_s <= lvl2dl_c_idx_s; 
 					addra_lvl2_cache_s <= lvl2da_c_idx_s & cc_counter_reg;
 				else
-					if(lvl2a_ts_bkk_s(LVL2C_BKK_DIRTY) = '0')then -- either 00 or 01
+					--if(lvl2a_ts_bkk_s(LVL2C_BKK_DIRTY) = '0')then -- either 00 or 01
 
-						if(lvl2a_ts_bkk_s(LVL2C_BKK_DATA) = '1')then
-							--addra_data_tag_s <= lvl1d_c_idx_s; --  not needed, this is default value
-							dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
-							wea_data_tag_s <= '1';
-							lvl1_valid_s <= '0';
-						end if;
-
-						if(lvl2a_ts_bkk_s(LVL2C_BKK_INSTR) = '1')then
-							addra_instr_tag_s <= lvl1d_c_idx_s;
-							dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
-							wea_instr_tag_s <= '1';
-							lvl1_valid_s <= '0';
-						end if;
-
+					if(invalidate_lvl1d_s = '1')then
+						--addra_data_tag_s <= lvl1d_c_idx_s; --  not needed, this is default value
+						dwritea_data_tag_s <= "00" & lvl1da_ts_tag_s; 
+						wea_data_tag_s <= '1';
+						lvl1_valid_s <= '0';
 					end if;
+
+					if(invalidate_lvl1i_s = '1')then
+						addra_instr_tag_s <= lvl1d_c_idx_s;
+						dwritea_instr_tag_s <= "00" & lvl1ia_ts_tag_s; 
+						wea_instr_tag_s <= '1';
+						lvl1_valid_s <= '0';
+					end if;
+
+					--end if;
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
 				end if;
 
@@ -653,9 +647,10 @@ begin
 		end case;
 	end process;
 
-	fsm_inter_proc : process(mc_state_reg, cc_state_reg, mc_counter_reg, mc_counter_incr, 
-									lvl2a_c_idx_s, lvl2a_c_tag_s, lvl2b_ts_tag_s, dread_phy_i,  lvl2b_ts_bkk_s, lvl2a_c_hit_s, 
-							 		lvl2a_ts_bkk_s, check_lvl2_s, dreadb_lvl2_cache_s) is
+	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, 
+									lvl2a_c_idx_s, lvl2a_c_tag_s, lvl2a_c_hit_s, lvl2a_ts_bkk_s, 
+									lvl2b_ts_tag_s, dread_phy_i,  lvl2b_ts_bkk_s,
+							 		 check_lvl2_s, dreadb_lvl2_cache_s) is
 	begin
 		-- for FSM
 		mc_state_next <= idle;
@@ -686,18 +681,18 @@ begin
 							flush_lvl1d_s <= '1';
 						when "11" => -- dirty and valid lvl2, flush to physical
 							mc_state_next <= flush; 
+							addrb_lvl2_tag_s <= lvl2a_c_idx_s;
 							addrb_lvl2_cache_s <= lvl2a_c_idx_s & mc_counter_reg;
 						when others =>
 						--when "0-" => -- not initialized / valid but not dirty data -- 01 -> ttim loop -- 00 =>
 							mc_state_next <= fetch;
 							addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_reg & "00";
-							--if (lvl2a_ts_bkk_s(3)='1')then
-								--invalidate_lvl1d_s <= '1';
-							--end if;
-							--if (lvl2a_ts_bkk_s(2)='1')then
-								--invalidate_lvl1i_s <= '1';
-							--end if;
-						--when others =>
+							if (lvl2a_ts_bkk_s(LVL2C_BKK_DATA)='1')then
+								invalidate_lvl1d_s <= '1';
+							end if;
+							if (lvl2a_ts_bkk_s(LVL2C_BKK_INSTR)='1')then
+								invalidate_lvl1i_s <= '1';
+							end if;
 					end case;
 				end if;
 
@@ -750,6 +745,7 @@ begin
 
 		end case;
 	end process;
+
 	--********** LEVEL 1 CACHE  **************
 	-- INSTRUCTION CACHE
 	-- TODO double check this address logic, change if unaligned accesses are implemented
