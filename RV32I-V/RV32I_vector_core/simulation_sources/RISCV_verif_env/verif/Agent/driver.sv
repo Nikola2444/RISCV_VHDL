@@ -128,7 +128,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       vif.vs1_addr_src_i = 1;
 	       vif.vrf_type_of_access_i = 2'b10; // read from VRD
 	       vif.alu_op_i = add_op;	       
-	       vif.store_fifo_we_i <= #99 1'b1; // this way store fifo will be high after one clock cycle
+	       vif.store_fifo_we_i <= 1'b1;
 	   end
 	   default: begin
 	       vif.vrf_type_of_access_i = vrf_no_access;
@@ -139,7 +139,7 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
 	       // Next line need's to be handled better. Two	       
 	       // Clock cycles delay is neccessary after receiveng new
 	       // intruction before setting store_we_i to 0
-	       vif.store_fifo_we_i <= #99 1'b0; 
+	       vif.store_fifo_we_i <= 1'b0; 
 	   end
 	   
        endcase; // case req.vector_instruction_i[31              	          
@@ -164,12 +164,12 @@ class control_if_driver extends uvm_driver#(control_if_seq_item);
        vif.type_of_masking_i = 1'b0;
        vif.mem_to_vrf_i = 2'b00;
        vif.immediate_sign_i = 1'b0;
+       vif.store_fifo_we_i <= 1'b0;
        
        
        // Next line need's to be handled better. One
        // Clock cycles delay is neccessary after receiveng new
        // intruction before setting store_we_i to 0
-       vif.store_fifo_we_i <= #99 1'b0;
 
        
        // Depending on funct3 some instructions may be in OPI group or OPM group, and instructions

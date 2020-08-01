@@ -93,7 +93,11 @@ class control_if_monitor extends uvm_monitor;
 			       end
 			   end
 			   send_store_seq_item: begin
-			       curr_store_item.data_to_mem_o = vif.data_to_mem_o;		       
+			       curr_store_item.data_to_mem_o = vif.data_to_mem_o;
+			       `uvm_info(get_type_name(),
+					 $sformatf("monitor storing: %x", vif.data_to_mem_o),
+					 UVM_HIGH)		      
+			       
 			       store_data_collected_port.write(curr_store_item);
 			       if(!vif.store_fifo_re_i) begin			  
 				   v_lane_store_stages = wait_for_re;

@@ -39,6 +39,8 @@ entity arbiter is
         M_CU_store_valid_o      : out std_logic;
         -- outputs      
         vector_stall_o         : out std_logic;
+        all_v_stores_executed_o:out std_logic;
+        all_v_loads_executed_o:out std_logic;
         -- V_CU interface
         rs1_to_V_CU_i                   : out std_logic_vector(31 downto 0);
         vmul_to_V_CU_o: out std_logic_vector(1 downto 0);
@@ -52,27 +54,28 @@ end entity;
 
 architecture beh of arbiter is
 
-
+    ----------------------------------------------------------------------------------------------------------------------
+    -- signals necessary for sinchronization  logic 
+    ----------------------------------------------------------------------------------------------------------------------    
+    signal fifo_reset_s       : std_logic;
+    
+    ----------------------------------------------------------------------------------------------------------------------
+    -- Constants and signals necessary for instruction DECODE logic
+    ----------------------------------------------------------------------------------------------------------------------
     constant vector_store_c : std_logic_vector(6 downto 0) := "0100111";
     constant vector_load_c  : std_logic_vector(6 downto 0) := "0000111";
-    constant vector_arith_c : std_logic_vector(6 downto 0) := "1010111";
-
-    alias vector_instr_opcode_a : std_logic_vector (6 downto 0) is vector_instruction_i(6 downto 0);
-    alias vs1_i: std_logic_vector(4 downto 0) is vector_instruction_i(24 downto 20);
-    alias vs2_i: std_logic_vector(4 downto 0) is vector_instruction_i(19 downto 15);
-    alias vs3_i: std_logic_vector(4 downto 0) is vector_instruction_i(11 downto 7);
+    constant vector_arith_c : std_logic_vector(6 downto 0) := "1010111";    
+    alias vector_instr_opcode_a : std_logic_vector (6 downto 0) is vector_instruction_i(6 downto 0);    
     alias mop_i: std_logic_vector (1 downto 0) is vector_instruction_i(27 downto 26);
-    signal opcode_s             : std_logic_vector (6 downto 0);
+    
     signal vector_instr_check_s : std_logic_vector(1 downto 0);
     signal vector_stall_s: std_logic;
-    signal inverted_ld_re_s: std_logic;
-
     signal vector_instr_to_V_CU_s:std_logic_vector(31 downto 0);
     
-    signal fifo_reset_s       : std_logic;
-    -------------------------------------------------------------------------------------------------------------------------------------
+    
+    ----------------------------------------------------------------------------------------------------------------------
     -- Interconnections necessary for fifos that store rs1, rs2, vl, vmul when
-    -- LOAD instructions arive
+    -- vector LOAD instructions arives
     ----------------------------------------------------------------------------------------------------------------------
     signal all_stores_executed_s: std_logic;
     -- rs1_rs2 and vmul_vl fifo enable signals
@@ -83,8 +86,7 @@ architecture beh of arbiter is
     signal rs1_rs2_ld_fifo_full_s  : std_logic;
     signal rs1_rs2_ld_fifo_i_s     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
     signal rs1_rs2_ld_fifo_o_s     : std_logic_vector(2*DATA_WIDTH - 1 downto 0);
-
-    --vl_ld_fifo interconnectionsa      
+    --vl_ld_fifo interconnections      
     signal vl_ld_fifo_o_s : std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
 
     -- Signals neccessary for load valid signal generation when M_CU tries to
@@ -92,7 +94,7 @@ architecture beh of arbiter is
     signal current_ld_is_valid_s : std_logic;
     signal ld_from_fifo_is_valid_s : std_logic;
     ----------------------------------------------------------------------------------------------------------------------
-
+    
     ----------------------------------------------------------------------------------------------------------------------
     -- Interconnections necessary for fifos that store rs1, rs2, vl, vmul when
     -- STORE instructions arive
@@ -120,7 +122,10 @@ architecture beh of arbiter is
     
     ----------------------------------------------------------------------------------------------------------------------
     -- Signals necessary for resolving dependecies with vector load
-    ----------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------------------------    
+    alias vs1_i: std_logic_vector(4 downto 0) is vector_instruction_i(24 downto 20);
+    alias vs2_i: std_logic_vector(4 downto 0) is vector_instruction_i(19 downto 15);
+    alias vs3_i: std_logic_vector(4 downto 0) is vector_instruction_i(11 downto 7);
     signal V_CU_rdy_for_load_s: std_logic;
     --18 bits are necessary because that's how much vector loads can be
     --stored inside load fifo in vector lanes
@@ -488,8 +493,8 @@ begin
 
     --registers used for storing load instruction so they can be compared to
     --incoming instruction and checked if there is dependecy between them.
-    -- In this code segment 18 registers are created which depending on vector
-    -- instruction check are connected in PIPO format or PISO. Something like a
+    -- In this code segment 18 registers are created and depending on vector
+    -- instruction are connected in PIPO format or PISO. Something like a
     -- fifo buffer, but whose elements can all be read in parallel but only
     -- first written element can be read out.
     process (clk)is
@@ -519,7 +524,7 @@ begin
 
 
     --Code segment bellow generates 18 comparators that check whether or not
-    --there are dependecies between load instructions that have not yet executed
+    --there are dependecies between load instructions that haven't been executed
     --and incoming instructions
     process (comparator_enables_reg, vs1_i, vs2_i, vs3_i, load_dependency_regs, vector_instr_check_s) is
     begin
@@ -542,7 +547,19 @@ begin
             dependency_check_s <= '1';
         end if ;
     end process;   
-    
+---------------------------------------------------------------------------------------------------------------------------------
+    -- Code that handles that checks if all vector stores and loads have been executed    
+---------------------------------------------------------------------------------------------------------------------------------
+    -- all stores have been executed if M_CU is rdy for another ifstore
+    -- fifos inside vector lanes are empty, rs1_rs2 store fifos are empty
+    -- (there are no pending stores) and current instructions is not a vectore
+    -- store
+    all_v_stores_executed_o <= store_fifo_empty_i and rs1_rs2_st_fifo_empty_s and not(vector_instr_check_s(1)) and vector_instr_check_s(0);
+
+    -- all loads have been executed if M_CU is rdy for another load, there is
+    -- no valid data inside rs1_rs2 load fifo and current instruction is not a
+    -- vector load (vector_instr_check_s != "11")
+    all_v_loads_executed_o <= rdy_for_load_i and not(ld_from_fifo_is_valid_s) and not(vector_instr_check_s(1)) and not(vector_instr_check_s(0));
 end architecture;
 
 

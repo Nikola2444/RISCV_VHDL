@@ -7,12 +7,12 @@ use work.custom_functions_pkg.all;
 entity vector_core is
     generic (DATA_WIDTH    : natural := 32;
              VECTOR_LENGTH : natural := 32;  -- num of elements per vector register
-             NUM_OF_LANES  : natural := 2
+             NUM_OF_LANES  : natural := 4
              );
 
     port(clk   : in std_logic;
          reset : in std_logic;
-
+         
          --input data
          instruction_i : in std_logic_vector(31 downto 0);
 
@@ -24,7 +24,10 @@ entity vector_core is
          scalar_load_req_i   : in std_logic;
          scalar_store_req_i  : in std_logic;
          scalar_address_i    : in std_logic_vector(31 downto 0);
-
+         
+         -- Status singlas going to scalar core
+         all_v_stores_executed_o:out std_logic;
+         all_v_loads_executed_o:out std_logic;
          -- Memory interface
          store_address_o : out std_logic_vector(31 downto 0);
          load_address_o  : out std_logic_vector(31 downto 0);
@@ -231,6 +234,8 @@ begin
             M_CU_st_vl_o           => M_CU_st_vl_s,
             M_CU_store_valid_o     => M_CU_store_valid_s,
             vector_stall_o         => vector_stall_o,
+            all_v_stores_executed_o => all_v_stores_executed_o,
+            all_v_loads_executed_o => all_v_loads_executed_o,
             rs1_to_V_CU_i          => rs1_to_V_CU_s,
             vmul_to_V_CU_o         => vmul_to_V_CU_s,
             vl_to_V_CU_o           => vl_to_V_CU_s,
@@ -370,7 +375,8 @@ begin
         end if;
     end process;
 
-    
+    -- One clock cycle is necessary for one element to be extracted from store
+    -- fifo and because of that one clock cycle delay is necessary
     process (store_fifos_en_s, data_to_mem_s)is
     begin
         data_to_mem_o <= data_to_mem_s(0);

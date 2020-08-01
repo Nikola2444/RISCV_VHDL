@@ -104,7 +104,7 @@ architecture structural of vector_lane is
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_exe_time_s                    : std_logic_vector(2 downto 0);
    signal fifo_reset_s                      : std_logic;
-
+   signal load_fifo_re_s: std_logic;
    -- STORE FIFO I/O signals
    signal store_fifo_we_s: std_logic;
    signal ready_reg:std_logic;
@@ -210,6 +210,7 @@ begin
 
    
    fifo_reset_s <= not(reset);
+   load_fifo_re_s <= (load_fifo_re_i and not(ready_s));
    LOAD_FIFO_SYN_inst : FIFO_SYNC_MACRO
       generic map (
          DEVICE              => "7SERIES",  -- Target Device: "VIRTEX5, "VIRTEX6", "7SERIES" 
@@ -229,12 +230,14 @@ begin
          WRERR       => load_fifo_wrerr_o,  -- 1-bit output write error
          CLK         => clk,            -- 1-bit input clock
          DI          => data_from_mem_i,  -- Input data, width defined by DATA_WIDTH parameter
-         RDEN        => (load_fifo_re_i and not(ready_s)),   -- 1-bit input read enable
+         RDEN        => load_fifo_re_s,   -- 1-bit input read enable
          RST         => fifo_reset_s,   -- 1-bit input reset
          WREN        => load_fifo_we_i  -- 1-bit input write enable
          );
 
 
+
+   --- this logic is used to generate we for store fifo.
    process (clk) is
    begin
        if (rising_edge(clk)) then
@@ -242,7 +245,7 @@ begin
                store_fifo_we_s <= '0';
            else               
                store_fifo_we_s <= store_fifo_we_i;
-               if (ready_reg = '1' and store_fifo_we_s = '1') then
+               if (ready_s = '1' and ready_reg = '1' and store_fifo_we_i = '1') then
                    store_fifo_we_s <= '0';
                end if;
            end if;
