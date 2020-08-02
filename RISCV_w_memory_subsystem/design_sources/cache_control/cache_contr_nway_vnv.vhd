@@ -505,7 +505,7 @@ begin
 	pcoder_nextv_detect: process (lvl2a_ts_nbkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
+			if (lvl2a_ts_nbkk_s(i)(LVL2C_BKK_NEXTV)= '1') then
 				--lvl2_nextv_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_nextv_index <= i;
 				exit;
@@ -967,7 +967,7 @@ begin
 
 				addrb_lvl2_tag_s <= lvl2a_c_idx_s;
 				if(mc_counter_reg = COUNTER_MIN) then  -- because of read first mode
-					dwriteb_lvl2_tag_s(lvl2_victim_index) <=  "10" & "0001" & lvl2a_c_tag_s;
+					dwriteb_lvl2_tag_s(lvl2_victim_index) <= lvl2b_ts_nbkk_s(lvl2_victim_index) & "0001" & lvl2a_c_tag_s;
 					web_lvl2_tag_s(lvl2_victim_index) <= '1';
 				end if;
 
