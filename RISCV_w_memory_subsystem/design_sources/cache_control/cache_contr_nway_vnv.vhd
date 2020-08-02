@@ -628,9 +628,9 @@ begin
 
 				if (lvl2a_c_hit_s = '1') then
 					cc_state_next <= fetch_instr;
-					-- block is going to be removed from lvl1ic
-					addra_lvl2_cache_s(lvl2_hit_index) <= lvl2ia_c_idx_s & cc_counter_reg;
+					--new block coming, previous block is going to be removed from lvl1ic
 					addra_lvl2_tag_s <= lvl2il_c_idx_s;
+					addra_lvl2_cache_s(lvl2_hit_index) <= lvl2ia_c_idx_s & cc_counter_reg;
 				elsif (flush_lvl1d_s = '1') then
 					cc_state_next <= flush_depandant_data;
 				else
@@ -657,6 +657,8 @@ begin
 
 				if (lvl2a_c_hit_s = '1') then
 					cc_state_next <= fetch_data;
+					-- new block coming, previous block is going to be removed from lvl1dc
+					addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 					addra_lvl2_cache_s(lvl2_hit_index) <= lvl2da_c_idx_s & cc_counter_reg;
 				else
 					cc_state_next <= check_lvl2_data; -- stay here if lvl2 is not ready
@@ -692,18 +694,14 @@ begin
 
 				if(cc_counter_reg = COUNTER_MIN)then 
 					-- block is going to be removed from lvl1ic
+					addra_lvl2_tag_s <= lvl2il_c_idx_s;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
 						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) and "1011") & lvl2a_ts_tag_s(lvl2_hit_index);
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
-					addra_lvl2_tag_s <= lvl2il_c_idx_s;
 				end if;
 
 				if(cc_counter_reg = COUNTER_MAX)then 
 					cc_state_next <= update_instr_ts;
-					-- block is in lvl1 instr
-					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
-						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "0100") & lvl2a_ts_tag_s(lvl2_hit_index); 
-					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				else
 					cc_state_next <= fetch_instr;
 				end if;
@@ -725,7 +723,7 @@ begin
 				lvl2a_c_idx_s <= lvl2da_c_idx_s;
 
 				if(cc_counter_reg = COUNTER_MIN)then 
-					-- block is going to be removed from lvl1ic
+					-- block is going to be removed from lvl1dc
 					addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <=  
 						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) and "0111") & lvl2a_ts_tag_s(lvl2_hit_index);
@@ -803,26 +801,32 @@ begin
 
 				case lvl2a_ts_nbkk_s(lvl2_hit_index) is
 				when "00" => -- hit to ordinary block : V/NV stay the same
+					-- V/NV stays the same; set INSTR bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
-						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
+						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "0100") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				when "01" => -- hit to next victim block : NV -> O, rand O -> NV
+					-- Hit NV becomes ordinary; set INSTR bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
-						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
+						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "0100") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
+					-- Random ordinary becomes NV;
 					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
 						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
 					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
 				when others => -- hit to victim block : V -> O, NV -> V, rand O -> NV
+					-- Hit V becomes ordinary; set INSTR bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
-						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
+						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "0100") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
-					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
-						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
-					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
+					-- NV becomes V
 					dwritea_lvl2_tag_s(lvl2_nextv_index) <= 
 						"10" & lvl2a_ts_bkk_s(lvl2_nextv_index) & lvl2a_ts_tag_s(lvl2_nextv_index); 
 					wea_lvl2_tag_s(lvl2_nextv_index) <= '1';
+					-- Random ordinary becomes NV;
+					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
+						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
+					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
 				end case;
 
 				cc_state_next <= idle;
@@ -839,26 +843,32 @@ begin
 				-- update tag stores on lvl2 cache
 				case lvl2a_ts_nbkk_s(lvl2_hit_index) is
 				when "00" => -- hit to ordinary block : V/NV stay the same
+					-- V/NV stays the same; set DATA bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
 						lvl2a_ts_nbkk_s(lvl2_hit_index) & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				when "01" => -- hit to next victim block : NV -> O, rand O -> NV
+					-- Hit NV becomes ordinary; set DATA bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
 						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
+					-- Random ordinary becomes NV;
 					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
 						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
 					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
 				when others => -- hit to victim block : V -> O, NV -> V, rand O -> NV
+					-- Hit V becomes ordinary; set DATA bit;
 					dwritea_lvl2_tag_s(lvl2_hit_index) <= 
 						"00" & (lvl2a_ts_bkk_s(lvl2_hit_index) or "1000") & lvl2a_ts_tag_s(lvl2_hit_index); 
 					wea_lvl2_tag_s(lvl2_hit_index) <= '1';
-					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
-						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
-					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
+					-- NV becomes V
 					dwritea_lvl2_tag_s(lvl2_nextv_index) <= 
 						"10" & lvl2a_ts_bkk_s(lvl2_nextv_index) & lvl2a_ts_tag_s(lvl2_nextv_index); 
 					wea_lvl2_tag_s(lvl2_nextv_index) <= '1';
+					-- Random ordinary becomes NV;
+					dwritea_lvl2_tag_s(lvl2_rando_index) <= 
+						"01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
+					wea_lvl2_tag_s(lvl2_rando_index) <= '1';
 				end case;
 
 				cc_state_next <= idle;
@@ -910,6 +920,7 @@ begin
 							addrb_lvl2_cache_s(lvl2_victim_index) <= lvl2a_c_idx_s & mc_counter_reg;
 						when others => -- not initialized / valid but not dirty data
 							mc_state_next <= fetch;
+							addrb_lvl2_tag_s <= lvl2a_c_idx_s;
 							addr_phy_o <= lvl2a_c_tag_s & lvl2a_c_idx_s & mc_counter_reg & "00";
 							-- when evicting block, invalidate if block is in lvl1 data cache
 							if (lvl2a_ts_bkk_s(lvl2_victim_index)(LVL2C_BKK_DATA)='1')then 
@@ -956,19 +967,21 @@ begin
 
 				addrb_lvl2_tag_s <= lvl2a_c_idx_s;
 				if(mc_counter_reg = COUNTER_MIN) then  -- because of read first mode
-					dwriteb_lvl2_tag_s(lvl2_victim_index) <=  "00" & "0001" & lvl2a_c_tag_s; 
+					dwriteb_lvl2_tag_s(lvl2_victim_index) <=  "10" & "0001" & lvl2a_c_tag_s;
 					web_lvl2_tag_s(lvl2_victim_index) <= '1';
-					-- nextvictim becomes victim
-					dwriteb_lvl2_tag_s(lvl2_nextv_index) <=  "10" & lvl2a_ts_bkk_s(lvl2_nextv_index) & lvl2a_ts_tag_s(lvl2_nextv_index); 
-					web_lvl2_tag_s(lvl2_nextv_index) <= '1';
-					-- random ordinary block becomes nextvictim
-					dwriteb_lvl2_tag_s(lvl2_rando_index) <=  "01" & lvl2a_ts_bkk_s(lvl2_rando_index) & lvl2a_ts_tag_s(lvl2_rando_index); 
-					web_lvl2_tag_s(lvl2_rando_index) <= '1';
 				end if;
 
 				if(mc_counter_reg = COUNTER_MAX)then 
 					mc_state_next <= idle;
-						-- write new tag to tag store, set valid, reset dirty
+					-- victim becomes ordinary block
+					dwriteb_lvl2_tag_s(lvl2_victim_index) <= "00" & lvl2b_ts_bkk_s(lvl2_victim_index) & lvl2b_ts_tag_s(lvl2_victim_index); 
+					web_lvl2_tag_s(lvl2_victim_index) <= '1';
+					-- nextvictim becomes victim
+					dwriteb_lvl2_tag_s(lvl2_nextv_index) <=  "10" & lvl2b_ts_bkk_s(lvl2_nextv_index) & lvl2b_ts_tag_s(lvl2_nextv_index); 
+					web_lvl2_tag_s(lvl2_nextv_index) <= '1';
+					-- random ordinary block becomes nextvictim
+					dwriteb_lvl2_tag_s(lvl2_rando_index) <=  "01" & lvl2b_ts_bkk_s(lvl2_rando_index) & lvl2b_ts_tag_s(lvl2_rando_index); 
+					web_lvl2_tag_s(lvl2_rando_index) <= '1';
 				else
 					mc_state_next <= fetch;
 				end if;
