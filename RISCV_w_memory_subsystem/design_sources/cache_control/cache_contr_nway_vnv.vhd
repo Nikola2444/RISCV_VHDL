@@ -234,11 +234,14 @@ architecture Behavioral of cache_contr_nway_vnv is
 	signal lvl2_rando_index : integer;
 
 	signal lvl2_invalid_found_s : std_logic;
-	--signal lvl2_ordinary_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
-	signal lvl2_victim_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
-	signal lvl2_nextv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
-	signal lvl2_vnv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_victim_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0);
+	signal lvl2_nextv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0);
+	signal lvl2_vnv_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); 
 
+	signal lvl2_d4s_valid_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_d4s_dirty_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_d4s_data_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
+	signal lvl2_d4s_instr_map : std_logic_vector(LVL2C_ASSOCIATIVITY-1 downto 0); -- invalid
 
 
 	-- SIGNALS FOR COMPARING TAG VALUES
@@ -268,7 +271,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	signal lvl1_valid_s  : std_logic; -- hit in instruction cache
 
 	-- Cache controler state
-	type cc_state is (idle, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data, flush_depandant_data, update_data_ts, update_instr_ts);
+	type cc_state is (idle, set_dirty, check_lvl2_instr, check_lvl2_data, fetch_instr, fetch_data, flush_data, flush_depandant_data, update_data_ts, update_instr_ts);
 	type mc_state is (idle, flush, fetch); 
 	-- cc -  cache controller fsm
 	signal cc_state_reg, cc_state_next: cc_state;
@@ -434,6 +437,18 @@ begin
 		--end if;
 	end process;
 	
+
+	-- TODO DESIGN FOR SIMULATION, DELETE LATER
+	design_for_simulation_map: process (lvl2a_ts_bkk_s) is 
+	begin
+		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
+		   lvl2_d4s_data_map(i) <= lvl2a_ts_bkk_s(i)(LVL2C_BKK_DATA);
+			lvl2_d4s_instr_map(i)  <= lvl2a_ts_bkk_s(i)(LVL2C_BKK_INSTR);
+		   lvl2_d4s_valid_map(i) <= lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID);
+			lvl2_d4s_dirty_map(i)  <= lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY);
+		end loop;
+	end process;
+
 	extract_vnv_map: process (lvl2a_ts_nbkk_s) is
 	begin
 		for i in 0 to (LVL2C_ASSOCIATIVITY-1) loop
@@ -592,15 +607,13 @@ begin
 				if (data_access_s = '1') then --its only then a data memory access
 					if(lvl1d_c_hit_s = '1') then 
 						if(re_data_i = '0')then -- this means instruction is a write, better to check one bit than 4 bits for we_data_i signal
-							-- set dirty in lvl1d
-							wea_data_tag_s <= '1';
-							dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
-							-- invalidate lvl2
-							addra_lvl2_tag_s <= lvl2da_c_idx_s;
-							wea_lvl2_tag_s(lvl2_hit_index) <= '1';
-							-- dirty but invalid, as the newer data is in data cache
-							dwritea_lvl2_tag_s(lvl2_hit_index) <= 
-								lvl2a_ts_nbkk_s(lvl2_hit_index) & lvl2a_ts_bkk_s(lvl2_hit_index)(3 downto 2) & "10" & lvl2a_ts_tag_s(lvl2_hit_index);
+							if(lvl1da_ts_bkk_s(1) = '0')then --if already dirty, no need to update anything
+								-- set dirty in lvl1d
+								wea_data_tag_s <= '1';
+								dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
+								addra_lvl2_tag_s <= lvl2da_c_idx_s;
+								cc_state_next <= set_dirty;
+							end if;
 						end if;
 					else -- data cache miss
 						addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -619,6 +632,15 @@ begin
 					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 				end if;
 				
+			when set_dirty =>
+				lvl1_valid_s <= '0';
+				cc_state_next <= idle;
+				-- invalidate lvl2
+				addra_lvl2_tag_s <= lvl2da_c_idx_s;
+				wea_lvl2_tag_s(lvl2_hit_index) <= '1';
+				-- dirty but invalid, as the newer data is in data cache
+				dwritea_lvl2_tag_s(lvl2_hit_index) <= 
+					lvl2a_ts_nbkk_s(lvl2_hit_index) & lvl2a_ts_bkk_s(lvl2_hit_index)(3 downto 2) & "10" & lvl2a_ts_tag_s(lvl2_hit_index);
 
 			when check_lvl2_instr => 
 				check_lvl2_s <= '1';
