@@ -12,9 +12,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="718458fs"></ZoomStartTime>
-      <ZoomEndTime time="1056309fs"></ZoomEndTime>
-      <Cursor1Time time="1000000fs"></Cursor1Time>
+      <ZoomStartTime time="4809770fs"></ZoomStartTime>
+      <ZoomEndTime time="4853696fs"></ZoomEndTime>
+      <Cursor1Time time="5372854fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="226"></NameColumnWidth>
@@ -1878,6 +1878,7 @@
       <obj_property name="ObjectShortName">dina[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#00FF7F</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_RISCV_w_cache/RISCV_w_cache_inst/cc_nway/\lvl2_cache_generate(0)\/level_2_cache/wea">
       <obj_property name="ElementShortName">wea[3:0]</obj_property>
@@ -1890,6 +1891,7 @@
       <obj_property name="ObjectShortName">douta[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#00FF7F</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="divider187" type="divider">
       <obj_property name="label">portB</obj_property>

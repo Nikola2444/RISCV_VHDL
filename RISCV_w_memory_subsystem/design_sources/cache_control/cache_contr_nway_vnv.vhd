@@ -228,6 +228,7 @@ architecture Behavioral of cache_contr_nway_vnv is
 	-- TODO Check if i can use integers
 	signal lvl2_hit_index : integer;
 	signal lvl2_dirty_index : integer;
+	signal lvl2_ddirty_index : integer;
 	signal lvl2_invalid_index : integer;
 	signal lvl2_victim_index : integer;
 	signal lvl2_nextv_index : integer;
@@ -487,18 +488,34 @@ begin
 		end loop;
 	end process;
 
-	pcoder_tag_cmp_detect: process(lvl2a_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
+	pcoder_dirty_detect: process(lvl2dl_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
 	begin
 		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-			if ((lvl2a_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' and lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='1') then
+			if ((lvl2dl_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' and lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='1') then
 				--lvl2_dirty_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 				lvl2_dirty_index <= i;
-				lvl2a_c_dirty_s <= '1';
+				--lvl2a_c_dirty_s <= '1';
 				exit;
 			else
 				--lvl2_dirty_index <= (others => '0');
 				lvl2_dirty_index <= 0;
-				lvl2a_c_dirty_s <= '0';
+				--lvl2a_c_dirty_s <= '0';
+			end if;
+		end loop;
+	end process;
+
+	pcoder_depandant_dirty_detect: process(lvl2ia_c_tag_s,lvl2a_ts_tag_s, lvl2a_ts_bkk_s) is
+	begin
+		for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
+			if ((lvl2ia_c_tag_s = lvl2a_ts_tag_s(i)) and lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' and lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='1') then
+				--lvl2_ddirty_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
+				lvl2_ddirty_index <= i;
+				--lvl2a_c_ddirty_s <= '1';
+				exit;
+			else
+				--lvl2_ddirty_index <= (others => '0');
+				lvl2_ddirty_index <= 0;
+				--lvl2a_c_ddirty_s <= '0';
 			end if;
 		end loop;
 	end process;
@@ -565,7 +582,7 @@ begin
 		lvl2a_ts_tag_s, lvl1i_c_idx_s, lvl2da_c_tag_s, lvl1d_c_idx_s, dreada_lvl2_cache_s,
 		lvl1d_c_tag_s, data_access_s, re_data_i, lvl1da_ts_tag_s,  flush_lvl1d_s, invalidate_lvl1d_s, invalidate_lvl1i_s,
 		lvl2il_c_idx_s, lvl2_hit_index, lvl2a_ts_nbkk_s, lvl1ia_ts_tag_s, lvl2dl_c_idx_s, lvl2dl_c_tag_s,
-		lvl2_nextv_index, lvl2_victim_index, lvl2_rando_index, lvl2_dirty_index) is
+		lvl2_nextv_index, lvl2_victim_index, lvl2_rando_index,lvl2_ddirty_index, lvl2_dirty_index) is
 	begin
 		check_lvl2_s <= '0';
 		lvl1_valid_s <= '1';
@@ -607,7 +624,7 @@ begin
 				if (data_access_s = '1') then --its only then a data memory access
 					if(lvl1d_c_hit_s = '1') then 
 						if(re_data_i = '0')then -- this means instruction is a write, better to check one bit than 4 bits for we_data_i signal
-							if(lvl1da_ts_bkk_s(1) = '0')then --if already dirty, no need to update anything
+							if(lvl1da_ts_bkk_s(1) = '0')then --if not dirty update
 								-- set dirty in lvl1d
 								wea_data_tag_s <= '1';
 								dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
@@ -620,6 +637,7 @@ begin
 						if(lvl1da_ts_bkk_s(1) = '1')then -- data in lvl1 is dirty
 							-- flush needed, prepare address one clk before
 							cc_state_next <= flush_data;
+							addra_lvl2_tag_s <= lvl2dl_c_idx_s;
 							addra_data_cache_s <= lvl1d_c_idx_s & cc_counter_reg;
 						else
 							cc_state_next <= check_lvl2_data;
@@ -762,7 +780,7 @@ begin
 			when flush_depandant_data => 
 				-- index addresses a block in cache, counter & 00 address 4 bytes at a time
 				-- lvl1i cache is asking for this data from level 2
-				addra_lvl2_cache_s(lvl2_dirty_index) <= lvl2ia_c_idx_s & cc_counter_reg;
+				addra_lvl2_cache_s(lvl2_ddirty_index) <= lvl2ia_c_idx_s & cc_counter_reg;
 				addra_data_cache_s <= lvl1i_c_idx_s & cc_counter_reg;
 				-- self - flush
 				-- NOTE depending on mc fsm, see if this is needed or not
@@ -771,8 +789,8 @@ begin
 				lvl2a_c_tag_s <= lvl2ia_c_tag_s;
 				lvl2a_c_idx_s <= lvl2ia_c_idx_s;
 
-				dwritea_lvl2_cache_s(lvl2_dirty_index) <= dreada_data_cache_s;
-				wea_lvl2_cache_s(lvl2_dirty_index)<= "1111";
+				dwritea_lvl2_cache_s(lvl2_ddirty_index) <= dreada_data_cache_s;
+				wea_lvl2_cache_s(lvl2_ddirty_index)<= "1111";
 
 				cc_counter_next <= cc_counter_incr;
 
@@ -780,9 +798,9 @@ begin
 					cc_state_next <= check_lvl2_instr;
 					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
 					-- write new tag to tag store, set valid, reset dirty
-					dwritea_lvl2_tag_s(lvl2_dirty_index) <= 
-						lvl2a_ts_nbkk_s(lvl2_dirty_index) & (lvl2a_ts_bkk_s(lvl2_dirty_index) or "0011") & lvl2a_ts_tag_s(lvl2_dirty_index); 
-					wea_lvl2_tag_s(lvl2_dirty_index) <= '1';
+					dwritea_lvl2_tag_s(lvl2_ddirty_index) <= 
+						lvl2a_ts_nbkk_s(lvl2_ddirty_index) & (lvl2a_ts_bkk_s(lvl2_ddirty_index) or "0011") & lvl2a_ts_tag_s(lvl2_ddirty_index); 
+					wea_lvl2_tag_s(lvl2_ddirty_index) <= '1';
 				else
 					cc_state_next <= flush_depandant_data;
 				end if;
