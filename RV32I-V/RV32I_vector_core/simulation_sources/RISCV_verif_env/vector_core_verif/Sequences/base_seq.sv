@@ -1,7 +1,7 @@
 `ifndef BASE_SEQ_SV
  `define BASE_SEQ_SV
 
-class vector_core_base_seq extends uvm_sequence#(instruction_mem_seq_item);
+class vector_core_base_seq extends uvm_sequence#(vector_core_seq_item);
 
     `uvm_object_utils(vector_core_base_seq)
     `uvm_declare_p_sequencer(vector_core_sequencer)

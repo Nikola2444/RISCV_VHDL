@@ -26,6 +26,7 @@ class vector_core_simple_seq extends vector_core_base_seq;
 	   //req.vector_instruction_i = instr_queue_1[i];
 	   `uvm_do_with(req, {req.vector_instruction_i == instr_queue_1[i];});
        end
+       `uvm_do_with(req, {req.vector_instruction_i == 0;});
        
        
    endtask : body

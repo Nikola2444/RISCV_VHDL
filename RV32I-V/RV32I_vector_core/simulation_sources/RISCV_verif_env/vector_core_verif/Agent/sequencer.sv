@@ -1,7 +1,7 @@
 `ifndef CONTROL_SEQUENCER_SV
  `define CONTROL_SEQUENCER_SV
 
-class vector_core_sequencer extends uvm_sequencer#(instruction_mem_seq_item);
+class vector_core_sequencer extends uvm_sequencer#(vector_core_seq_item);
 
    `uvm_component_utils(vector_core_sequencer)
 

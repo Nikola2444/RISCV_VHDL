@@ -25,8 +25,8 @@ class vector_core_env extends uvm_env;
 
 
        /************Setting to configuration database********************/
-       uvm_config_db#(vector_core_config)::set(this, "*if_agent", "vector_core_config", cfg);
-       uvm_config_db#(virtual v_core_if)::set(this, "*if_agent", "v_core_if", vif);
+       uvm_config_db#(vector_core_config)::set(this, "*agent", "vector_core_config", cfg);
+       uvm_config_db#(virtual v_core_if)::set(this, "*agent", "v_core_if", vif);
        /*****************************************************************/
        control_agent = vector_core_agent::type_id::create("vector_core_agent", this);
        scoreboard = vector_core_scoreboard::type_id::create("scoreboard", this);

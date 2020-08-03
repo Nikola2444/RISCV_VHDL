@@ -16,7 +16,7 @@ class vector_core_seq_item extends uvm_sequence_item;
 
 
     //constraint rs1_data_i_constr {rs1_data_i < 5;}
-    constraint rs1_rs2_constr {rs2_i < 50; rs1_i <  50}
+    constraint rs1_rs2_constr {rs2_i < 50; rs1_i <  50;}
     function new (string name = "vector_core_seq_item");
 	super.new(name);
     endfunction // new

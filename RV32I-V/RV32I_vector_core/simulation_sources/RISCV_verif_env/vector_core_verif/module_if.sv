@@ -8,10 +8,15 @@ interface v_core_if (input clk, logic reset);
    logic [31 : 0] rs2_i;
 
    //Scalar core load and store interface
-   logic 	  scalar_load_req_i;
-   logic 	  scalar_store_req_i;
-   logic [31 : 0] scalar_address_i;
+   logic 	  scalar_load_req_i = 0;
+   logic 	  scalar_store_req_i = 0;
+   logic [31 : 0] scalar_address_i = 0;
 
+   logic 	  all_v_stores_executed_o;
+   logic 	  all_v_loads_executed_o;
+   
+   
+   
    //Vector core status signal
    logic 	  vector_stall_s;
 

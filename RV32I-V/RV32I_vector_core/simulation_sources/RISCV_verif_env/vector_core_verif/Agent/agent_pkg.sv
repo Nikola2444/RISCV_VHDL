@@ -11,9 +11,11 @@ package vector_core_agent_pkg;
    /////////////////////////////////////////////////////////
    import configurations_pkg::*;
    import v_alu_ops_pkg::*;
+   import instruction_constants_pkg::*;
    
    //`include "v_alu_ops_pkg.sv"
    `include "store_data_seq_item.sv"
+   `include "load_data_seq_item.sv"
    `include "seq_item.sv"
    `include "sequencer.sv"
    `include "driver.sv"

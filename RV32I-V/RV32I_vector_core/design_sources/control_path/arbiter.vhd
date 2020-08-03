@@ -160,7 +160,7 @@ begin
     begin
         if (rising_edge(clk))then
             if (reset = '0') then
-                vl_reg_s <= std_logic_vector(to_unsigned(17, clogb2(VECTOR_LENGTH * 8) + 1));
+                vl_reg_s <= std_logic_vector(to_unsigned(32, clogb2(VECTOR_LENGTH * 8) + 1));
                 vmul_reg_s <= "00";
             else
                 if (vector_instr_check_s = "01" and vector_instruction_i (14 downto  12) = "111") then
@@ -187,19 +187,26 @@ begin
         if (rising_edge(clk))then
             if (reset = '0')then
                 vector_instr_to_V_CU_s <= (others => '0');
+                rs1_to_V_CU_i <= (others => '0');
+                vl_to_V_CU_o <= (others => '0');
+                vmul_to_V_CU_o <= (others => '0');
             else
                 if (V_CU_rdy_for_load_s = '1') then
                     vl_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 downto 13);
                     vmul_to_V_CU_o <= load_dependency_regs(0)(clogb2(VECTOR_LENGTH*8) + 13 +2 downto clogb2(VECTOR_LENGTH*8) + 14);
                     -- sending to V_CU  necessary fields from a vector load instruction
                     vector_instr_to_V_CU_s <= "000000"&load_dependency_regs(0)(12)&"0000000000000" & load_dependency_regs(0)(11 downto 0);
+                    rs1_to_V_CU_i <= rs1_i;          
                 elsif (ready_i = '1' and vector_instr_check_s /= "11" and dependency_check_s = '0') then
-                    rs1_to_V_CU_i <= rs1_i;                
+                    rs1_to_V_CU_i <= rs1_i;          
                     vl_to_V_CU_o <= vl_reg_s;
                     vmul_to_V_CU_o <= vmul_reg_s;
                     vector_instr_to_V_CU_s <= vector_instruction_i;
                 elsif (ready_i = '1' and not(V_CU_rdy_for_load_s) = '1') then
                     vector_instr_to_V_CU_s <= (others => '0');
+                    rs1_to_V_CU_i <= (others => '0');
+                    vl_to_V_CU_o <= (others => '0');
+                    vmul_to_V_CU_o <= (others => '0');
                 end if;            
             end if;
         end if;
@@ -355,13 +362,16 @@ begin
     end process;
     --logic for generating write enable signals for store fifos
 
-    
-    st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and vector_stall_s = '0' else
-                          '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and dependency_check_reg = '1' else
+    st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and vector_stall_s = '0' else
                           '0';
+    -- st_instr_fifo_we_s <= '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and vector_stall_s = '0' else
+    --                       '1' when vector_instr_check_s = "10" and dependency_check_s = '0' and dependency_check_reg = '1' else
+    --                       '0';
     
     --logic for generating read enable signals for store fifos
     --st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
+
+    
     st_instr_fifo_re_s <= not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
 
     --logic for generating valid signal to signalaze that valid data has been

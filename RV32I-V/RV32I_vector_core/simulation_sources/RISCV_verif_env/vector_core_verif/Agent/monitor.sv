@@ -3,16 +3,17 @@ class vector_core_monitor extends uvm_monitor;
     // control fileds
    bit checks_enable = 1;
    bit coverage_enable = 1;
-
+   bit is_ok_to_end = 0;
+    
     uvm_analysis_port #(vector_core_seq_item) instr_item_collected_port;
     uvm_analysis_port #(store_data_seq_item) store_data_collected_port;
-    uvm_analysis_port #(store_data_seq_item) load_data_collected_port;
+    uvm_analysis_port #(load_data_seq_item) load_data_collected_port;
     
    typedef enum {wait_for_ready, send_seq_item, wait_store_to_finish} collect_instr_stages;
     collect_instr_stages v_lane_mon_stages = wait_for_ready;
 
    typedef enum {wait_for_we, send_store_seq_item} collect_store_data_stages;
-    collect_store_data_stages v_core_store_stages = wait_for_re;
+    collect_store_data_stages v_core_store_stages = wait_for_we;
 
     typedef enum {wait_for_re, send_load_seq_item} collect_load_data_stages;
     collect_load_data_stages v_core_load_stages = wait_for_re;
@@ -29,7 +30,7 @@ class vector_core_monitor extends uvm_monitor;
    // current transaction
    vector_core_seq_item curr_instr_item;
    store_data_seq_item curr_store_item;
-   load_data_seq_item curr_load_item;      
+   load_data_seq_item curr_load_item; 
    
    
    // coverage can go here
@@ -48,6 +49,8 @@ class vector_core_monitor extends uvm_monitor;
          `uvm_fatal("NOVIF",{"virtual interface must be set:",get_full_name(),".vif"})
    endfunction : connect_phase
 
+
+
    task main_phase(uvm_phase phase);
        forever begin
 	   @(posedge(vif.clk));
@@ -55,7 +58,7 @@ class vector_core_monitor extends uvm_monitor;
            curr_instr_item = vector_core_seq_item::type_id::create("curr_instr_item", this);
 	   curr_store_item = store_data_seq_item::type_id::create("curr_store_item", this);
 	   curr_load_item = load_data_seq_item::type_id::create("curr_load_item", this);
-
+	   
 	   if (vif.reset)begin	       
 	       fork
 		   //Instruction fork
@@ -64,10 +67,9 @@ class vector_core_monitor extends uvm_monitor;
 			   curr_instr_item.vector_instruction_i = vif.vector_instruction_i;
 			   curr_instr_item.rs1_i = vif.rs1_i;
 			   curr_instr_item.rs2_i = vif.rs2_i;		       
-			   instr_item_collected_port.write(curr_instr_item);
+			   instr_item_collected_port.write(curr_instr_item);			   
 		       end
 		   end
-
 		   //Store fork
 		   begin
 		       if(vif.mem_we_s) begin			 							   
@@ -77,25 +79,23 @@ class vector_core_monitor extends uvm_monitor;
 		   end
 		   // Load fork
 		   begin
-		       if(vif.mem_re_s)
 			 case (v_core_load_stages)
-			     wait_for_re: begin
+			     wait_for_re: begin				 
 				 if (vif.mem_re_s)
 				   v_core_load_stages = send_load_seq_item;		    				 
 			     end
 			     send_load_seq_item: begin
-				 curr_load_item.data_form_mem_s = vif.data_from_mem_s;
+				 curr_load_item.data_from_mem_s = vif.data_from_mem_s;
 				 load_data_collected_port.write(curr_load_item);
-				 if (!vif.mem_re)
-				   v_core_load_stages = wait_for_re;				 
+				 if (!vif.mem_re_s) begin
+				   v_core_load_stages = wait_for_re;
+				 end
 			     end
 			 endcase
-		   end
+		   end		   
 	       join_none
-	   end
-
-	   
-       end
+	   end // if (vif.reset)	   
+       end // forever begin       
    endtask : main_phase
 
 endclass : vector_core_monitor

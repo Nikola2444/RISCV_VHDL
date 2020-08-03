@@ -9,7 +9,7 @@ class store_if_agent extends uvm_agent;
     store_if_monitor mon;
    virtual interface v_core_if vif;
    // configuration
-   vector_lane_config cfg;
+   vector_core_config cfg;
    int 	   value;   
    `uvm_component_utils_begin (store_if_agent)
        `uvm_field_object(cfg, UVM_DEFAULT)
@@ -25,7 +25,7 @@ class store_if_agent extends uvm_agent;
        if (!uvm_config_db#(virtual v_core_if)::get(this, "", "v_core_if", vif))
          `uvm_fatal("NOVIF",{"virtual interface must be set:",get_full_name(),".vif"})
        
-       if(!uvm_config_db#(vector_lane_config)::get(this, "", "vector_lane_config", cfg))
+       if(!uvm_config_db#(vector_core_config)::get(this, "", "vector_core_config", cfg))
          `uvm_fatal("NOCONFIG",{"Config object must be set for: ",get_full_name(),".cfg"})
        /*****************************************************************/
        

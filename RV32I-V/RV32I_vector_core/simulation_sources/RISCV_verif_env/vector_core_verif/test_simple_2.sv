@@ -15,7 +15,7 @@ class test_simple_2 extends test_base;
       uvm_config_db#(uvm_object_wrapper)::set(this,
                                               "seqr.main_phase",
                                               "default_sequence",
-                                              control_if_simple_seq::type_id::get());
+                                              vector_core_simple_seq::type_id::get());
    endfunction : build_phase
 
 endclass

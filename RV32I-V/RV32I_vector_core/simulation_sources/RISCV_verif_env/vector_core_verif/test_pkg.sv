@@ -7,10 +7,10 @@ package test_pkg;
  `include "uvm_macros.svh" // Include the UVM macros
 
    import configurations_pkg::*;
-   import vector_core_agent_pkg::*;
-   import store_if_agent_pkg::*;
+   import vector_core_agent_pkg::*;   
    import seq_pkg::*;
    import v_alu_ops_pkg::*;
+   import instruction_constants_pkg::*;
    
 `include "scoreboard.sv"
 `include "environment.sv"   
