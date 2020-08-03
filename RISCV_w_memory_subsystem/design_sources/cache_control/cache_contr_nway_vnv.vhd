@@ -620,12 +620,18 @@ begin
 				
 		case (cc_state_reg) is
 			when idle =>
+				-- ACCESS TO INSTR MEMORY
+				if(lvl1i_c_hit_s = '0') then -- instr cache miss
+					cc_state_next <= check_lvl2_instr;
+					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
+				end if;
 				-- ACCESS TO DATA MEMORY
 				if (data_access_s = '1') then --its only then a data memory access
 					if(lvl1d_c_hit_s = '1') then 
 						if(re_data_i = '0')then -- this means instruction is a write, better to check one bit than 4 bits for we_data_i signal
 							if(lvl1da_ts_bkk_s(1) = '0')then --if not dirty update
 								-- set dirty in lvl1d
+								lvl1_valid_s <= '0';
 								wea_data_tag_s <= '1';
 								dwritea_data_tag_s <= "11" & lvl1da_ts_tag_s; --data written, dirty + valid
 								addra_lvl2_tag_s <= lvl2da_c_idx_s;
@@ -644,16 +650,11 @@ begin
 						end if;
 					end if;
 				end if;
-				-- ACCESS TO INSTR MEMORY
-				if(lvl1i_c_hit_s = '0') then -- instr cache miss
-					cc_state_next <= check_lvl2_instr;
-					addra_lvl2_tag_s <= lvl2ia_c_idx_s;
-				end if;
 				
 			when set_dirty =>
-				lvl1_valid_s <= '0';
 				cc_state_next <= idle;
 				-- invalidate lvl2
+				lvl2a_c_tag_s <= lvl2da_c_tag_s;
 				addra_lvl2_tag_s <= lvl2da_c_idx_s;
 				wea_lvl2_tag_s(lvl2_hit_index) <= '1';
 				-- dirty but invalid, as the newer data is in data cache
