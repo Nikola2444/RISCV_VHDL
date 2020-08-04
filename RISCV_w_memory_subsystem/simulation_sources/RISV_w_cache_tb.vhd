@@ -35,7 +35,7 @@ architecture behavior of tb_RISCV_w_cache is
 	);
 	end component;
 	    
-	constant C_SHRINK_ADDR_WIDTH : integer := 14;
+	constant C_SHRINK_ADDR_WIDTH : integer := 10;
     constant C_SHRINK_ADDR_SPACE    : integer := 2**C_SHRINK_ADDR_WIDTH;
 	-- Inputs
 	signal	clk				: std_logic:='0';
