@@ -365,11 +365,11 @@ begin
 		
 	end process;
 
-	invalid_pcoder: process (lvl2a_ts_bkk_s) is
+	invalid_pcoder: process (lvl2a_ts_bkk_s,lvl2a_ts_nbkk_s) is
 	begin
 			--lvl2_invalid_map(i) <= not (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID) or lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY));
-			for i in (LVL2C_ASSOCIATIVITY-1) downto 0 loop
-				if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' or lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='1') then
+			for i in(LVL2C_ASSOCIATIVITY-1) downto 0 loop
+				if (lvl2a_ts_bkk_s(i)(LVL2C_BKK_VALID)='0' and lvl2a_ts_bkk_s(i)(LVL2C_BKK_DIRTY)='0' and lvl2a_ts_nbkk_s(i) = "00") then
 					--lvl2_invalid_index <= std_logic_vector(to_unsigned(i,LVL2C_ASSOC_LOG2));
 					lvl2_invalid_index <= i;
 					lvl2_invalid_found_s <= '1';
@@ -377,7 +377,7 @@ begin
 				else
 					--lvl2_invalid_index <= (others => '0');
 					lvl2_invalid_index <= 0;
-					lvl2_invalid_found_s <= '1';
+					lvl2_invalid_found_s <= '0';
 				end if;
 			end loop;
 	end process;
@@ -924,7 +924,7 @@ begin
 	fsm_inter_proc : process(mc_state_reg, mc_counter_reg, mc_counter_incr, dread_phy_i,
 									lvl2a_c_idx_s, lvl2a_c_tag_s, lvl2a_c_hit_s, lvl2a_ts_bkk_s, lvl2a_ts_tag_s,
 									check_lvl2_s, lvl2b_ts_tag_s, lvl2b_ts_bkk_s, dreadb_lvl2_cache_s, lvl2b_ts_nbkk_s,
-									lvl2_victim_index, lvl2_nextv_index, lvl2_rando_index) is
+									lvl2_victim_index, lvl2_nextv_index, lvl2_rando_index, lvl2_invalid_found_s, lvl2_invalid_index) is
 	begin
 		-- for FSM
 		mc_state_next <= idle;
@@ -1007,7 +1007,7 @@ begin
 				mc_counter_next <= mc_counter_incr;
 
 				addrb_lvl2_tag_s <= lvl2a_c_idx_s;
-				if(mc_counter_reg = COUNTER_MIN) then  -- because of read first mode
+				if(mc_counter_reg = COUNTER_MIN) then  -- because of the read first mode
 					dwriteb_lvl2_tag_s(lvl2_victim_index) <= lvl2b_ts_nbkk_s(lvl2_victim_index) & "0001" & lvl2a_c_tag_s;
 					web_lvl2_tag_s(lvl2_victim_index) <= '1';
 				end if;
@@ -1020,9 +1020,14 @@ begin
 					-- nextvictim becomes victim
 					dwriteb_lvl2_tag_s(lvl2_nextv_index) <=  "10" & lvl2b_ts_bkk_s(lvl2_nextv_index) & lvl2b_ts_tag_s(lvl2_nextv_index); 
 					web_lvl2_tag_s(lvl2_nextv_index) <= '1';
-					-- random ordinary block becomes nextvictim
-					dwriteb_lvl2_tag_s(lvl2_rando_index) <=  "01" & lvl2b_ts_bkk_s(lvl2_rando_index) & lvl2b_ts_tag_s(lvl2_rando_index); 
-					web_lvl2_tag_s(lvl2_rando_index) <= '1';
+					
+					 if(lvl2_invalid_found_s = '1')then -- if there is invalid block, set it as next victim
+						dwriteb_lvl2_tag_s(lvl2_invalid_index) <=  "01" & lvl2b_ts_bkk_s(lvl2_invalid_index) & lvl2b_ts_tag_s(lvl2_invalid_index); 
+						web_lvl2_tag_s(lvl2_invalid_index) <= '1';
+					else -- if all blocks are valid, random ordinary block becomes nextvictim
+						dwriteb_lvl2_tag_s(lvl2_rando_index) <=  "01" & lvl2b_ts_bkk_s(lvl2_rando_index) & lvl2b_ts_tag_s(lvl2_rando_index); 
+						web_lvl2_tag_s(lvl2_rando_index) <= '1';
+					end if;
 				else
 					mc_state_next <= fetch;
 				end if;

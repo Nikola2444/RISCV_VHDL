@@ -194,13 +194,13 @@ begin
    ex_mem : process (clk) is
    begin
       if (rising_edge(clk)) then
-			if (reset = '0' or (instr_ready_i = '0' and data_ready_i = '1'))then
+			if (reset = '0' )then --or (instr_ready_i = '0' and data_ready_i = '1')
 				funct3_mem_s      <= (others => '0');
 				data_mem_we_mem_s <= '0';
 				rd_we_mem_s       <= '0';
 				mem_to_reg_mem_s  <= (others => '0');
 				rd_address_mem_s  <= (others => '0');
-			elsif (data_ready_i = '1')then
+			elsif (data_ready_i = '1' and instr_ready_i = '1')then
 				funct3_mem_s      <= funct3_ex_s;
 				data_mem_we_mem_s <= data_mem_we_ex_s;
 				rd_we_mem_s       <= rd_we_ex_s;
