@@ -82,6 +82,7 @@ architecture structural of vector_lane is
 
 --****************************INTERCONNECTIONS*******************************
 
+
    
 --VRF output signals
    signal vs1_data_s, vs2_data_s, vd_data_s : std_logic_vector (DATA_WIDTH - 1 downto 0);
@@ -90,17 +91,18 @@ architecture structural of vector_lane is
 
 -- VRF input signals
    signal sign_extension: std_logic_vector(DATA_WIDTH - 1 - 4 downto 0);
-   signal immediate_sign_ext_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal immediate_sign_ext_next: std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal masked_we_s:std_logic;
    alias vm_s: std_logic is vector_instruction_i(25);
    signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
-   signal vm_or_update_el_s:std_logic;
+   signal vm_or_update_el_next, vm_or_update_el_reg:std_logic;
    signal vd_address_s: std_logic_vector(4 downto 0);
+   signal mem_to_vrf_reg: std_logic_vector(1 downto 0);
 -- ALU I/O interconnections
    signal alu_op_s: std_logic_vector(4 downto 0);
    signal alu_result_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_a_input_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
-   
+   signal alu_src_a_reg: std_logic_vector(1 downto 0);
 -- LOAD FIFO I/O signals
    constant load_fifo_empty_threshhold: std_logic_vector(15 downto 0) := std_logic_vector(to_unsigned(VECTOR_LENGTH - 1, 16));
    signal fifo_data_output_s                : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -113,24 +115,24 @@ architecture structural of vector_lane is
    
    signal vs1_address_s: std_logic_vector(4 downto 0);
 
-   signal immediate_sign_ext_ex_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
-   signal rs1_data_ex_s: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal immediate_sign_ext_reg: std_logic_vector(DATA_WIDTH - 1 downto 0);
+   signal rs1_data_reg: std_logic_vector(DATA_WIDTH - 1 downto 0);
 begin
 
 --**************************COMBINATIORIAL LOGIC*****************************
    -- "ID_PHASE"
    sign_extension <= (others => vector_instruction_i(19)) when immediate_sign_i = '0'else
                      (others => '0') ;
-   immediate_sign_ext_s <= sign_extension & vector_instruction_i(18 downto 15);
+   immediate_sign_ext_next <= sign_extension & vector_instruction_i(18 downto 15);
    
    --chosing what to write into VRF vs1 or vs2
    merge_data_s <= alu_a_input_s when mask_s  = '1' else
                    vs2_data_s;
    --mem to vector register file mux
    vd_data_s <=
-      fifo_data_output_s when mem_to_vrf_i = "01" else
-      merge_data_s when mem_to_vrf_i = "10" else
-      alu_a_input_s when mem_to_vrf_i = "11" else
+      fifo_data_output_s when mem_to_vrf_reg = "01" else
+      merge_data_s when mem_to_vrf_reg = "10" else
+      alu_a_input_s when mem_to_vrf_reg = "11" else
       alu_result_s;
 
    -- Depending on which instructions is being executed exe time of alu can differ.
@@ -144,37 +146,44 @@ begin
 
    --Only if value of both vm_s and type_of_masking_i is '0' then
    --masking should be applied, otherwise all elements are updated
-   vm_or_update_el_s <= vm_s or type_of_masking_i;
+   vm_or_update_el_next <= vm_s or type_of_masking_i;
    
-   masked_we_s <= mask_s when vm_or_update_el_s = '0' else
+   masked_we_s <= mask_s when vm_or_update_el_reg = '0' else
                   '1';
 
 
    -- EX PHASE
-   -- Multiplexing source operand "a" of ALU unit
+   -- this here models all signals that need to active one clock cycle after instruction
+   -- is received
    process (clk)is
    begin
        if(rising_edge(clk)) then
            if (reset = '0') then
-               immediate_sign_ext_ex_s <= (others => '0');
+               vm_or_update_el_reg <= '0';
+               immediate_sign_ext_reg <= (others => '0');
                vd_address_s <= (others => '0');
-               rs1_data_ex_s <= (others => '0');
-               alu_op_s <= (others => '0');
+               rs1_data_reg <= (others => '0');
+               alu_op_s <= (others => '0');              
                --ready reg
                ready_reg <= '0';
-           else
+               alu_src_a_reg <= (others => '0');
+               mem_to_vrf_reg <= (others => '0');
+           else               
+               alu_src_a_reg <= alu_src_a_i;
+               vm_or_update_el_reg <= vm_or_update_el_next;
                alu_op_s <= alu_op_i;
                vd_address_s <= vector_instruction_i(11 downto 7);
                ready_reg <= ready_s;
-               immediate_sign_ext_ex_s <= immediate_sign_ext_s;
-               rs1_data_ex_s <= rs1_data_i;
+               immediate_sign_ext_reg <= immediate_sign_ext_next;
+               rs1_data_reg <= rs1_data_i;
+               mem_to_vrf_reg <= mem_to_vrf_i;
            end if;
        end if;
    end process;
    
-   alu_a_input_s <= vs1_data_s when alu_src_a_i = "00" else
-                    rs1_data_ex_s when alu_src_a_i = "01" else
-                    immediate_sign_ext_ex_s;
+   alu_a_input_s <= vs1_data_s when alu_src_a_reg = "00" else
+                    rs1_data_reg when alu_src_a_reg = "01" else
+                    immediate_sign_ext_reg;
                   
 
 --****************************INSTANTIATIONS*********************************
