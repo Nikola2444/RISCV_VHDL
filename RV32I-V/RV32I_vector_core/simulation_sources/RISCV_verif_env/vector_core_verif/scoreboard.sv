@@ -24,6 +24,8 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		    logic [31 : 0] 		      rs1;
 		    logic [31 : 0] 		      rs2;
 		    logic [4 : 0] 		      vd_addr;
+		     //Divided by 4 because maximum vmul is 8, and maximum number of elements in a vector is 256
+		    logic [31 : 0] 		      store_vector [VECTOR_LENGTH * 32 / 4];
 		 } load_store_info;
 
     
@@ -54,8 +56,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 	    for (int i = 0; i < NUM_OF_LANES; i++) begin
 		VRF_referent_model[j * NUM_OF_LANES + i] = j;
 		$display ("VRF[%d] = %d",j * NUM_OF_LANES + i, VRF_referent_model[j * NUM_OF_LANES + i]);	
-	    end
-	    
+	    end	    
 	end 
     endfunction : new
 
@@ -95,7 +96,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 	VRF_referent_model[vrf_load_addr] = tr_clone.data_from_mem_s;
 	`uvm_info(get_type_name(), $sformatf("  load written on position [%d]: %x", 
 							  vrf_load_addr, VRF_referent_model [vrf_load_addr]), UVM_HIGH);
-	if(load_iterator == ( tmp_load_info.vector_length)) begin
+	if(load_iterator == (tmp_load_info.vector_length)) begin
 	    load_iterator = 0;
 	    load_info_fifo.pop_front();
 	end	     
@@ -112,18 +113,18 @@ class vector_core_scoreboard extends uvm_scoreboard;
 	tmp_store_info = store_info_fifo[0];	
 	$cast(tr_clone, tr.clone());	
 	
-       vrf_addr = i++ + tmp_store_info.vd_addr * elements_per_vector * 2**tmp_store_info.vmul; 
-	assert(tr_clone.data_to_mem_s == VRF_referent_model[vrf_addr]) begin
+	vrf_addr = i + tmp_store_info.vd_addr * elements_per_vector * 2**tmp_store_info.vmul; 
+	assert(tr_clone.data_to_mem_s == tmp_store_info.store_vector[i]) begin
 	    `uvm_info(get_type_name(), $sformatf("Match on position VRF[%d]! expected value: %x, \t real_value: %x", 
-						 vrf_addr, VRF_referent_model[vrf_addr ], tr_clone.data_to_mem_s), UVM_MEDIUM);
+						 vrf_addr, tmp_store_info.store_vector[i], tr_clone.data_to_mem_s), UVM_MEDIUM);
 	    num_of_matches++;		
 	end
 	else begin
 	    `uvm_info(get_type_name(), $sformatf("Mismatch on position VRF[%d]! expected value: %x, \t real_value: %x", 
-						 vrf_addr, VRF_referent_model[vrf_addr ], tr_clone.data_to_mem_s), UVM_LOW);
+						 vrf_addr, tmp_store_info.store_vector[i], tr_clone.data_to_mem_s), UVM_LOW);
 	    num_of_mis_matches++;
 	end
-	
+	i++;	
 	if(i == ( tmp_store_info.vector_length)) begin
 	    i = 0;
 	    store_info_fifo.pop_front();
@@ -186,7 +187,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		    return;		    
 		end // if (funct3 == 3'b111)
 		
-		for (int i = 0; i < 2**vmul_reg*vl_reg; i++)begin
+		for (int i = 0; i < vl_reg; i++)begin
 		    // Finding correct operand for arith operation
 		    if (funct3 == OPIVV_funct3 || funct3 == OPMVV_funct3) begin
 			a = VRF_referent_model[i + vs1_addr*elements_per_vector*2**vmul_reg];
@@ -198,7 +199,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		    end
 		    else if (funct3 == OPIVI_funct3) begin			
 			a = imm;
-			b = VRF_referent_model[i + vs2_addr*elements_per_vector*2**vmul_reg];		
+			b = VRF_referent_model[i + vs2_addr*elements_per_vector*2**vmul_reg];
 		    end
 		    else
 		      `uvm_error (get_type_name(), $sformatf("Non supported OPM funct3 generated with valeu: %x", funct3))
@@ -226,8 +227,8 @@ class vector_core_scoreboard extends uvm_scoreboard;
 			      VRF_referent_model [i + vd_addr*elements_per_vector*2**vmul_reg] = arith_operation(a, b, generate_alu_op(tr.vector_instruction_i));
 			end
 		    endcase // case (funct6)
-		    `uvm_info(get_type_name(), $sformatf("instruction: %x,  alu_result[%d]: %x \t a is: %x, b is :%x", 
-							 funct6,  i + vd_addr*elements_per_vector*2**vmul_reg, VRF_referent_model [i + vd_addr*elements_per_vector*2**vmul_reg], a, b), UVM_MEDIUM);
+		    `uvm_info(get_type_name(), $sformatf("instruction: %x,  alu_result[%d]: %x \t a is: %x, b is :%x \t vs2 = %x", 
+							 funct6,  i + vd_addr*elements_per_vector*2**vmul_reg, VRF_referent_model [i + vd_addr*elements_per_vector*2**vmul_reg], a, b, vs2_addr), UVM_MEDIUM);
 		end // for (int i = 0; i < 2**tr.vmul*tr.vector_length; i++)
 		
 	    end // case: arith_opcode
@@ -237,7 +238,9 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		tmp_store_info.vd_addr = vd_addr;
 		tmp_store_info.rs1 = tr.rs1_i;
 		tmp_store_info.rs2 = tr.rs2_i;
-		store_info_fifo.push_back(tmp_store_info);		
+		for (int i = 0; i < vl_reg; i++)
+		  tmp_store_info.store_vector[i] = VRF_referent_model[vd_addr * elements_per_vector * 2**vmul_reg + i];		
+		store_info_fifo.push_back(tmp_store_info);
 	    end
 	    load_opcode:begin
 		tmp_load_info.vector_length = vl_reg;
@@ -251,7 +254,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
     endfunction: update_VRF_ref_model
 
 
-    function logic[31 : 0] arith_operation(logic [31 : 0] a, logic [31 : 0] b, logic [4 : 0] alu_op);
+    function logic [31 : 0] arith_operation(logic [31 : 0] a, logic [31 : 0] b, logic [4 : 0] alu_op);
        logic [63 : 0] mul_temp;	
 	case (alu_op)
 	    add_op: return a + b;		       
@@ -277,7 +280,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 	    end	    
 	    sll_op: return b << a[5 : 0];	   
 	    srl_op: return b >> a[5 : 0];		
-	    sra_op: return b >>>a[5 : 0];
+	    sra_op: return int'(b) >>>a[5 : 0];
 	    eq_op: return a == b;
 	    neq_op: return a != b;
 	    sle_op: return (signed'(a) == signed'(b) || signed'(b) < signed'(a));

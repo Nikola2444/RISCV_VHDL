@@ -45,6 +45,7 @@ architecture behavioral of vector_control_path is
     constant vector_arith_c : std_logic_vector(6 downto 0) := "1010111";
 begin
 
+    --DEBUG logic
     -- Sequential logig
     -- process (clk) is
     -- begin
@@ -58,7 +59,7 @@ begin
     -- end process;
     store_fifo_we_o <= store_fifo_we_s;
     -- Combinational logic
-    control_dec : process (opcode_i, funct6_i, OPMVV_instr_check_s, vm_i) is
+    control_dec : process (opcode_i, funct6_i, OPMVV_instr_check_s, vm_i, funct3_i) is
     begin        
         mem_to_vrf_o         <= "00";        
         load_fifo_re_o       <= '0';
@@ -78,7 +79,11 @@ begin
                 mem_to_vrf_o         <= "01";
                 load_fifo_re_o       <= '1';
             when vector_arith_c =>
-                vrf_type_of_access_o <= "00";
+                if (funct3_i = "111") then
+                    vrf_type_of_access_o <= "11";
+                else
+                    vrf_type_of_access_o <= "00";
+                end if;
                 case funct6_i is
                     when v_add_funct6 =>
                         alu_op_o <= add_op;

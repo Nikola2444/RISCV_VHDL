@@ -95,7 +95,9 @@ architecture structural of vector_lane is
    alias vm_s: std_logic is vector_instruction_i(25);
    signal merge_data_s: std_logic_vector (DATA_WIDTH - 1 downto 0);    
    signal vm_or_update_el_s:std_logic;
+   signal vd_address_s: std_logic_vector(4 downto 0);
 -- ALU I/O interconnections
+   signal alu_op_s: std_logic_vector(4 downto 0);
    signal alu_result_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_a_input_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    
@@ -155,10 +157,14 @@ begin
        if(rising_edge(clk)) then
            if (reset = '0') then
                immediate_sign_ext_ex_s <= (others => '0');
+               vd_address_s <= (others => '0');
                rs1_data_ex_s <= (others => '0');
+               alu_op_s <= (others => '0');
                --ready reg
                ready_reg <= '0';
            else
+               alu_op_s <= alu_op_i;
+               vd_address_s <= vector_instruction_i(11 downto 7);
                ready_reg <= ready_s;
                immediate_sign_ext_ex_s <= immediate_sign_ext_s;
                rs1_data_ex_s <= rs1_data_i;
@@ -189,7 +195,7 @@ begin
          vector_length_i      => vector_length_i,
          vs1_address_i        => vs1_address_s,
          vs2_address_i        => vector_instruction_i(24 downto 20),
-         vd_address_i         => vector_instruction_i(11 downto 7),
+         vd_address_i         => vd_address_s,
          vd_data_i            => vd_data_s,
          vs1_data_o           => vs1_data_s,
          vs2_data_o           => vs2_data_s,
@@ -205,7 +211,7 @@ begin
          reset => reset,
          a_i   => alu_a_input_s,
          b_i   => vs2_data_s,
-         op_i  => alu_op_i,
+         op_i  => alu_op_s,
          res_o => alu_result_s);
 
    
@@ -245,7 +251,7 @@ begin
                store_fifo_we_s <= '0';
            else               
                store_fifo_we_s <= store_fifo_we_i;
-               if (ready_s = '1' and ready_reg = '1' and store_fifo_we_i = '1') then
+               if (ready_s = '1' and ready_reg = '1' and store_fifo_we_i = '1' and vector_length_i > std_logic_vector(to_unsigned(1, clogb2(VECTOR_LENGTH * 8) + 1))) then
                    store_fifo_we_s <= '0';
                end if;
            end if;
