@@ -1,11 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.util_pkg.all;
 
 entity TOP_RISCV is
    port(
       -- Synchronization ports
       clk                 : in  std_logic;
+      ce                  : in  std_logic;
       reset               : in  std_logic;
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
@@ -23,20 +25,19 @@ architecture structural of TOP_RISCV is
    signal set_a_zero_s       : std_logic;
    signal mem_to_reg_s       : std_logic_vector(1 downto 0);
    signal load_type_s        : std_logic_vector(2 downto 0);
-   signal alu_op_s           : std_logic_vector(4 downto 0);
+   signal alu_op_s           : alu_op_t;
    signal alu_src_b_s        : std_logic;
    signal alu_src_a_s        : std_logic;
    signal rd_we_s            : std_logic;
-   signal pc_next_sel_s      : std_logic_vector(1 downto 0);
+   signal pc_next_sel_s      : std_logic;
 
    signal if_id_flush_s      : std_logic;
    signal id_ex_flush_s      : std_logic;
 
-   signal alu_forward_a_s    : std_logic_vector(1 downto 0);
-   signal alu_forward_b_s    : std_logic_vector(1 downto 0);
-   signal branch_forward_a_s : std_logic_vector(1 downto 0);
-   signal branch_forward_b_s : std_logic_vector(1 downto 0);
+   signal alu_forward_a_s    : fwd_a_t;
+   signal alu_forward_b_s    : fwd_b_t;
    signal branch_condition_s : std_logic;
+	signal branch_op_s        : std_logic_vector(1 downto 0);
 
    signal pc_en_s            : std_logic;
    signal if_id_en_s         : std_logic;
@@ -48,6 +49,7 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
+         ce                  => ce,
          reset               => reset,
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
@@ -65,11 +67,10 @@ begin
          alu_src_a_i         => alu_src_a_s,
          rd_we_i             => rd_we_s,
          pc_next_sel_i       => pc_next_sel_s,
+			branch_op_i 		  => branch_op_s,
          -- control signals for forwaring
          alu_forward_a_i     => alu_forward_a_s,
          alu_forward_b_i     => alu_forward_b_s,
-         branch_forward_a_i  => branch_forward_a_s,
-         branch_forward_b_i  => branch_forward_b_s,
          branch_condition_o  => branch_condition_s,
          -- control signals for flushing
          if_id_flush_i       => if_id_flush_s,
@@ -88,6 +89,7 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
+         ce                  => ce,
          reset               => reset,
          -- instruction is read from memory
          instruction_i       => instr_mem_read_i,
@@ -100,11 +102,10 @@ begin
          alu_src_a_o         => alu_src_a_s,
          rd_we_o             => rd_we_s,
          pc_next_sel_o       => pc_next_sel_s,
+			branch_op_o 		  => branch_op_s,
          -- control signals for forwarding
          alu_forward_a_o     => alu_forward_a_s,
          alu_forward_b_o     => alu_forward_b_s,
-         branch_forward_a_o  => branch_forward_a_s,
-         branch_forward_b_o  => branch_forward_b_s,
          branch_condition_i  => branch_condition_s,
          -- control signals for flushing
          data_mem_we_o       => data_mem_we_o,

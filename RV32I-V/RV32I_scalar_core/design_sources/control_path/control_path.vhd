@@ -1,12 +1,14 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.util_pkg.all;
 
 
 entity control_path is
    port (
       -- global synchronization signals
       clk                : in  std_logic;
+      ce                 : in  std_logic;
       reset              : in  std_logic;
       -- instruction is read from memory
       instruction_i      : in  std_logic_vector (31 downto 0);
@@ -16,17 +18,16 @@ entity control_path is
       set_a_zero_o       : out std_logic;
       mem_to_reg_o       : out std_logic_vector(1 downto 0);
       load_type_o        : out std_logic_vector(2 downto 0);
-      alu_op_o           : out std_logic_vector(4 downto 0);
+      alu_op_o           : out alu_op_t;
       alu_src_b_o        : out std_logic;
       alu_src_a_o        : out std_logic;
       rd_we_o            : out std_logic;
-      pc_next_sel_o      : out std_logic_vector(1 downto 0);
+      pc_next_sel_o      : out std_logic;
       data_mem_we_o      : out std_logic_vector(3 downto 0);
+      branch_op_o        : out std_logic_vector(1 downto 0);
       -- control singals for forwarding
-      alu_forward_a_o    : out std_logic_vector (1 downto 0);
-      alu_forward_b_o    : out std_logic_vector (1 downto 0);
-      branch_forward_a_o : out std_logic_vector (1 downto 0);  -- mux a 
-      branch_forward_b_o : out std_logic_vector(1 downto 0);   -- mux b
+      alu_forward_a_o    : out fwd_a_t;
+      alu_forward_b_o    : out fwd_b_t;
       -- control singals for flushing
       if_id_flush_o      : out std_logic;
       id_ex_flush_o      : out std_logic;
@@ -63,7 +64,6 @@ architecture behavioral of control_path is
    signal rs1_address_id_s  : std_logic_vector (4 downto 0);
    signal rs2_address_id_s  : std_logic_vector (4 downto 0);
    signal rd_address_id_s   : std_logic_vector (4 downto 0);
-   signal bcc_id_s          : std_logic;
    --*********       EXECUTE       **************
 
    signal branch_type_ex_s  : std_logic_vector(1 downto 0);
@@ -79,10 +79,11 @@ architecture behavioral of control_path is
    signal rd_we_ex_s        : std_logic;
    signal mem_to_reg_ex_s   : std_logic_vector(1 downto 0);
 
-
    signal rs1_address_ex_s  : std_logic_vector (4 downto 0);
    signal rs2_address_ex_s  : std_logic_vector (4 downto 0);
    signal rd_address_ex_s   : std_logic_vector (4 downto 0);
+   signal bcc_ex_s          : std_logic;
+   signal branch_conf_ex_s  : std_logic;
 
    --*********       MEMORY        **************
 
@@ -108,7 +109,9 @@ begin
    -- when branch instruction is executing:
    --    '0' -> beq blt bltu
    --    '1' -> bne bge geu  (opposite,complement of adequate comparison)
-   bcc_id_s <= instruction_i(12);
+   bcc_ex_s <= funct3_ex_s(0);
+
+	branch_op_o <= funct3_ex_s(2 downto 1);
 
    -- extract operation and operand data from instruction
    rs1_address_id_s <= instruction_i(19 downto 15);
@@ -125,27 +128,24 @@ begin
                        "1111" when data_mem_we_mem_s = '1' and funct3_mem_s = "010" else
                        "0000";
 
+
+	-- branch confirmed, 1 if branch is going to be taken,
+	-- based on branch condition and branch complement bit
+	branch_conf_ex_s <= branch_condition_i xor bcc_ex_s;
    -- this process covers conditional and unconditional branches
-   -- based on which branch is executing: 
+   -- base on which branch is executing: 
    --    control pc_next mux
    --    flush appropriate registers in pipeline
-   pc_next_if_s : process(branch_type_id_s, branch_type_ex_s, branch_condition_i, bcc_id_s)
+   pc_next_if_s : process(branch_type_ex_s, branch_conf_ex_s)
    begin
-      if_id_flush_s <= '0';
-      id_ex_flush_s <= '0';
-      pc_next_sel_o <= "00";
-      if (branch_type_id_s = "01" and ((branch_condition_i xor bcc_id_s) = '1'))then
-         pc_next_sel_o <= "01";
+      if((branch_type_ex_s = "10") or (branch_type_ex_s = "01" and branch_conf_ex_s = '1') or (branch_type_ex_s = "11")) then
+         pc_next_sel_o <= '1';
          if_id_flush_s <= '1';
-      end if;
-      if(branch_type_id_s = "10")then
-         pc_next_sel_o <= "10";
-         if_id_flush_s <= '1';
-      end if;
-      if(branch_type_ex_s = "11") then
-         pc_next_sel_o <= "11";
-         if_id_flush_s <= '1';
-         id_ex_flush_s <= '1';
+			id_ex_flush_s <= '1';
+		else
+			if_id_flush_s <= '0';
+			id_ex_flush_s <= '0';
+			pc_next_sel_o <= '0';
       end if;
    end process;
 
@@ -155,7 +155,7 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
             branch_type_ex_s <= (others => '0');
             funct3_ex_s      <= (others => '0');
@@ -179,7 +179,8 @@ begin
             alu_src_b_ex_s   <= alu_src_b_id_s;
             mem_to_reg_ex_s  <= mem_to_reg_id_s;
             alu_2bit_op_ex_s <= alu_2bit_op_id_s;
-            rs1_address_ex_s <= rs1_address_id_s; rs2_address_ex_s <= rs2_address_id_s;
+            rs1_address_ex_s <= rs1_address_id_s; 
+				rs2_address_ex_s <= rs2_address_id_s;
             rd_address_ex_s  <= rd_address_id_s;
             rd_we_ex_s       <= rd_we_id_s;
             data_mem_we_ex_s <= data_mem_we_id_s;
@@ -190,7 +191,7 @@ begin
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             funct3_mem_s      <= (others => '0');
             data_mem_we_mem_s <= '0';
@@ -210,7 +211,7 @@ begin
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk)) then
+      if (rising_edge(clk) and ce='1') then
          if (reset = '0')then
             funct3_wb_s     <= (others => '0');
             rd_we_wb_s      <= '0';
@@ -261,12 +262,8 @@ begin
          rd_address_wb_i    => rd_address_wb_s,
          rs1_address_ex_i   => rs1_address_ex_s,
          rs2_address_ex_i   => rs2_address_ex_s,
-         rs1_address_id_i   => rs1_address_id_s,
-         rs2_address_id_i   => rs2_address_id_s,
          alu_forward_a_o    => alu_forward_a_o,
-         alu_forward_b_o    => alu_forward_b_o,
-         branch_forward_a_o => branch_forward_a_o,
-         branch_forward_b_o => branch_forward_b_o);
+         alu_forward_b_o    => alu_forward_b_o);
 
    -- Hazard unit
    hazard_u : entity work.hazard_unit(behavioral)
@@ -275,14 +272,9 @@ begin
          rs2_address_id_i => rs2_address_id_s,
          rs1_in_use_i     => rs1_in_use_id_s,
          rs2_in_use_i     => rs2_in_use_id_s,
-         branch_type_id_i => branch_type_id_s,
 
          rd_address_ex_i => rd_address_ex_s,
          mem_to_reg_ex_i => mem_to_reg_ex_s,
-         rd_we_ex_i      => rd_we_ex_s,
-
-         rd_address_mem_i => rd_address_mem_s,
-         mem_to_reg_mem_i => mem_to_reg_mem_s,
 
          pc_en_o        => pc_en_o,
          if_id_en_o     => if_id_en_s,

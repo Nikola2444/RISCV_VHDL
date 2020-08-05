@@ -53,7 +53,7 @@ jal error
 valid7: jal procedure # expected- a5=a6=69
 beq a5, a6, valid8  #tested- jal,jalr
 jal error
-valid8: addi a6, a6, 1 # expected- a5=70 a6=69
+valid8: addi a6, a6, 1 # expected- a5=69 a6=70
 bne a5, a6, valid9  #tested- bne
 jal error
 valid9: li a6 -1 # expected- a5=69 a6=-1 (for next 4 branches)

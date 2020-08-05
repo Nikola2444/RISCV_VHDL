@@ -4,16 +4,18 @@ use ieee.numeric_std.all;
 use std.textio.all;
 use work.txt_util.all;
 
-entity scalar_core_tb is
+entity TOP_RISCV_tb is
 -- port ();
 end entity;
 
 
-architecture Behavioral of scalar_core_tb is
+architecture Behavioral of TOP_RISCV_tb is
    -- File operands   
    file RISCV_instructions             : text open read_mode is "../../../../../simulation_sources/assembly_code.txt";
    -- Signals
-   signal clk                          : std_logic := '0';
+   signal clk                          : std_logic;
+   signal ce                          : std_logic;
+
    signal reset                        : std_logic;
    -- Instruction memory signals
    signal rsta_instr_s, rstb_instr_s   : std_logic;
@@ -38,6 +40,7 @@ begin
    -- PORT A : test bench instruction initializationa
    -- PORT B : cpu reads instructions
    -- Constants:
+   ce <= '1';
    ena_instr_s   <= '1';
    rsta_instr_s  <= '0';
    addrb_instr_s <= addrb_instr_32_s(9 downto 0);
@@ -98,6 +101,7 @@ begin
    TOP_RISCV_1 : entity work.TOP_RISCV
       port map (
          clk   => clk,
+         ce => ce,
          reset => reset,
 
          instr_mem_read_i    => doutb_instr_s,
