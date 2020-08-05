@@ -33,6 +33,7 @@ class vector_core_driver extends uvm_driver#(vector_core_seq_item);
        forever begin
 	   if (vif.reset) begin	       	       
 	       /*State machine that send instructions to vector core if there is no get_instruction*/
+	       #1;	       
 	       while(vif.vector_stall_s)begin		 
 		 @(posedge(vif.clk));	    
 		   #1; 
@@ -44,9 +45,10 @@ class vector_core_driver extends uvm_driver#(vector_core_seq_item);
 	       seq_item_port.item_done();
 	       
 	       @(posedge(vif.clk));
-	       #1;
-	       vif.vector_instruction_i <= req.vector_instruction_i;
+	       #1
 	       vif.rs1_i = req.rs1_i;
+	       vif.vector_instruction_i <= req.vector_instruction_i;
+	       
 	       vif.rs2_i = req.rs2_i;
 	       
 	       

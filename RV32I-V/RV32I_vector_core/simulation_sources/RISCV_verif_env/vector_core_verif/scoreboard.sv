@@ -15,11 +15,11 @@ class vector_core_scoreboard extends uvm_scoreboard;
 
    // Registers whose value will change only if scoreboard receievs vsetvli instructions
    logic [1 : 0] vmul_reg = 0; 
-   logic [$clog2(VECTOR_LENGTH) : 0] vl_reg = VECTOR_LENGTH;
+   logic [$clog2(VECTOR_LENGTH * 8) : 0] vl_reg = VECTOR_LENGTH;
     
    typedef struct 		     
 		 {
-		    logic [$clog2(VECTOR_LENGTH) : 0] vector_length; 
+		    logic [$clog2(VECTOR_LENGTH * 8) : 0] vector_length; 
 		    logic [1 : 0] 		      vmul;
 		    logic [31 : 0] 		      rs1;
 		    logic [31 : 0] 		      rs2;
@@ -86,17 +86,21 @@ class vector_core_scoreboard extends uvm_scoreboard;
     function write_load_data_item (load_data_seq_item tr);
 	//variable declaration
 	int vrf_load_addr;
+	
 	load_store_info tmp_load_info;
 	load_data_seq_item tr_clone;
-
+	
 	//Function body
 	tmp_load_info = load_info_fifo[0];
 	$cast(tr_clone, tr.clone());	
-        vrf_load_addr = load_iterator++ + tmp_load_info.vd_addr * elements_per_vector * 2**tmp_load_info.vmul;
+        vrf_load_addr = load_iterator + tmp_load_info.vd_addr * elements_per_vector * 2**tmp_load_info.vmul;
 	VRF_referent_model[vrf_load_addr] = tr_clone.data_from_mem_s;
 	`uvm_info(get_type_name(), $sformatf("  load written on position [%d]: %x", 
 							  vrf_load_addr, VRF_referent_model [vrf_load_addr]), UVM_HIGH);
+	load_iterator++;	
 	if(load_iterator == (tmp_load_info.vector_length)) begin
+	    `uvm_info(get_type_name(), $sformatf("vector length: %d \t load_iterator: %d", 
+							  tmp_load_info.vector_length, load_iterator), UVM_HIGH);
 	    load_iterator = 0;
 	    load_info_fifo.pop_front();
 	end	     
@@ -178,12 +182,16 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		    vmul_reg = zimm[1 : 0];
 		    if (vd_addr && !vs1_addr) begin
 			//in this case vl is set to a maximum value
-			vl_reg = VECTOR_LENGTH * 2**vmul_reg;			
+			vl_reg = VECTOR_LENGTH * 2**vmul_reg;
+			`uvm_info(get_type_name(), $sformatf("max vl_reg is: %d",  vl_reg), UVM_HIGH)
 		    end
 		    else if (vs1_addr) begin
-			// In this case vectorlength is taken from scalar register
-			vl_reg = tr.rs1_i;			
+			// In this case vectorlength is taken from scalar register			
+			vl_reg = tr.rs1_i;
+			`uvm_info(get_type_name(), $sformatf("vl_reg is: %d, rs1 is :%d",  vl_reg, tr.rs1_i), UVM_HIGH)
 		    end
+		    else
+		      `uvm_info(get_type_name(), $sformatf("unchanged vl_reg is: %d, rs1 is :%d",  vl_reg, tr.rs1_i), UVM_HIGH)
 		    return;		    
 		end // if (funct3 == 3'b111)
 		
@@ -239,7 +247,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 		tmp_store_info.rs1 = tr.rs1_i;
 		tmp_store_info.rs2 = tr.rs2_i;
 		for (int i = 0; i < vl_reg; i++)
-		  tmp_store_info.store_vector[i] = VRF_referent_model[vd_addr * elements_per_vector * 2**vmul_reg + i];		
+		  tmp_store_info.store_vector[i] = VRF_referent_model[vd_addr * elements_per_vector * 2**vmul_reg + i];	
 		store_info_fifo.push_back(tmp_store_info);
 	    end
 	    load_opcode:begin
