@@ -37,8 +37,7 @@ module vector_core_verif_top;
        .all_v_stores_executed_o(v_core_vif.all_v_stores_executed_o),
        .all_v_loads_executed_o(v_core_vif.all_v_loads_executed_o),
        
-       .store_address_o(v_core_vif.store_address_s),
-       .load_address_o(v_core_vif.load_address_s),
+       .data_mem_addr_o(v_core_vif.data_mem_addr_s),       
        .mem_we_o(v_core_vif.mem_we_s),
        .mem_re_o(v_core_vif.mem_re_s),
        .data_from_mem_i(v_core_vif.data_from_mem_s),
@@ -55,8 +54,8 @@ module vector_core_verif_top;
 	.INIT_FILE(""))
        DATA_MEM(
 		.clk(clk),
-		.write_addr_i(v_core_vif.store_address_s[15 : 0]),
-		.read_addr_i(v_core_vif.load_address_s[15 : 0]),
+		.write_addr_i(v_core_vif.data_mem_addr_s[15 : 0]),
+		.read_addr_i(v_core_vif.data_mem_addr_s[15 : 0]),
 		.write_data_i(v_core_vif.data_to_mem_s),
 		.we_i(v_core_vif.mem_we_s),
 		.re_i(v_core_vif.mem_re_s),

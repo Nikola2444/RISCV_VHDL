@@ -8,12 +8,20 @@ entity control_path is
    port (
       -- global synchronization signals
       clk                : in  std_logic;
-      ce                 : in  std_logic;
+      instr_ready_i  : in  std_logic;
+      data_ready_i   : in  std_logic;
       reset              : in  std_logic;
       -- instruction is read from memory
       instruction_i      : in  std_logic_vector (31 downto 0);
       -- from data_path comparator
       branch_condition_i : in  std_logic;
+      -- Vector core status signals
+      all_v_stores_executed_i:in std_logic;
+      all_v_loads_executed_i:in std_logic;
+      vector_stall_i  : in std_logic;
+      -- Vector core control signals
+      scalar_load_req_o   : out std_logic;
+      scalar_store_req_o  : out std_logic;
       -- control signals forwarded to datapath and memory
       set_a_zero_o       : out std_logic;
       mem_to_reg_o       : out std_logic_vector(1 downto 0);
@@ -33,7 +41,9 @@ entity control_path is
       id_ex_flush_o      : out std_logic;
       -- control signals for stalling
       pc_en_o            : out std_logic;
-      if_id_en_o         : out std_logic
+      if_id_en_o         : out std_logic;
+		-- detect read from data memory
+      data_mem_re_o         : out std_logic
       );
 end entity;
 
@@ -46,6 +56,11 @@ architecture behavioral of control_path is
    signal id_ex_flush_s     : std_logic;   
    
    --*********  INSTRUCTION DECODE **************
+
+   signal scalar_load_req_id: std_logic;
+   signal scalar_store_req_id: std_logic;
+
+   
    signal branch_type_id_s  : std_logic_vector(1 downto 0);
    signal funct3_id_s       : std_logic_vector(2 downto 0);
    signal funct7_id_s       : std_logic_vector(6 downto 0);
@@ -66,6 +81,8 @@ architecture behavioral of control_path is
    signal rd_address_id_s   : std_logic_vector (4 downto 0);
    --*********       EXECUTE       **************
 
+   signal scalar_load_req_ex: std_logic;
+   signal scalar_store_req_ex: std_logic;
    signal branch_type_ex_s  : std_logic_vector(1 downto 0);
    signal funct3_ex_s       : std_logic_vector(2 downto 0);
    signal funct7_ex_s       : std_logic_vector(6 downto 0);
@@ -86,7 +103,9 @@ architecture behavioral of control_path is
    signal branch_conf_ex_s  : std_logic;
 
    --*********       MEMORY        **************
-
+   
+   signal scalar_load_req_mem: std_logic;
+   signal scalar_store_req_mem: std_logic;
    signal funct3_mem_s      : std_logic_vector(2 downto 0);
    signal data_mem_we_mem_s : std_logic;
    signal rd_we_mem_s       : std_logic;
@@ -155,64 +174,73 @@ begin
    --ID/EX register
    id_ex : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if (reset = '0' or control_pass_s = '0' or id_ex_flush_s = '1')then
-            branch_type_ex_s <= (others => '0');
-            funct3_ex_s      <= (others => '0');
-            funct7_ex_s      <= (others => '0');
-            set_a_zero_ex_s  <= '0';
-            alu_src_a_ex_s   <= '0';
-            alu_src_b_ex_s   <= '0';
-            mem_to_reg_ex_s  <= (others => '0');
-            alu_2bit_op_ex_s <= (others => '0');
-            rs1_address_ex_s <= (others => '0');
-            rs2_address_ex_s <= (others => '0');
-            rd_address_ex_s  <= (others => '0');
-            rd_we_ex_s       <= '0';
-            data_mem_we_ex_s <= '0';
-         else
-            branch_type_ex_s <= branch_type_id_s;
-            funct7_ex_s      <= funct7_id_s;
-            funct3_ex_s      <= funct3_id_s;
-            set_a_zero_ex_s  <= set_a_zero_id_s;
-            alu_src_a_ex_s   <= alu_src_a_id_s;
-            alu_src_b_ex_s   <= alu_src_b_id_s;
-            mem_to_reg_ex_s  <= mem_to_reg_id_s;
-            alu_2bit_op_ex_s <= alu_2bit_op_id_s;
-            rs1_address_ex_s <= rs1_address_id_s; 
+      if (rising_edge(clk)) then
+			if (reset = '0' or ((control_pass_s = '0' or id_ex_flush_s = '1') and data_ready_i = '1' and instr_ready_i = '1' ))then
+				branch_type_ex_s <= (others => '0');
+				funct3_ex_s      <= (others => '0');
+				funct7_ex_s      <= (others => '0');
+				set_a_zero_ex_s  <= '0';
+				alu_src_a_ex_s   <= '0';
+				alu_src_b_ex_s   <= '0';
+				mem_to_reg_ex_s  <= (others => '0');
+				alu_2bit_op_ex_s <= (others => '0');
+				rs1_address_ex_s <= (others => '0');
+				rs2_address_ex_s <= (others => '0');
+				rd_address_ex_s  <= (others => '0');
+				rd_we_ex_s       <= '0';
+				data_mem_we_ex_s <= '0';                                
+                                scalar_load_req_ex <= '0';
+                                scalar_store_req_ex <= '0';
+                                
+			elsif(data_ready_i = '1' and instr_ready_i = '1')then
+				branch_type_ex_s <= branch_type_id_s;
+				funct7_ex_s      <= funct7_id_s;
+				funct3_ex_s      <= funct3_id_s;
+				set_a_zero_ex_s  <= set_a_zero_id_s;
+				alu_src_a_ex_s   <= alu_src_a_id_s;
+				alu_src_b_ex_s   <= alu_src_b_id_s;
+				mem_to_reg_ex_s  <= mem_to_reg_id_s;
+				alu_2bit_op_ex_s <= alu_2bit_op_id_s;
+				rs1_address_ex_s <= rs1_address_id_s; 
 				rs2_address_ex_s <= rs2_address_id_s;
-            rd_address_ex_s  <= rd_address_id_s;
-            rd_we_ex_s       <= rd_we_id_s;
-            data_mem_we_ex_s <= data_mem_we_id_s;
-         end if;
+				rd_address_ex_s  <= rd_address_id_s;
+				rd_we_ex_s       <= rd_we_id_s;
+				data_mem_we_ex_s <= data_mem_we_id_s;
+                                scalar_load_req_ex <= scalar_load_req_id;
+                                scalar_store_req_ex <= scalar_store_req_id;       
+			end if;
       end if;
    end process;
 
    --EX/MEM register
    ex_mem : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if (reset = '0')then
-            funct3_mem_s      <= (others => '0');
-            data_mem_we_mem_s <= '0';
-            rd_we_mem_s       <= '0';
-            mem_to_reg_mem_s  <= (others => '0');
-            rd_address_mem_s  <= (others => '0');
-         else
-            funct3_mem_s      <= funct3_ex_s;
-            data_mem_we_mem_s <= data_mem_we_ex_s;
-            rd_we_mem_s       <= rd_we_ex_s;
-            mem_to_reg_mem_s  <= mem_to_reg_ex_s;
-            rd_address_mem_s  <= rd_address_ex_s;
-         end if;
+      if (rising_edge(clk)) then
+			if (reset = '0' )then --or (instr_ready_i = '0' and data_ready_i = '1')
+				funct3_mem_s      <= (others => '0');
+				data_mem_we_mem_s <= '0';
+				rd_we_mem_s       <= '0';
+				mem_to_reg_mem_s  <= (others => '0');
+				rd_address_mem_s  <= (others => '0');
+                                scalar_load_req_mem <= '0';
+                                scalar_store_req_mem <= '0';
+			elsif (data_ready_i = '1' and instr_ready_i = '1')then
+				funct3_mem_s      <= funct3_ex_s;
+				data_mem_we_mem_s <= data_mem_we_ex_s;
+				rd_we_mem_s       <= rd_we_ex_s;
+				mem_to_reg_mem_s  <= mem_to_reg_ex_s;
+				rd_address_mem_s  <= rd_address_ex_s;
+                                scalar_load_req_mem <= scalar_load_req_ex;
+                                scalar_store_req_mem <= scalar_store_req_ex;       
+			end if;
       end if;
    end process;
 
    --MEM/WB register
    mem_wb : process (clk) is
    begin
-      if (rising_edge(clk) and ce='1') then
-         if (reset = '0')then
+      if (rising_edge(clk)) then
+         if (reset = '0' or data_ready_i = '0')then
             funct3_wb_s     <= (others => '0');
             rd_we_wb_s      <= '0';
             mem_to_reg_wb_s <= (others => '0');
@@ -243,7 +271,11 @@ begin
          rd_we_o       => rd_we_id_s,
          rs1_in_use_o  => rs1_in_use_id_s,
          rs2_in_use_o  => rs2_in_use_id_s,
-         alu_2bit_op_o => alu_2bit_op_id_s);
+         alu_2bit_op_o => alu_2bit_op_id_s,
+         -- Signals going to hazard unit and vector core
+         scalar_load_req_o => scalar_load_req_id,
+         scalar_store_req_o => scalar_store_req_id
+         );
 
    -- ALU decoder
    alu_dec : entity work.alu_decoder(behavioral)
@@ -268,14 +300,20 @@ begin
    -- Hazard unit
    hazard_u : entity work.hazard_unit(behavioral)
       port map (
-         rs1_address_id_i => rs1_address_id_s,
-         rs2_address_id_i => rs2_address_id_s,
-         rs1_in_use_i     => rs1_in_use_id_s,
-         rs2_in_use_i     => rs2_in_use_id_s,
+          rs1_address_id_i => rs1_address_id_s,
+          rs2_address_id_i => rs2_address_id_s,
+          rs1_in_use_i     => rs1_in_use_id_s,
+          rs2_in_use_i     => rs2_in_use_id_s,
 
-         rd_address_ex_i => rd_address_ex_s,
-         mem_to_reg_ex_i => mem_to_reg_ex_s,
-
+          rd_address_ex_i => rd_address_ex_s,
+          mem_to_reg_ex_i => mem_to_reg_ex_s,
+          --vector core signals------------------------
+          all_v_stores_executed_i => all_v_stores_executed_i,          
+          all_v_loads_executed_i => all_v_loads_executed_i,
+          vector_stall_i  => vector_stall_i,
+          scalar_load_req_i => scalar_load_req_id,
+          scalar_store_req_i => scalar_store_req_id,
+          ---------------------------------------------------
          pc_en_o        => pc_en_o,
          if_id_en_o     => if_id_en_s,
          control_pass_o => control_pass_s);
@@ -284,6 +322,10 @@ begin
 
    --********** Outputs **************
 
+   --Signals going to vector core
+   scalar_load_req_o <= scalar_load_req_mem;
+   scalar_store_req_o <= scalar_store_req_mem;
+   
    -- forward control signals to datapath
    if_id_en_o    <= if_id_en_s;
    mem_to_reg_o  <= mem_to_reg_wb_s;
@@ -296,6 +338,9 @@ begin
 
    -- load_type controls which bytes are taken from memory in wb stage
    load_type_o <= funct3_wb_s;
+	-- cache controller needs to know about loads in memory phase
+	-- so it can validate in time that requested data is in data cache
+	data_mem_re_o <= mem_to_reg_mem_s(1); -- there is no "11" combination se we can use just upper bit
 
 
 end architecture;

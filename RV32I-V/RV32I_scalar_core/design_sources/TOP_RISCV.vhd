@@ -3,25 +3,45 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.util_pkg.all;
 
-entity TOP_RISCV is
+entity scalar_core is
    port(
       -- Synchronization ports
       clk                 : in  std_logic;
-      ce                  : in  std_logic;
+      instr_ready_i   : in  std_logic;
+      data_ready_i    : in  std_logic;
       reset               : in  std_logic;
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
       instr_mem_read_i    : in  std_logic_vector(31 downto 0);
-      instr_mem_flush_o   : out std_logic;
-      instr_mem_en_o      : out std_logic;
-      -- Data memory interface
+      --instr_mem_flush_o   : out std_logic;
+      --instr_mem_en_o      : out std_logic;
+
+      ---------------------------- VECTOR CORE INTERFACE---------------------------
+      -- Vector core status signals
+      all_v_stores_executed_i:in std_logic;
+      all_v_loads_executed_i:in std_logic;
+      vector_stall_i  : in std_logic;
+      -- Signals going to M_CU inside vector core
+      scalar_load_req_o   : out std_logic;
+      scalar_store_req_o  : out std_logic;      
+      
+      -- Values of rs1 and rs2 from register bank going to Vector core
+      v_instruction_o: out std_logic_vector(31 downto 0);
+      rs1_o :out std_logic_vector(31 downto 0);
+      rs2_o: out std_logic_vector(31 downto 0);
+      --------------------------------------------------------------------------------------------
+     
+      
+      -- Data memory interface      
       data_mem_address_o  : out std_logic_vector(31 downto 0);
       data_mem_read_i     : in  std_logic_vector(31 downto 0);
       data_mem_write_o    : out std_logic_vector(31 downto 0);
-      data_mem_we_o       : out std_logic_vector(3 downto 0));  
+      data_mem_we_o       : out std_logic_vector(3 downto 0);  
+      data_mem_re_o       : out std_logic);
 end entity;
 
-architecture structural of TOP_RISCV is
+architecture structural of scalar_core is
+
    signal set_a_zero_s       : std_logic;
    signal mem_to_reg_s       : std_logic_vector(1 downto 0);
    signal load_type_s        : std_logic_vector(2 downto 0);
@@ -37,27 +57,35 @@ architecture structural of TOP_RISCV is
    signal alu_forward_a_s    : fwd_a_t;
    signal alu_forward_b_s    : fwd_b_t;
    signal branch_condition_s : std_logic;
-	signal branch_op_s        : std_logic_vector(1 downto 0);
+   signal branch_op_s        : std_logic_vector(1 downto 0);
 
    signal pc_en_s            : std_logic;
    signal if_id_en_s         : std_logic;
          
-   
+   signal instr_mem_id_s   : std_logic_vector(31 downto 0);
+
 begin
-   -- Data_path instance
+   -- data_path instance
    data_path_1: entity work.data_path
       port map (
          -- global synchronization signals
          clk                 => clk,
-         ce                  => ce,
+         instr_ready_i   => instr_ready_i,
+         data_ready_i    => data_ready_i,
          reset               => reset,
          -- operands come from instruction memory
          instr_mem_address_o => instr_mem_address_o,
          instr_mem_read_i    => instr_mem_read_i,
+         instr_mem_id_o    => instr_mem_id_s,
          -- interface towards data memory
          data_mem_address_o  => data_mem_address_o,
          data_mem_write_o    => data_mem_write_o,
          data_mem_read_i     => data_mem_read_i,
+
+         -- Vector core interface
+         v_instruction_o => v_instruction_o,
+         rs1_o => rs1_o,
+         rs2_o => rs2_o,
          -- control signals come from control path
          set_a_zero_i        => set_a_zero_s,
          mem_to_reg_i        => mem_to_reg_s,
@@ -80,8 +108,9 @@ begin
          if_id_en_i          => if_id_en_s); 
 
       --flush current instruction
-      instr_mem_flush_o <= if_id_flush_s;
-
+      --instr_mem_flush_o <=  '1' when (if_id_flush_s = '1' or instr_ready_i ='0') else '0';
+   -- stall currnet instruction
+		--instr_mem_en_o <= '0' when (if_id_en_s = '0' or data_ready_i = '0') else '1';
 
 
    -- Control_path instance
@@ -89,10 +118,18 @@ begin
       port map (
          -- global synchronization signals
          clk                 => clk,
-         ce                  => ce,
+         instr_ready_i   => instr_ready_i,
+         data_ready_i    => data_ready_i,
          reset               => reset,
-         -- instruction is read from memory
-         instruction_i       => instr_mem_read_i,
+         -- Vector core status signals
+         all_v_stores_executed_i => all_v_stores_executed_i,
+         all_v_loads_executed_i => all_v_loads_executed_i,
+         vector_stall_i  => vector_stall_i,
+         -- Vector core control signals
+         scalar_load_req_o => scalar_load_req_o,
+         scalar_store_req_o => scalar_store_req_o,
+         -- instruction is read from memory         
+         instruction_i       => instr_mem_id_s,
          -- control signals are forwarded to data_path
          set_a_zero_o        => set_a_zero_s,
          mem_to_reg_o        => mem_to_reg_s,
@@ -113,8 +150,7 @@ begin
          id_ex_flush_o       => id_ex_flush_s,
          -- control signals for stalling
          pc_en_o             => pc_en_s,
-         if_id_en_o          => if_id_en_s);
+         if_id_en_o          => if_id_en_s,
+			data_mem_re_o 		  => data_mem_re_o);
    
-   -- stall currnet instruction
-   instr_mem_en_o <= if_id_en_s;
 end architecture;

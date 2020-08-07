@@ -86,8 +86,9 @@ class vector_core_monitor extends uvm_monitor;
 				   v_core_load_stages = send_load_seq_item;		    				 
 			     end
 			     send_load_seq_item: begin
+				 #1;
 				 curr_load_item.data_from_mem_s = vif.data_from_mem_s;
-				 load_data_collected_port.write(curr_load_item);
+				 load_data_collected_port.write(curr_load_item);				 
 				 if (!vif.mem_re_s) begin
 				   v_core_load_stages = wait_for_re;
 				 end

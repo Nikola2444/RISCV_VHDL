@@ -29,8 +29,7 @@ entity vector_core is
          all_v_stores_executed_o:out std_logic;
          all_v_loads_executed_o:out std_logic;
          -- Memory interface
-         store_address_o : out std_logic_vector(31 downto 0);
-         load_address_o  : out std_logic_vector(31 downto 0);
+         data_mem_addr_o : out std_logic_vector(31 downto 0);         
          mem_we_o        : out std_logic;
          mem_re_o        : out std_logic;
          data_from_mem_i : in  std_logic_vector (31 downto 0);
@@ -201,8 +200,7 @@ begin
             scalar_load_req_i  => scalar_load_req_i,
             scalar_store_req_i => scalar_store_req_i,
             scalar_address_i   => scalar_address_i,
-            store_address_o    => store_address_o,
-            load_address_o     => load_address_o,
+            data_mem_addr_o    => data_mem_addr_o,            
             mem_we_o           => mem_we_o,
             mem_re_o           => mem_re_o,
             store_fifos_en_o   => store_fifos_en_s,

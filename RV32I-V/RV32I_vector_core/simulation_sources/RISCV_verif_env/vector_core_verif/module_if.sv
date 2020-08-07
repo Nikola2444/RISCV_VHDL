@@ -24,8 +24,7 @@ interface v_core_if (input clk, logic reset);
    //Interconnections between data memory and vector core
    logic 	  mem_we_s;
    logic 	  mem_re_s;
-   logic [31 : 0] store_address_s ;
-   logic [31 : 0] load_address_s ;
+   logic [31 : 0] data_mem_addr_s ;
    logic [31 : 0] data_from_mem_s;
    logic [31 : 0] data_to_mem_s;
    

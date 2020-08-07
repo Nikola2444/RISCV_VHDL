@@ -106,9 +106,7 @@ begin
             end if;
         end if;
     end process;
-
-    -- Calculating number of elements that need to be extracted from memory
-
+    
     ---------------------------------------------------------------------------------------------------------------------------------------------
     -- logic that handles LOAD instructions
     ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -116,10 +114,11 @@ begin
     process (load_fsm_states_next, load_fsm_states_reg, vector_ld_rs2_next,
              vector_ld_rs2_reg, M_CU_load_valid_i, scalar_address_i,
              scalar_load_req_i, load_vl_reg, load_vl_next, load_address_next, load_address_reg,
-             load_counter_reg, load_counter_next, M_CU_ld_vl_i, M_CU_ld_rs1_i, M_CU_ld_rs2_i) is
+             load_counter_reg, load_counter_next, M_CU_ld_vl_i, M_CU_ld_rs1_i, M_CU_ld_rs2_i, store_fsm_states_reg,
+             M_CU_store_valid_i) is
     begin
         vector_ld_rs2_next <= vector_ld_rs2_reg;
-        mem_re_o           <= '0';        
+        mem_re_o           <= '0';
         rdy_for_load_o     <= '0';
         load_start_s       <= '0';
         load_counter_next  <= load_counter_reg;
@@ -130,27 +129,28 @@ begin
             when waiting_for_loads =>
 
                 load_fsm_states_next <= waiting_for_loads;
-                -- scalar load have a higher priority because they only extract one
+                -- scalar loads have a higher priority because they only extract one
                 -- element from memory, and vector loads extrac VECTOR_LENGTH
                 -- elements from the memory.
                 if (scalar_load_req_i = '1') then
                     load_address_next <= scalar_address_i;
                     mem_re_o          <= '1';
-                elsif (M_CU_load_valid_i = '1' and M_CU_ld_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1))) then
+                elsif (M_CU_load_valid_i = '1' and M_CU_ld_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1)) and
+                       M_CU_store_valid_i = '0' and store_fsm_states_reg = waiting_for_stores) then
                     -- if there is a valid vector load start reading data from the memory.
                     load_fsm_states_next <= load_vector_state;
                     -- Raise rdy_for_load_o for one clock cycle (that is the
                     -- handshake the arbiter expects)
-
                     rdy_for_load_o <= '1';
                     mem_re_o       <= '1';
-
+                    load_start_s      <= '1';                    
+                    -- register vl, rs1 and rs2
                     load_vl_next       <= M_CU_ld_vl_i;
                     vector_ld_rs2_next <= M_CU_ld_rs2_i;
-
+                    -- set read address and increment the counter
                     load_address_next <= M_CU_ld_rs1_i;
                     load_counter_next <= std_logic_vector(unsigned(load_counter_reg) + to_unsigned(1, clogb2(VECTOR_LENGTH * 8) + 1));
-                    load_start_s      <= '1';
+
                 end if;
             when load_vector_state =>
                 mem_re_o             <= '1';
@@ -203,7 +203,8 @@ begin
     process (store_fsm_states_next, store_fsm_states_reg, vector_st_rs2_next,
              vector_st_rs2_reg, M_CU_store_valid_i, scalar_address_i,
              scalar_store_req_i, store_vl_reg, store_vl_next, store_address_next, store_address_reg,
-             store_counter_reg, store_counter_next, M_CU_st_vl_i, M_CU_st_rs1_i, M_CU_st_rs2_i, store_fifos_empty_i) is
+             store_counter_reg, store_counter_next, M_CU_st_vl_i, M_CU_st_rs1_i,
+             M_CU_st_rs2_i, store_fifos_empty_i, load_fsm_states_reg) is
     begin
         vector_st_rs2_next <= vector_st_rs2_reg;        
         mem_we_s           <= '0';
@@ -214,26 +215,31 @@ begin
         store_vl_next      <= store_vl_reg;
         case store_fsm_states_reg is
             when waiting_for_stores =>
-                store_fsm_states_next <= waiting_for_stores;
                 -- scalar store have a higher priority because they only extract one
                 -- element from memory, and vector stores extrac VECTOR_LENGTH
                 -- elements from the memory.
+                store_fsm_states_next <= waiting_for_stores;
                 if (scalar_store_req_i = '1') then
                     store_address_next <= scalar_address_i;
                     mem_we_s        <= '1';
-                elsif (M_CU_store_valid_i = '1' and M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1)) and store_fifos_empty_i = '0') then
-                    -- if there is a valid vector store start reading data from the memory.
-                    store_fsm_states_next <= store_vector_state;
+                elsif (M_CU_store_valid_i = '1' and
+                       M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1)) and
+                       store_fifos_empty_i = '0' and
+                       load_fsm_states_reg = waiting_for_loads) then
+                    -- if there is a valid vector store start reading data from the memory.                    
                     -- Raise rdy_for_store_o for one clock cycle (that is the
                     -- handshake the arbiter expects)
+                    store_fsm_states_next <= store_vector_state;
                     rdy_for_store_o <= '1';
                     mem_we_s        <= '1';
+                    store_start_s      <= '1';
+                    -- register vl, rs1 and rs2
                     store_vl_next      <= M_CU_st_vl_i;
                     vector_st_rs2_next <= M_CU_st_rs2_i;
-
+                    -- set write address and increment the counter
                     store_address_next <= M_CU_st_rs1_i;
                     store_counter_next <= std_logic_vector(unsigned(store_counter_reg) + to_unsigned(1, clogb2(VECTOR_LENGTH * 8) + 1));
-                    store_start_s      <= '1';
+                    
                 end if;
             when store_vector_state =>
                 mem_we_s              <= '1';
@@ -257,7 +263,7 @@ begin
                 store_fsm_states_next <= waiting_for_stores;
         end case;
     end process;
-
+    
     -- Logic that generates enables for store fifos
     process (store_fsm_states_reg, store_fifos_en_next, store_fifos_en_reg, store_start_s)is
     begin
@@ -287,9 +293,19 @@ begin
     store_address_o <= store_address_reg when scalar_store_req_i = '0' else
                        scalar_address_i;
 
-    store_fifos_en_o <= store_fifos_en_next;
-    load_fifos_en_o <= load_fifos_en_reg;
 
+    -- Enable signal for store fifos inside vector lanes. If there are multiple
+    -- lanes it decides from which vector lane fifo the data is taken. This is
+    -- done in cyclical manner.
+    store_fifos_en_o <= store_fifos_en_next;
+    
+    
+    load_fifos_en_o <= load_fifos_en_reg when load_start_s = '1' else
+                       (others => '0');
+
+
+    -- It takes one clock cycle for element to be read from fifo lanes, se
+    -- mem_we needs to be delayed for one clock cycle
     process (clk) is
     begin
         if (rising_edge(clk))then

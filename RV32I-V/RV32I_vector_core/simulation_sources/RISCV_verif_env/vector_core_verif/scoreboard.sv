@@ -97,7 +97,7 @@ class vector_core_scoreboard extends uvm_scoreboard;
 	VRF_referent_model[vrf_load_addr] = tr_clone.data_from_mem_s;
 	`uvm_info(get_type_name(), $sformatf("  load written on position [%d]: %x", 
 							  vrf_load_addr, VRF_referent_model [vrf_load_addr]), UVM_HIGH);
-	load_iterator++;	
+	load_iterator++;
 	if(load_iterator == (tmp_load_info.vector_length)) begin
 	    `uvm_info(get_type_name(), $sformatf("vector length: %d \t load_iterator: %d", 
 							  tmp_load_info.vector_length, load_iterator), UVM_HIGH);
