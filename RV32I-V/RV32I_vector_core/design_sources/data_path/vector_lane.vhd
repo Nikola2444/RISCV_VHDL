@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.custom_functions_pkg.all;
+use work.vector_alu_ops_pkg.all;
 library UNIMACRO;
 use UNIMACRO.vcomponents.all;
 use ieee.numeric_std.all;
@@ -26,14 +27,16 @@ entity vector_lane is
         -- if immediate_sign_i = 1 immediate is treated as unsigned else, it
         -- is treated as signed
         immediate_sign_i: in    std_logic;
-        alu_op_i                : in  std_logic_vector(4 downto 0);
+        --alu_op_i                : in  std_logic_vector(4 downto 0);
+        alu_op_i                : in  vector_alu_ops_t;
         mem_to_vrf_i            : in  std_logic_vector(1 downto 0);
         store_fifo_we_i         : in  std_logic;
         vrf_type_of_access_i    : in  std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
         alu_src_a_i: in std_logic_vector(1 downto 0);
         -- 1: all elements in VRF are updated (merge and move instructions)
         -- 0: only masked elements in VRF are updated 
-        type_of_masking_i: in std_logic;                                         
+        type_of_masking_i: in std_logic;
+        alu_exe_time_i: in std_logic_vector(2 downto 0);
         load_fifo_re_i          : in  std_logic;
         vs1_addr_src_i          : in  std_logic;
         --oputput data
@@ -62,24 +65,6 @@ end entity;
 
 architecture structural of vector_lane is
 
-   type ROM_OP_exe_time is array (0 to 31) of std_logic_vector(2 downto 0);
-   -- Each location in this memory contans data that tells VRF how many
-   -- clock cycles is needed for each operation to be executed. If zero clock
-   -- cycles is needed, that means insutruction is not supported. This is hardcoded!
-   signal ROM_OP_exe_time_s : ROM_OP_exe_time :=
-      --and      or      add      xor
-      ("000", "000", "000", "000",
-       --no_op             sub      shr
-       "000", "000", "000", "000",
-       -- shra    mulu  mulhs  mulhsu
-       "000", "100", "100", "100",
-       --mulhu  divu    divs     remu
-       "100", "000", "000", "000",
-       --rems    muls  setLtu  shl     
-       "000", "100", "000", "000",
-       --seteq
-       "000", others => "000");
-
 --****************************INTERCONNECTIONS*******************************
 
 
@@ -99,7 +84,8 @@ architecture structural of vector_lane is
    signal vd_address_s: std_logic_vector(4 downto 0);
    signal mem_to_vrf_reg: std_logic_vector(1 downto 0);
 -- ALU I/O interconnections
-   signal alu_op_s: std_logic_vector(4 downto 0);
+   --signal alu_op_s: std_logic_vector(4 downto 0);
+   signal alu_op_s: vector_alu_ops_t;
    signal alu_result_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_a_input_s                      : std_logic_vector(DATA_WIDTH - 1 downto 0);
    signal alu_src_a_reg: std_logic_vector(1 downto 0);
@@ -137,7 +123,7 @@ begin
 
    -- Depending on which instructions is being executed exe time of alu can differ.
    -- For example multiplication takes 4 clk but addition 0 (for now).
-   alu_exe_time_s <= ROM_OP_exe_time_s (to_integer(unsigned(alu_op_i)));
+   alu_exe_time_s <= alu_exe_time_i;
 
    -- If Store is being executed instruction (11 : 7) holds the address of
    -- vector register that needs to be stored.
@@ -163,7 +149,7 @@ begin
                immediate_sign_ext_reg <= (others => '0');
                vd_address_s <= (others => '0');
                rs1_data_reg <= (others => '0');
-               alu_op_s <= (others => '0');              
+               alu_op_s <= and_op;              
                --ready reg
                ready_reg <= '0';
                alu_src_a_reg <= (others => '0');

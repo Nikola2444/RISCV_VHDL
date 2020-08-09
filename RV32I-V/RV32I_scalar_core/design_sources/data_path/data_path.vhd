@@ -25,6 +25,7 @@ entity data_path is
         v_instruction_o    : out std_logic_vector (31 downto 0);
         rs1_o              : out std_logic_vector(31 downto 0);
         rs2_o              : out std_logic_vector(31 downto 0);
+        vector_stall_i: std_logic;
         -- control signals that are forwarded from data_path
         mem_to_reg_i       : in  std_logic_vector(1 downto 0);
         load_type_i        : in  std_logic_vector(2 downto 0);
@@ -119,18 +120,21 @@ begin
 -- checking flush = '1' automaticly also checks stall = '0'
 -- they are mutually exclusive
 
+
+    
     --IF/ID register
+    instr_mem_id_s <= instr_mem_read_i;
     if_id : process (clk) is
     begin
         if (rising_edge(clk)) then
             if (reset = '0' or (if_id_flush_i = '1' and data_ready_i = '1' and instr_ready_i = '1'))then
                 pc_reg_id_s    <= (others => '0');
                 pc_adder_id_s  <= (others => '0');
-                instr_mem_id_s <= (others => '0');
+                --instr_mem_id_s <= (others => '0');
             elsif (if_id_en_i = '1' and data_ready_i = '1' and instr_ready_i = '1')then
                 pc_reg_id_s    <= pc_reg_if_s;
                 pc_adder_id_s  <= pc_adder_if_s;
-                instr_mem_id_s <= instr_mem_read_i;
+                --instr_mem_id_s <= instr_mem_read_i;
             end if;
         end if;
     end process;
@@ -144,19 +148,29 @@ begin
                 rs1_data_ex_s           <= (others => '0');
                 rs2_data_ex_s           <= (others => '0');
                 immediate_extended_ex_s <= (others => '0');
-                rd_address_ex_s         <= (others => '0');
-                instr_mem_ex_s          <= (others => '0');
+                rd_address_ex_s         <= (others => '0');                
             elsif (data_ready_i = '1' and instr_ready_i = '1')then
                 pc_adder_ex_s           <= pc_adder_id_s;
                 rs1_data_ex_s           <= rs1_data_id_s;
                 rs2_data_ex_s           <= rs2_data_id_s;
                 immediate_extended_ex_s <= immediate_extended_id_s;
                 rd_address_ex_s         <= rd_address_id_s;
-                instr_mem_ex_s          <= instr_mem_id_s;
+                
             end if;
         end if;
     end process;
 
+    --ID/VECTOR_CORE
+    process(clk)is
+    begin
+        if (rising_edge(clk))then
+            if (reset = '0')then
+                instr_mem_ex_s          <= (others => '0');
+            elsif (not(vector_stall_i) = '1') then
+                instr_mem_ex_s          <= instr_mem_read_i;
+            end if;
+        end if;
+    end process;    
     --EX/MEM register
     ex_mem : process (clk) is
     begin
@@ -299,8 +313,12 @@ begin
     data_mem_write_o    <= rs2_data_mem_s;
     -- To vector core
     v_instruction_o     <= instr_mem_ex_s;
-    rs1_o               <= rs1_data_ex_s;
-    rs2_o               <= rs2_data_ex_s;
+    rs1_o               <= alu_result_mem_s when alu_forward_a_i = fwd_a_from_mem else
+                           rd_data_wb_s when alu_forward_a_i = fwd_a_from_wb else
+                           rs1_data_ex_s;
+    rs2_o               <= alu_result_mem_s when alu_forward_b_i = fwd_b_from_mem else
+                           rd_data_wb_s when alu_forward_b_i = fwd_b_from_wb else
+                           rs2_data_ex_s;
 end architecture;
 
 

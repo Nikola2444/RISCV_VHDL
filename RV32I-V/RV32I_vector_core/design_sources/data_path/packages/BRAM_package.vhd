@@ -6,6 +6,7 @@ package custom_functions_pkg is
    constant MAX_INSTR_NUM_C                       :    integer := 32;
    type instructions_mem is array (0 to MAX_INSTR_NUM_C - 1) of std_logic_vector(31 downto 0);
    function clogb2 (depth                         : in natural) return integer;
+   function calc_BRAM_DEPTH(VECTOR_LENGTH : natural) return integer;
    impure function read_instr_from_file (instr_file_name : in string) return instructions_mem;
 end custom_functions_pkg;
 
@@ -20,6 +21,15 @@ package body custom_functions_pkg is
          temp    := temp / 2;
       end loop;
       return ret_val;
+   end function;
+
+   function calc_BRAM_DEPTH(VECTOR_LENGTH : natural) return integer is              
+   begin
+       if (VECTOR_LENGTH < 16) then
+           return 16 * 32;
+       else
+           return VECTOR_LENGTH * 32;
+       end if;
    end function;
 
 

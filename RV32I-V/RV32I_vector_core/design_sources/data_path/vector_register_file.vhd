@@ -34,7 +34,7 @@ end entity;
 
 architecture structural of vector_register_file is
 
-
+   
    component VRF_BRAM_addr_generator is
       generic(VECTOR_LENGTH : natural := 32;
               DATA_WIDTH    : natural := 32
@@ -79,7 +79,8 @@ architecture structural of vector_register_file is
 
    end component;
    --***************VRF_BRAM_addr_generator signals ***************************
-   
+
+   constant BRAM_DEPTH:integer:= calc_BRAM_DEPTH(VECTOR_LENGTH);
    signal BRAM_we_s         : std_logic;
    signal mask_BRAM_we_s      : std_logic;
    signal mask_BRAM_re_s      : std_logic; 

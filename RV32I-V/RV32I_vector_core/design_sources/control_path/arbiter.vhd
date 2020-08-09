@@ -69,6 +69,8 @@ architecture beh of arbiter is
     alias mop_i: std_logic_vector (1 downto 0) is vector_instruction_i(27 downto 26);
     
     signal vector_instr_check_s : std_logic_vector(1 downto 0);
+    signal instr_not_store_s: std_logic;
+    signal instr_not_load_s: std_logic;
     signal vector_stall_s: std_logic;
     signal vector_instr_to_V_CU_s:std_logic_vector(31 downto 0);
     
@@ -137,12 +139,11 @@ architecture beh of arbiter is
 
     -- register in which load instruction that are not yet executed are stored
     type dependency_regs is array (0 to 17) of std_logic_vector(14 + clogb2(VECTOR_LENGTH * 8) + 1  downto 0);   
-    signal load_dependency_regs:dependency_regs;
-    
-    
+    signal load_dependency_regs:dependency_regs;        
     signal load_comparators: std_logic_vector (17 downto 0);
-
     signal dependency_check_s: std_logic;
+
+    
 begin
     ----------------------------------------------------------------------------------------------------------------------
     --ARCHITECTURE BEGINS HERE
@@ -564,12 +565,15 @@ begin
     -- fifos inside vector lanes are empty, rs1_rs2 store fifos are empty
     -- (there are no pending stores) and current instructions is not a vectore
     -- store
-    all_v_stores_executed_o <= store_fifo_empty_i and rs1_rs2_st_fifo_empty_s and not(vector_instr_check_s(1)) and vector_instr_check_s(0);
+    instr_not_store_s <= '1' when vector_instr_check_s /= "10" and vector_instr_to_V_CU_s(6 downto 0) /= "0100111" else
+                         '0';
+    all_v_stores_executed_o <= store_fifo_empty_i and rs1_rs2_st_fifo_empty_s and instr_not_store_s;
 
     -- all loads have been executed if M_CU is rdy for another load, there is
     -- no valid data inside rs1_rs2 load fifo and current instruction is not a
     -- vector load (vector_instr_check_s != "11")
-    all_v_loads_executed_o <= rdy_for_load_i and not(ld_from_fifo_is_valid_s) and not(vector_instr_check_s(1)) and not(vector_instr_check_s(0));
+    instr_not_load_s <= '1' when vector_instr_check_s /= "11" else '0';
+    all_v_loads_executed_o <= not(ld_from_fifo_is_valid_s) and instr_not_load_s;
 end architecture;
 
 

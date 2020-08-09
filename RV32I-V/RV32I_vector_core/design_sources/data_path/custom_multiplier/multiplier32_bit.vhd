@@ -49,7 +49,8 @@ entity multiplier32_bit is
    port (
       clk   : in  std_logic;
       reset : in  std_logic;
-      op   : in STD_LOGIC_VECTOR(4 DOWNTO 0); --operation Selection
+      --op   : in STD_LOGIC_VECTOR(4 DOWNTO 0); --operation Selection
+      op   : in vector_alu_ops_t; --operation select
       a     : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
       b     : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
       c     : out std_logic_vector(2*DATA_WIDTH - 1 downto 0));
@@ -137,7 +138,7 @@ begin
       if (a(DATA_WIDTH - 1) /= '1') then
          a_s <= a;
       else
-         case op is
+          case op is
             when muls_op =>
                a_s <= a_signed_s;
             when mulhs_op =>

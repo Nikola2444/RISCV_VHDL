@@ -13,8 +13,9 @@ entity scalar_core is
       -- Instruction memory interface
       instr_mem_address_o : out std_logic_vector(31 downto 0);
       instr_mem_read_i    : in  std_logic_vector(31 downto 0);
-      --instr_mem_flush_o   : out std_logic;
-      --instr_mem_en_o      : out std_logic;
+      
+      instr_mem_flush_o   : out std_logic;
+      instr_mem_en_o      : out std_logic;
 
       ---------------------------- VECTOR CORE INTERFACE---------------------------
       -- Vector core status signals
@@ -86,6 +87,7 @@ begin
          v_instruction_o => v_instruction_o,
          rs1_o => rs1_o,
          rs2_o => rs2_o,
+         vector_stall_i => vector_stall_i,
          -- control signals come from control path
          set_a_zero_i        => set_a_zero_s,
          mem_to_reg_i        => mem_to_reg_s,
@@ -152,5 +154,8 @@ begin
          pc_en_o             => pc_en_s,
          if_id_en_o          => if_id_en_s,
 			data_mem_re_o 		  => data_mem_re_o);
-   
+
+
+   instr_mem_flush_o <= if_id_flush_s;
+   instr_mem_en_o <= if_id_en_s;
 end architecture;

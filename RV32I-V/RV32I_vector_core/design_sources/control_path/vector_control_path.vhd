@@ -14,11 +14,13 @@ entity vector_control_path is
           --output control signals 0
           vrf_type_of_access_o : out std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
           immediate_sign_o : out std_logic;
-          alu_op_o             : out std_logic_vector(4 downto 0);
+          --alu_op_o             : out std_logic_vector(4 downto 0);
+          alu_op_o             : out vector_alu_ops_t;
           mem_to_vrf_o         : out std_logic_vector(1 downto 0);
           store_fifo_we_o      : out std_logic;
           alu_src_a_o: out std_logic_vector(1 downto 0);
           type_of_masking_o   :out std_logic;
+          alu_exe_time_o: out std_logic_vector(2 downto 0);
           vs1_addr_src_o       : out std_logic;
           load_fifo_re_o       : out std_logic
 
@@ -68,7 +70,8 @@ begin
         immediate_sign_o <= '0';
         store_fifo_we_s <= '0';
         type_of_masking_o <= '0';
-        alu_op_o <= (others => '0');
+        alu_op_o <= add_op;
+        alu_exe_time_o <= (others =>'0');
         case opcode_i is
             when vector_store_c =>
                 vrf_type_of_access_o <= "10";
@@ -101,6 +104,7 @@ begin
                             alu_op_o <= sll_op;
                         else
                             alu_op_o <= muls_op;
+                            alu_exe_time_o <= "100";
                         end if;
                     when v_shrl_funct6 =>
                         immediate_sign_o <= '1';
@@ -137,10 +141,13 @@ begin
                             mem_to_vrf_o <= "10";
                         end if;
                     when v_mulhsu_funct6 =>
+                        alu_exe_time_o <= "100";
                         alu_op_o <= mulhsu_op;
                     when v_mulhs_funct6 =>
-                        alu_op_o <= mulhs_op;
+                        alu_exe_time_o <= "100";
+                        alu_op_o <= mulhs_op;                        
                     when v_mulhu_funct6 =>
+                        alu_exe_time_o <= "100";
                         alu_op_o <= mulhu_op;
                     when others =>                        
                 end case;                        

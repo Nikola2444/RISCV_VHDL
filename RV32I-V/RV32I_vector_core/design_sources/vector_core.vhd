@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.custom_functions_pkg.all;
-
+use work.vector_alu_ops_pkg.all;
 
 entity vector_core is
     generic (DATA_WIDTH    : natural := 32;
@@ -52,7 +52,8 @@ architecture struct of vector_core is
     signal lane_done_s: std_logic_vector(NUM_OF_LANES - 1 downto 0);
 
     
-    signal alu_op_s               : std_logic_vector(4 downto 0);
+    --signal alu_op_s               : std_logic_vector(4 downto 0);
+    signal alu_op_s               : vector_alu_ops_t;
     signal mem_to_vrf_s           : std_logic_vector(1 downto 0);
     signal V_CU_store_fifo_we_s   : std_logic;
     signal V_CU_load_fifo_re_s    : std_logic;
@@ -62,6 +63,7 @@ architecture struct of vector_core is
     signal combined_ld_fifo_empty_s : std_logic_vector(NUM_OF_LANES - 1 downto 0);
     signal alu_src_a_s            : std_logic_vector(1 downto 0);
     signal type_of_masking_s      : std_logic;
+    signal alu_exe_time_s: std_logic_vector(2 downto 0);
     signal vs1_addr_src_s         : std_logic;
 
     signal rs1_data_s : std_logic_vector (31 downto 0);
@@ -174,6 +176,7 @@ begin
             store_fifo_we_o      => V_CU_store_fifo_we_s,
             alu_src_a_o          => alu_src_a_s,
             type_of_masking_o    => type_of_masking_s,
+            alu_exe_time_o => alu_exe_time_s,
             vs1_addr_src_o => vs1_addr_src_s,
             load_fifo_re_o       => V_CU_load_fifo_re_s);
 
@@ -331,6 +334,7 @@ begin
                 vrf_type_of_access_i => lane_type_of_access_s(i),
                 alu_src_a_i          => alu_src_a_s,
                 type_of_masking_i    => type_of_masking_s,
+                alu_exe_time_i => alu_exe_time_s,
                 vs1_addr_src_i       => vs1_addr_src_s,
                 load_fifo_re_i       => V_CU_load_fifo_re_s,
                 -- Output data

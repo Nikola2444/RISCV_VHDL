@@ -17,6 +17,7 @@ entity hazard_unit is
         all_v_stores_executed_i:in std_logic;
         all_v_loads_executed_i:in std_logic;
         vector_stall_i  : in std_logic;
+        vector_instr_i: in std_logic;
         -- control outputs
         pc_en_o          : out std_logic;
         if_id_en_o       : out std_logic;
@@ -32,7 +33,7 @@ begin
     -- stalls pipeline when hazard is detected by setting enable signals to zero
     hazard_det: process (rs1_address_id_i, rs2_address_id_i, rd_address_ex_i, 
                          mem_to_reg_ex_i, rs1_in_use_i, rs2_in_use_i, scalar_load_req_i, scalar_store_req_i,
-                         all_v_loads_executed_i, all_v_stores_executed_i, vector_stall_i) is
+                         all_v_loads_executed_i, all_v_stores_executed_i, vector_stall_i, vector_instr_i) is
     begin
         -- Load in ex.st. 
         -- Its loading the value that is used in the next instruction (id.st.)
@@ -45,7 +46,7 @@ begin
                (scalar_store_req_i = '1' and (not(all_v_stores_executed_i) = '1' or not(all_v_loads_executed_i ) = '1'))) then 
             -- defualt, dont do anything
             en_s <= '0';
-        elsif (vector_stall_i = '1') then
+        elsif (vector_stall_i = '1' and vector_instr_i = '1') then
             en_s <= '0';
         else
             en_s <= '1';
