@@ -1,0 +1,41 @@
+#Vector Core
+#packages
+xvhdl  ../RV32I_vector_core/design_sources/data_path/packages/BRAM_package.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/packages/vector_alu_ops_pkg.vhd
+#HDL files
+xvhdl  ../RV32I_vector_core/design_sources/data_path/custom_multiplier/multiplier32_bit.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/ALU.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/BRAM_18KB.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/VRF_BRAM_addr_generator_v2.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/vector_register_file.vhd
+xvhdl  ../RV32I_vector_core/design_sources/data_path/vector_lane.vhd
+
+#control path
+xvhdl  ../RV32I_vector_core/design_sources/control_path/packages/instr_fields_constants.vhd
+xvhdl  ../RV32I_vector_core/design_sources/control_path/arbiter.vhd
+xvhdl  ../RV32I_vector_core/design_sources/control_path/M_CU_v2.vhd
+xvhdl  ../RV32I_vector_core/design_sources/control_path/vector_control_path.vhd
+xvhdl  ../RV32I_vector_core/design_sources/vector_core.vhd
+
+#Scalar Core
+# data path
+xvhdl  ../RV32I_scalar_core/design_sources/packages/util_pkg.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/data_path/immediate.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/data_path/register_bank.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/data_path/scalar_ALU.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/data_path/data_path.vhd
+# control path
+xvhdl  ../RV32I_scalar_core/design_sources/control_path/alu_decoder.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/control_path/ctrl_decoder.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/control_path/forwarding_unit.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/control_path/hazard_unit.vhd
+xvhdl  ../RV32I_scalar_core/design_sources/control_path/control_path.vhd
+#TOP scalar
+xvhdl  ../RV32I_scalar_core/design_sources/TOP_RISCV.vhd
+
+
+#TOP
+xvhdl ../RV32I_V.vhd
+
+#Verification files
+

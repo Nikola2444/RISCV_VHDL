@@ -1,0 +1,9 @@
+Vivado Simulator 2020.1
+Copyright 1986-1999, 2001-2020 Xilinx, Inc. All Rights Reserved.
+Running: /tools/Xilinx/Vivado/2020.1/bin/unwrapped/lnx64.o/xelab -L uvm -debug typical processor_tb -s top_sim 
+Multi-threading is on. Using 6 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+WARNING: [#UNDEF] Warning: "NUMERIC_STD.TO_UNSIGNED: vector truncated" [/proj/xbuilds/2020.1_INT_0224_1736/installs/all_platforms/Vivado/2020.1/data/vhdl/src/ieee_2008/numeric_std-body.vhdl:3382]
+ERROR: [VRFC 10-8389] size mismatch in mixed language port association, VHDL port 'mem_we_o' [/home/nikola/Documents/Master/RISCV_VHDL/RV32I-V/processor_tb.sv:33]
+ERROR: [XSIM 43-3322] Static elaboration of top level Verilog design unit(s) in library work failed.
