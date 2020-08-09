@@ -9,7 +9,7 @@ module vector_core_verif_top;
    logic reset;
    parameter VECTOR_LENGTH = 32;
    
-   parameter NUM_OF_LANES = 8;
+   parameter NUM_OF_LANES = 1;
    parameter DATA_WIDTH = 32;
 
    // interface

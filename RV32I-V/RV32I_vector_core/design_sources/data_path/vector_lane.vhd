@@ -116,10 +116,10 @@ begin
                    vs2_data_s;
    --mem to vector register file mux
    vd_data_s <=
-      fifo_data_output_s when mem_to_vrf_reg = "01" else
-      merge_data_s when mem_to_vrf_reg = "10" else
-      alu_a_input_s when mem_to_vrf_reg = "11" else
-      alu_result_s;
+       fifo_data_output_s when mem_to_vrf_reg = "01" else
+       merge_data_s when mem_to_vrf_reg = "10" else
+       alu_a_input_s when mem_to_vrf_reg = "11" else
+       alu_result_s;
 
    -- Depending on which instructions is being executed exe time of alu can differ.
    -- For example multiplication takes 4 clk but addition 0 (for now).

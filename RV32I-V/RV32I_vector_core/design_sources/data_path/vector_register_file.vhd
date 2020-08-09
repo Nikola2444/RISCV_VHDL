@@ -92,10 +92,10 @@ architecture structural of vector_register_file is
    
    signal mask_BRAM_write_data_s: std_logic;
    -- Signals coming out of VRF_generator
-   signal BRAM2_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal BRAM2_r_address_s : std_logic_vector(clogb2(BRAM_DEPTH) - 1 downto 0):= (others => '0');
    signal mask_BRAM_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH * 32 /4)  downto 0);
-   signal BRAM1_r_address_s : std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
-   signal BRAM_w_address_s  : std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
+   signal BRAM1_r_address_s : std_logic_vector(clogb2(BRAM_DEPTH) - 1 downto 0):= (others => '0');
+   signal BRAM_w_address_s  : std_logic_vector(clogb2(BRAM_DEPTH) - 1 downto 0):=(others => '0');
    signal VRF_BRAM_we_s      : std_logic;
    signal VRF_BRAM_re_s      : std_logic;
    --*************************************************************************
@@ -149,11 +149,11 @@ begin
          vs2_address_i        => vs2_address_i,
          vd_address_i         => vd_address_i,
          vector_length_i      => vector_length_i,
-         BRAM1_r_address_o    => BRAM1_r_address_s,
-         BRAM2_r_address_o    => BRAM2_r_address_s,
+         BRAM1_r_address_o    => BRAM1_r_address_s(clogb2(VECTOR_LENGTH  * 32) - 1 downto 0),
+         BRAM2_r_address_o    => BRAM2_r_address_s(clogb2(VECTOR_LENGTH  * 32) - 1 downto 0),
          BRAM_re_o            => BRAM_re_s,
 
-         BRAM_w_address_o     => BRAM_w_address_s,
+         BRAM_w_address_o     => BRAM_w_address_s(clogb2(VECTOR_LENGTH  * 32) - 1 downto 0),
          BRAM_we_o            => VRF_BRAM_we_s,
          
          mask_BRAM_r_address_o => mask_BRAM_r_address_s,
@@ -163,7 +163,7 @@ begin
    BRAM_18KB_1 : entity work.BRAM_18KB
       generic map (
          RAM_WIDTH       => DATA_WIDTH,
-         RAM_DEPTH       => VECTOR_LENGTH * 32,
+         RAM_DEPTH       => BRAM_DEPTH,
          RAM_PERFORMANCE => "LOW_LATENCY",
          INIT_FILE       => "")
       port map (
@@ -180,12 +180,12 @@ begin
    BRAM_18KB_2 : entity work.BRAM_18KB
       generic map (
          RAM_WIDTH       => DATA_WIDTH,
-         RAM_DEPTH       => VECTOR_LENGTH * 32,
+         RAM_DEPTH       => BRAM_DEPTH,
          RAM_PERFORMANCE => "LOW_LATENCY",
          INIT_FILE       => "")
       port map (
          clk             => clk,
-         write_addr_i    => BRAM_w_address_s,
+         write_addr_i     => BRAM_w_address_s,
          read_addr_i     => BRAM2_r_address_s,
          write_data_i    => vd_data_i,
          we_i            => BRAM_we_s,

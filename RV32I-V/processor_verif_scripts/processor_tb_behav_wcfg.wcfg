@@ -14,12 +14,12 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="9104000fs"></ZoomStartTime>
-      <ZoomEndTime time="10586001fs"></ZoomEndTime>
-      <Cursor1Time time="9650000fs"></Cursor1Time>
+      <ZoomStartTime time="9336000fs"></ZoomStartTime>
+      <ZoomEndTime time="10858001fs"></ZoomEndTime>
+      <Cursor1Time time="9652000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="162"></NameColumnWidth>
+      <NameColumnWidth column_width="142"></NameColumnWidth>
       <ValueColumnWidth column_width="66"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="14" />
@@ -51,9 +51,9 @@
       <obj_property name="ElementShortName">scalar_store_req_i</obj_property>
       <obj_property name="ObjectShortName">scalar_store_req_i</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/processor_tb/mem_we_s">
-      <obj_property name="ElementShortName">mem_we_s</obj_property>
-      <obj_property name="ObjectShortName">mem_we_s</obj_property>
+   <wvobject type="array" fp_name="/processor_tb/mem_we_s">
+      <obj_property name="ElementShortName">mem_we_s[3:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_we_s[3:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/processor_tb/mem_re_s">
       <obj_property name="ElementShortName">mem_re_s</obj_property>
@@ -62,10 +62,12 @@
    <wvobject type="array" fp_name="/processor_tb/data_mem_addr_s">
       <obj_property name="ElementShortName">data_mem_addr_s[31:0]</obj_property>
       <obj_property name="ObjectShortName">data_mem_addr_s[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/processor_tb/data_to_mem_s">
       <obj_property name="ElementShortName">data_to_mem_s[31:0]</obj_property>
       <obj_property name="ObjectShortName">data_to_mem_s[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/processor_tb/data_from_mem_s">
       <obj_property name="ElementShortName">data_from_mem_s[31:0]</obj_property>
@@ -104,24 +106,58 @@
       <wvobject type="group" fp_name="group28">
          <obj_property name="label">data_path</obj_property>
          <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/data_mem_address_o">
+            <obj_property name="ElementShortName">data_mem_address_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_mem_address_o[31:0]</obj_property>
+            <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+         </wvobject>
          <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/alu_result_mem_s">
             <obj_property name="ElementShortName">alu_result_mem_s[31:0]</obj_property>
             <obj_property name="ObjectShortName">alu_result_mem_s[31:0]</obj_property>
+            <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
          </wvobject>
          <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/alu_result_ex_s">
             <obj_property name="ElementShortName">alu_result_ex_s[31:0]</obj_property>
             <obj_property name="ObjectShortName">alu_result_ex_s[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/rs1_data_id_s">
+            <obj_property name="ElementShortName">rs1_data_id_s[31:0]</obj_property>
+            <obj_property name="ObjectShortName">rs1_data_id_s[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/rs1_data_ex_s">
+            <obj_property name="ElementShortName">rs1_data_ex_s[31:0]</obj_property>
+            <obj_property name="ObjectShortName">rs1_data_ex_s[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/rs1_address_id_s">
+            <obj_property name="ElementShortName">rs1_address_id_s[4:0]</obj_property>
+            <obj_property name="ObjectShortName">rs1_address_id_s[4:0]</obj_property>
          </wvobject>
          <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_path_1/register_bank_1/reg_bank_s">
             <obj_property name="ElementShortName">reg_bank_s[0:31][31:0]</obj_property>
             <obj_property name="ObjectShortName">reg_bank_s[0:31][31:0]</obj_property>
          </wvobject>
       </wvobject>
+      <wvobject type="group" fp_name="group163">
+         <obj_property name="label">forwarding_unit</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="other" fp_name="/processor_tb/DUT/scalar_core_1/control_path_1/forwarding_u/alu_forward_a_o">
+            <obj_property name="ElementShortName">alu_forward_a_o</obj_property>
+            <obj_property name="ObjectShortName">alu_forward_a_o</obj_property>
+         </wvobject>
+         <wvobject type="other" fp_name="/processor_tb/DUT/scalar_core_1/control_path_1/forwarding_u/alu_forward_b_o">
+            <obj_property name="ElementShortName">alu_forward_b_o</obj_property>
+            <obj_property name="ObjectShortName">alu_forward_b_o</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject type="array" fp_name="/processor_tb/DUT/scalar_core_1/data_mem_we_o">
+         <obj_property name="ElementShortName">data_mem_we_o[3:0]</obj_property>
+         <obj_property name="ObjectShortName">data_mem_we_o[3:0]</obj_property>
+      </wvobject>
    </wvobject>
    <wvobject type="group" fp_name="group19">
       <obj_property name="label">vector_core</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject type="array" fp_name="/processor_tb/DUT/vector_core_1/instruction_i">
          <obj_property name="ElementShortName">instruction_i[31:0]</obj_property>
          <obj_property name="ObjectShortName">instruction_i[31:0]</obj_property>
@@ -129,6 +165,10 @@
       <wvobject type="array" fp_name="/processor_tb/DUT/vector_core_1/arbiter_1/vector_instr_to_V_CU_o">
          <obj_property name="ElementShortName">vector_instr_to_V_CU_o[31:0]</obj_property>
          <obj_property name="ObjectShortName">vector_instr_to_V_CU_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/processor_tb/DUT/vector_core_1/arbiter_1/rs1_i">
+         <obj_property name="ElementShortName">rs1_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rs1_i[31:0]</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/processor_tb/DUT/vector_core_1/arbiter_1/rs1_to_V_CU_i">
          <obj_property name="ElementShortName">rs1_to_V_CU_i[31:0]</obj_property>
@@ -138,9 +178,42 @@
          <obj_property name="ElementShortName">all_v_stores_executed_o</obj_property>
          <obj_property name="ObjectShortName">all_v_stores_executed_o</obj_property>
       </wvobject>
+      <wvobject type="logic" fp_name="/processor_tb/DUT/vector_mem_we_s">
+         <obj_property name="ElementShortName">vector_mem_we_s</obj_property>
+         <obj_property name="ObjectShortName">vector_mem_we_s</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/mem_we_o">
+         <obj_property name="ElementShortName">mem_we_o</obj_property>
+         <obj_property name="ObjectShortName">mem_we_o</obj_property>
+      </wvobject>
       <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/vector_stall_o">
          <obj_property name="ElementShortName">vector_stall_o</obj_property>
          <obj_property name="ObjectShortName">vector_stall_o</obj_property>
+      </wvobject>
+      <wvobject type="group" fp_name="group71">
+         <obj_property name="label">M_CU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="other" fp_name="/processor_tb/DUT/vector_core_1/M_CU_1/ld_st_fsm_states_next">
+            <obj_property name="ElementShortName">ld_st_fsm_states_next</obj_property>
+            <obj_property name="ObjectShortName">ld_st_fsm_states_next</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/M_CU_1/scalar_store_req_i">
+            <obj_property name="ElementShortName">scalar_store_req_i</obj_property>
+            <obj_property name="ObjectShortName">scalar_store_req_i</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/M_CU_1/mem_we_reg">
+            <obj_property name="ElementShortName">mem_we_reg</obj_property>
+            <obj_property name="ObjectShortName">mem_we_reg</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/M_CU_1/mem_we_o">
+            <obj_property name="ElementShortName">mem_we_o</obj_property>
+            <obj_property name="ObjectShortName">mem_we_o</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/processor_tb/DUT/vector_core_1/M_CU_1/mem_we_next">
+            <obj_property name="ElementShortName">mem_we_next</obj_property>
+            <obj_property name="ObjectShortName">mem_we_next</obj_property>
+         </wvobject>
       </wvobject>
    </wvobject>
 </wave_config>

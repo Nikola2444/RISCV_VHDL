@@ -62,7 +62,7 @@ architecture behavioral of M_CU is
     signal mem_we_next, mem_we_reg: std_logic;
 
 begin
-
+    
     process (clk)is
     begin
         if (rising_edge(clk))then
@@ -134,8 +134,7 @@ begin
                     data_mem_addr_next <= scalar_address_i;
                     mem_re_o          <= '1';
                 elsif (scalar_store_req_i = '1') then
-                        data_mem_addr_next <= scalar_address_i;
-                        mem_we_next        <= '1';
+                        data_mem_addr_next <= scalar_address_i;                        
                 elsif (M_CU_store_valid_i = '1' and
                        M_CU_st_vl_i /= std_logic_vector(to_unsigned(0, clogb2(VECTOR_LENGTH * 8) + 1)) and
                        store_fifos_empty_i = '0') then
@@ -202,7 +201,7 @@ begin
 
 
         -- Logic that generates enables for load fifos
-    process (ld_st_fsm_states_reg, load_fifos_en_next, load_fifos_en_reg, load_start_s)is
+    process (ld_st_fsm_states_reg, load_fifos_en_next, load_fifos_en_reg, load_start_s, ld_st_counter_reg, ld_st_counter_reg)is
     begin
         load_fifos_en_next <= load_fifos_en_reg;
         case ld_st_fsm_states_reg is
@@ -250,7 +249,8 @@ begin
     -----------------------------------------------------------------------------
     -- OUTPUTS
     -----------------------------------------------------------------------------
-    mem_we_o <= mem_we_reg;
+    mem_we_o <= '1' when scalar_store_req_i = '1' else
+                mem_we_reg;
     data_mem_addr_o <= data_mem_addr_reg when store_start_s = '1' else
                        data_mem_addr_next;
     -- Enable signal for store fifos inside vector lanes. If there are multiple
@@ -266,3 +266,6 @@ begin
     
 
 end behavioral;
+
+
+
