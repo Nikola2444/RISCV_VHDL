@@ -1,0 +1,11 @@
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/instruction_constants_pkg.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/Configurations/configurations_pkg.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/Agent/v_alu_ops_pkg.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/module_if.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/Agent/agent_pkg.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/Sequences/seq_pkg.sv -L uvm
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/test_pkg.sv -L uvm
+
+xvlog -sv  ../RV32I_vector_core/simulation_sources/RISCV_verif_env/vector_core_verif/top.sv -L uvm
+
+xelab -L uvm -debug typical vector_core_verif_top -s top_sim
