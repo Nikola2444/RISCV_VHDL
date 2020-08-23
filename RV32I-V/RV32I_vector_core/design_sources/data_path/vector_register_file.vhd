@@ -17,6 +17,7 @@ entity vector_register_file is
          alu_exe_time_i  : in std_logic_vector (2 downto 0);
          vmul_i          : in std_logic_vector(1 downto 0);         
          masked_we_i: in std_logic;
+         vd_el0_we: in std_logic;
          -- input data
          vs1_address_i   : in std_logic_vector(4 downto 0);  --number of vector registers is 32
          vs2_address_i   : in std_logic_vector(4 downto 0);
@@ -71,10 +72,7 @@ architecture structural of vector_register_file is
 
          
          ready_o : out std_logic
-
-         
-         
-         );
+);
 
 
    end component;
@@ -110,7 +108,8 @@ begin
                    '0';
    mask_BRAM_re_s <= VRF_mask_BRAM_re_s;
    -- Generating control signals for vector BRAM's
-   BRAM_we_s <= VRF_BRAM_we_s  and masked_we_i;
+   BRAM_we_s <= VRF_BRAM_we_s  and masked_we_i when vd_el0_we = '0' else
+                '1';
 
 
    --This BRAM contains mask bits that are used to determine which
@@ -137,9 +136,9 @@ begin
 
 
    VRF_BRAM_addr_generator_1 : VRF_BRAM_addr_generator
-      generic map (VECTOR_LENGTH => VECTOR_LENGTH,
+       generic map (VECTOR_LENGTH => VECTOR_LENGTH,
                    DATA_WIDTH    => DATA_WIDTH)
-      port map (
+       port map (
          clk                  => clk,
          reset                => reset,
          vrf_type_of_access_i => vrf_type_of_access_i,

@@ -10,7 +10,7 @@ entity vector_control_path is
           reset                : in std_logic;
           --Input data
           vector_instruction_i : in std_logic_vector(31 downto 0);
-
+          
           --output control signals 0
           vrf_type_of_access_o : out std_logic_vector(1 downto 0);  --there are r/w, r, w, no_access
           immediate_sign_o : out std_logic;
@@ -22,8 +22,13 @@ entity vector_control_path is
           type_of_masking_o   :out std_logic;
           alu_exe_time_o: out std_logic_vector(2 downto 0);
           vs1_addr_src_o       : out std_logic;
-          load_fifo_re_o       : out std_logic
-
+          load_fifo_re_o       : out std_logic;
+          V_CU_not_rdy_o: out std_logic;
+          start_reduction_cnt_o: std_logic;
+          en_reduction_o          : out  std_logic;
+          -- Vector lane status signals
+          lanes_ready_i: std_logic;
+          reduction_complete_i: in std_logic
      --input status signals from VRF         
      --Input status signals from memory control unit                  
      -- Output status signals         
@@ -39,12 +44,14 @@ architecture behavioral of vector_control_path is
     alias funct6_i: std_logic_vector(5 downto 0) is vector_instruction_i(31 downto 26);
     alias funct3_i: std_logic_vector(2 downto 0) is vector_instruction_i(14 downto 12);
     alias vm_i: std_logic is vector_instruction_i(25);
-    --signals between alu_decoder and ctrl_decoder    
-
-    
+    --signals between alu_decoder and ctrl_decoder
     constant vector_store_c : std_logic_vector(6 downto 0) := "0100111";
     constant vector_load_c  : std_logic_vector(6 downto 0) := "0000111";
     constant vector_arith_c : std_logic_vector(6 downto 0) := "1010111";
+
+    type V_CU_FSM_t is (idle, recv_reduction_instr);
+    signal V_CU_FSM_reg, V_CU_FSM_next:V_CU_FSM_t;
+    signal possible_reduction_s: std_logic;     
 begin
 
     --DEBUG logic
@@ -61,8 +68,8 @@ begin
     -- end process;
     store_fifo_we_o <= store_fifo_we_s;
     -- Combinational logic
-    control_dec : process (opcode_i, funct6_i, OPMVV_instr_check_s, vm_i, funct3_i) is
-    begin        
+    control_dec : process (opcode_i, funct6_i, OPMVV_instr_check_s, vm_i, funct3_i, V_CU_FSM_reg) is
+    begin
         mem_to_vrf_o         <= "00";        
         load_fifo_re_o       <= '0';
         vrf_type_of_access_o <= "11"; -- no access
@@ -72,89 +79,93 @@ begin
         type_of_masking_o <= '0';
         alu_op_o <= add_op;
         alu_exe_time_o <= (others =>'0');
-        case opcode_i is
-            when vector_store_c =>
-                vrf_type_of_access_o <= "10";
-                vs1_addr_src_o <= '1';
-                store_fifo_we_s      <= '1';
-            when vector_load_c =>
-                vrf_type_of_access_o <= "01";
-                mem_to_vrf_o         <= "01";
-                load_fifo_re_o       <= '1';
-            when vector_arith_c =>
-                if (funct3_i = "111") then
-                    vrf_type_of_access_o <= "11";
-                else
-                    vrf_type_of_access_o <= "00";
-                end if;
-                case funct6_i is
-                    when v_add_funct6 =>
-                        alu_op_o <= add_op;
-                    when v_sub_funct6 =>
-                        alu_op_o <= sub_op;
-                    when v_and_funct6 =>
-                        alu_op_o <= and_op;
-                    when v_or_funct6 =>
-                        alu_op_o <= or_op;
-                    when v_xor_funct6 =>
-                        alu_op_o <= xor_op;
-                    when v_shll_vmul_funct6 =>
-                        if (OPMVV_instr_check_s = '0') then
+        possible_reduction_s <= '0';
+            case opcode_i is
+                when vector_store_c =>
+                    vrf_type_of_access_o <= "10";
+                    vs1_addr_src_o <= '1';
+                    store_fifo_we_s      <= '1';
+                when vector_load_c =>
+                    vrf_type_of_access_o <= "01";
+                    mem_to_vrf_o         <= "01";
+                    load_fifo_re_o       <= '1';
+                when vector_arith_c =>
+                    if (funct3_i = "111" or V_CU_FSM_reg /=idle) then
+                        vrf_type_of_access_o <= "11";
+                    else
+                        vrf_type_of_access_o <= "00";
+                    end if;
+                    case funct6_i is
+                        when v_add_funct6 =>
+                            alu_op_o <= add_op;
+                            possible_reduction_s <= '1';
+                        when v_sub_funct6 =>
+                            alu_op_o <= sub_op;
+                        when v_and_funct6 =>
+                            alu_op_o <= and_op;
+                        when v_or_funct6 =>
+                            alu_op_o <= or_op;
+                        when v_xor_funct6 =>
+                            alu_op_o <= xor_op;
+                        when v_shll_vmul_funct6 =>
+                            if (OPMVV_instr_check_s = '0') then
+                                immediate_sign_o <= '1';
+                                alu_op_o <= sll_op;
+                            else
+                                alu_op_o <= muls_op;
+                                alu_exe_time_o <= "100";
+                            end if;
+                        when v_shrl_funct6 =>
                             immediate_sign_o <= '1';
-                            alu_op_o <= sll_op;
-                        else
-                            alu_op_o <= muls_op;
+                            alu_op_o <= srl_op;
+                        when v_shra_funct6 =>
+                            immediate_sign_o <= '1';
+                            alu_op_o <= sra_op;
+                        when v_vmseq_funct6 =>
+                            alu_op_o <= eq_op;
+                        when v_vmsne_funct6 =>
+                            alu_op_o <= neq_op;
+                        when v_vmslt_funct6 =>
+                            alu_op_o <= slt_op;
+                        when v_vmsltu_funct6 =>
+                            alu_op_o <= sltu_op;
+                        when v_vmsleu_funct6 =>
+                            alu_op_o <= sleu_op;
+                        when v_vmsle_funct6 =>
+                            alu_op_o <= sle_op;
+                        when v_vmsgtu_funct6 =>
+                            alu_op_o <= sgtu_op;
+                        when v_vmsgt_funct6 =>
+                            alu_op_o <= sgt_op;
+                        when v_vminu_funct6 =>
+                            possible_reduction_s <= '1';
+                            alu_op_o <= minu_op;                        
+                        when v_vmin_funct6 =>
+                            possible_reduction_s <= '1';
+                            alu_op_o <= min_op;
+                        when v_merge_funct6 =>
+                            alu_op_o <= add_op;
+                            type_of_masking_o <= '1';
+                            if (vm_i = '1') then
+                                mem_to_vrf_o <= "11";
+                            else
+                                mem_to_vrf_o <= "10";
+                            end if;
+                        when v_mulhsu_funct6 =>
                             alu_exe_time_o <= "100";
-                        end if;
-                    when v_shrl_funct6 =>
-                        immediate_sign_o <= '1';
-                        alu_op_o <= srl_op;
-                    when v_shra_funct6 =>
-                        immediate_sign_o <= '1';
-                        alu_op_o <= sra_op;
-                    when v_vmseq_funct6 =>
-                        alu_op_o <= eq_op;
-                    when v_vmsne_funct6 =>
-                        alu_op_o <= neq_op;
-                    when v_vmslt_funct6 =>
-                        alu_op_o <= slt_op;
-                    when v_vmsltu_funct6 =>
-                        alu_op_o <= sltu_op;
-                    when v_vmsleu_funct6 =>
-                        alu_op_o <= sleu_op;
-                    when v_vmsle_funct6 =>
-                        alu_op_o <= sle_op;
-                    when v_vmsgtu_funct6 =>
-                        alu_op_o <= sgtu_op;
-                    when v_vmsgt_funct6 =>
-                        alu_op_o <= sgt_op;
-                    when v_vminu_funct6 =>
-                        alu_op_o <= minu_op;
-                    when v_vmin_funct6 =>
-                        alu_op_o <= min_op;
-                    when v_merge_funct6 =>
-                        alu_op_o <= add_op;
-                        type_of_masking_o <= '1';
-                        if (vm_i = '1') then
-                            mem_to_vrf_o <= "11";
-                        else
-                            mem_to_vrf_o <= "10";
-                        end if;
-                    when v_mulhsu_funct6 =>
-                        alu_exe_time_o <= "100";
-                        alu_op_o <= mulhsu_op;
-                    when v_mulhs_funct6 =>
-                        alu_exe_time_o <= "100";
-                        alu_op_o <= mulhs_op;                        
-                    when v_mulhu_funct6 =>
-                        alu_exe_time_o <= "100";
-                        alu_op_o <= mulhu_op;
-                    when others =>                        
-                end case;                        
-            when others =>                
-        end case;
+                            alu_op_o <= mulhsu_op;
+                        when v_mulhs_funct6 =>
+                            alu_exe_time_o <= "100";
+                            alu_op_o <= mulhs_op;                        
+                        when v_mulhu_funct6 =>
+                            alu_exe_time_o <= "100";
+                            alu_op_o <= mulhu_op;
+                        when others =>                        
+                    end case;                        
+                when others =>                
+            end case;
     end process;
-
+    
     process (funct3_i)is
     begin
         OPMVV_instr_check_s <= '0';
@@ -176,4 +187,44 @@ begin
         end case;
     end process;
 
+    --reduction fsm
+
+    process (clk)is
+    begin
+        if (rising_edge(clk)) then
+            if (reset = '0') then
+                V_CU_FSM_reg <= idle;
+            else
+                V_CU_FSM_reg <= V_CU_FSM_next;
+            end if;
+        end if;
+    end process;
+
+
+    process (V_CU_FSM_reg, V_CU_FSM_next, possible_reduction_s, OPMVV_instr_check_s, lanes_ready_i, reduction_complete_i)is
+    begin
+        V_CU_FSM_next <= V_CU_FSM_reg;
+        V_CU_not_rdy_o <= '0';
+        en_reduction_o <= '0';
+        start_reduction_cnt_o <= '0';
+        case V_CU_FSM_reg is
+            when idle=>
+                -- check if reduction instruction appeared
+                if (possible_reduction_s <= '1' and OPMVV_instr_check_s = '1' ) then
+                    V_CU_not_rdy_o <= '1';
+                    en_reduction_o <= '1';
+                    if (lanes_ready_i = '1') then
+                        V_CU_FSM_reg <= recv_reduction_instr;
+                    end if;
+                end if;
+            when recv_reduction_instr =>
+                start_reduction_cnt_o <= '1';
+                V_CU_not_rdy_o <= '1';
+                if (reduction_complete_i = '1') then
+                    V_CU_not_rdy_o <= '0';
+                    V_CU_FSM_reg <= idle;
+                end if;
+            when others =>
+        end case;
+    end process;
 end behavioral;

@@ -90,8 +90,22 @@ architecture struct of vector_core is
     -- Interconnections for arbiter, M_CU, vector lanes and V_CU
     signal ready_s               : std_logic;
 
+    ----------------------------------------------------------------------------------------------------------------
+    --Signals neccessary for reduction instructions to execute
+    ----------------------------------------------------------------------------------------------------------------
+    constant reduction_counter_bit_num: integer:=clogb2(NUM_OF_LANES);
+    type lanes_redu_values_t is array (0 to NUM_OF_LANES - 1) of std_logic_vector (DATA_WIDTH - 1 downto 0);
+    signal lanes_redu_values_s: lanes_redu_values_t;
+    signal reduction_counter_reg, reduction_counter_next: std_logic_vector(reduction_counter_bit_num - 1 downto 0);
 
-    --maximum amount od pending loads is 18, so because of that
+    signal V_CU_not_rdy_s: std_logic;
+    type lanes_start_redu_t is array (0 to NUM_OF_LANES - 1) of std_logic;
+    signal lanes_start_redu_s: lanes_start_redu_t := (others =>'0');
+    signal start_reduction_cnt_s: std_logic;
+    signal en_reduction_s: std_logic;
+    signal reduction_complete_s: std_logic;
+    -------------------------------------------------------------------------------------------------------------------
+    
     -- there are 5 bits neeeded to represent loads_written_cnt signal
     signal loads_written_cnt: std_logic_vector(4 downto 0);
     signal loads_read_cnt: std_logic_vector(4 downto 0);
@@ -145,10 +159,8 @@ begin
         end if;
     end process;
 
-    -- All vector lanes must set ready to one, because that indicates
-    -- that all vector lanes finished with execution of received instruction
-    --ready_s <= '1' when combined_lanes_ready_s = std_logic_vector(to_unsigned(2**(NUM_OF_LANES) - 1, NUM_OF_LANES)) else '0';
-    ready_s <= '1' when combined_lanes_ready_s(0) = '1' else '0';
+    -- If vector lane (0) is ready that means all the other lanes are ready
+    ready_s <= '1' when combined_lanes_ready_s(0) = '1' and V_CU_not_rdy_s = '0' else '0';
 
     -- This status signal reports to M_CU when vector store instruction has written
     -- elements from VRF into store fifo buffers inside vector lanes
@@ -178,7 +190,13 @@ begin
             type_of_masking_o    => type_of_masking_s,
             alu_exe_time_o => alu_exe_time_s,
             vs1_addr_src_o => vs1_addr_src_s,
-            load_fifo_re_o       => V_CU_load_fifo_re_s);
+            load_fifo_re_o       => V_CU_load_fifo_re_s,
+            V_CU_not_rdy_o => V_CU_not_rdy_s,
+            start_reduction_cnt_o => start_reduction_cnt_s,
+            en_reduction_o => en_reduction_s,
+            
+            lanes_ready_i => combined_lanes_ready_s(0),
+            reduction_complete_i => reduction_complete_s);
 
 
     M_CU_1 : entity work.M_CU
@@ -309,12 +327,50 @@ begin
         end loop;
     end process;
     
+
+    --------------------------------------------------------------------------------------------------
+    --Logic necessary for reduction instructions to execute
+    --------------------------------------------------------------------------------------------------     
+    no_reduction_counter : if NUM_OF_LANES > 1 generate
+        lanes_start_redu_s(0) <= start_reduction_cnt_s;
+        process (clk)is
+        begin
+            if (rising_edge(clk))then
+                if (reset = '0')then
+                    reduction_counter_reg <= (others => '1');
+                else
+                    if (start_reduction_cnt_s = '1') then
+                        if (reduction_counter_reg = std_logic_vector(to_unsigned(0, reduction_counter_bit_num))) then
+                            reduction_counter_reg <= (others => '1');
+
+                        else
+                            reduction_counter_reg <= std_logic_vector(unsigned(reduction_counter_reg) - to_unsigned(1, reduction_counter_bit_num));
+                        end if;
+                    end if;
+                end if;
+            end if;
+        end process;
+        reduction_complete_s <= '1' when reduction_counter_reg = std_logic_vector(to_unsigned(0, reduction_counter_bit_num)) else '0';
+        lanes_redu_values_s(0) <= lanes_redu_values_s(integer(to_unsigned(reduction_counter_reg)));
+    end generate;
+
+    no_output_register : if NUM_OF_LANES = 1 generate
+        reduction_complete_s <= '1';
+        lanes_start_redu_s(0) <= '0';
+        lanes_redu_values_s(0) <= (others => '0');
+    end generate;
+    --------------------------------------------------------------------------------------------------
+    --Vector lane instantiation
+    --------------------------------------------------------------------------------------------------
+    
+   
     
     gen_vector_lanes : for i in 0 to NUM_OF_LANES - 1 generate
         vector_lane_1 : entity work.vector_lane
             generic map (
                 DATA_WIDTH    => DATA_WIDTH,
-                VECTOR_LENGTH => VECTOR_LENGTH/NUM_OF_LANES)
+                VECTOR_LENGTH => VECTOR_LENGTH/NUM_OF_LANES,
+                NUM_OF_LANES => NUM_OF_LANES)
             port map (
                 clk                  => clk,
                 reset                => reset,
@@ -337,6 +393,11 @@ begin
                 alu_exe_time_i => alu_exe_time_s,
                 vs1_addr_src_i       => vs1_addr_src_s,
                 load_fifo_re_i       => V_CU_load_fifo_re_s,
+
+                --inputs necessary for reduction instructions
+                reduction_value_i => lanes_redu_values_t(i),
+                en_reduction_i  => en_reduction_s,
+                combine_lane_redu_values_i => lanes_start_redu_s(i),
                 -- Output data
                 data_to_mem_o        => data_to_mem_s(i),
                 -- Status signals

@@ -23,7 +23,7 @@
 -- In clock 1:
           -- DSP5 is calculating: X1*Y0 + X0*Y1
           -- DSP1(31:0) was concataneted with result of DSP2(31:16) and put
-          -- into C register of DSP7. This concatanation is equivalent to 2^16
+          -- into C register of DSP6. This concatanation is equivalent to 2^16
           -- left shift of DSP1 result.
           -- DSP2(15:0) was put into dsp2_p_clk1_reg_s so it can be used for
           -- concatanation in clock 3.

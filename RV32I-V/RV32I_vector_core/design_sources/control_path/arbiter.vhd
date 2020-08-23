@@ -25,14 +25,16 @@ entity arbiter is
         store_fifo_empty_i      : in    std_logic;
 
         --M_CU interface
-        rdy_for_load_i : in std_logic;
-        rdy_for_store_i  : in std_logic;
+        
+
         -- M_CU data necessary for load exe
+        rdy_for_load_i : in std_logic;
         M_CU_ld_rs1_o             : out std_logic_vector(31 downto 0);
         M_CU_ld_rs2_o             : out std_logic_vector(31 downto 0);
         M_CU_ld_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length
         M_CU_load_valid_o      : out std_logic;
         -- M_CU data necessary for store exe
+        rdy_for_store_i  : in std_logic;
         M_CU_st_rs1_o             : out std_logic_vector(31 downto 0);
         M_CU_st_rs2_o             : out std_logic_vector(31 downto 0);
         M_CU_st_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector       
@@ -156,6 +158,7 @@ begin
         "11" when vector_load_c,
         "00" when others;
 
+    -- Vector reduction instruction check
     -- Seting vl and vmul logic
     process (clk)is
     begin

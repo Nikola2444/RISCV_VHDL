@@ -21,7 +21,6 @@ entity VRF_BRAM_addr_generator is
         vs1_address_i        : in std_logic_vector(4 downto 0);
         vs2_address_i        : in std_logic_vector(4 downto 0);
         vd_address_i         : in std_logic_vector(4 downto 0);
-        
         -- output signals
         BRAM1_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
         BRAM2_r_address_o : out std_logic_vector(clogb2(VECTOR_LENGTH * 32) - 1 downto 0);
