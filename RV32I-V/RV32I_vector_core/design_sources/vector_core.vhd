@@ -138,7 +138,7 @@ begin
                 if (M_CU_load_done_s = '1') then
                     loads_written_cnt <= std_logic_vector( unsigned(loads_written_cnt) + to_unsigned(1, 5));
                 end if;
-                if (ready_reg = '1' and vector_instr_to_V_CU_s(6 downto 0) = "0000111") then
+                if (ready_reg = '1' and V_CU_load_fifo_re_s = '1') then
                     loads_read_cnt <= std_logic_vector( unsigned(loads_read_cnt) + to_unsigned(1, 5));
                 end if;                
             end if;
@@ -379,7 +379,7 @@ begin
 
     -- One clock cycle is necessary for one element to be extracted from store
     -- fifo and because of that one clock cycle delay is necessary
-    process (store_fifos_en_s, data_to_mem_s)is
+    process (store_fifos_en_reg, data_to_mem_s)is
     begin
         data_to_mem_o <= data_to_mem_s(0);
         for i in 0 to NUM_OF_LANES - 1 loop

@@ -14,6 +14,7 @@ entity arbiter is
     port (
         clk                     : in std_logic;
         reset                   : in std_logic;
+
         ready_i                 : in std_logic;
         --input data
         vector_instruction_i    : in std_logic_vector(31 downto 0);
@@ -23,16 +24,14 @@ entity arbiter is
         --scalar_core_stall_i     : in std_logic;
         load_fifo_empty_i : in    std_logic;
         store_fifo_empty_i      : in    std_logic;
-
-        --M_CU interface
-        rdy_for_load_i : in std_logic;
-        rdy_for_store_i  : in std_logic;
         -- M_CU data necessary for load exe
+        rdy_for_load_i : in std_logic;
         M_CU_ld_rs1_o             : out std_logic_vector(31 downto 0);
         M_CU_ld_rs2_o             : out std_logic_vector(31 downto 0);
         M_CU_ld_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector length
         M_CU_load_valid_o      : out std_logic;
         -- M_CU data necessary for store exe
+        rdy_for_store_i  : in std_logic;
         M_CU_st_rs1_o             : out std_logic_vector(31 downto 0);
         M_CU_st_rs2_o             : out std_logic_vector(31 downto 0);
         M_CU_st_vl_o              : out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);  -- vector       
@@ -42,7 +41,7 @@ entity arbiter is
         all_v_stores_executed_o:out std_logic;
         all_v_loads_executed_o:out std_logic;
         -- V_CU interface
-        rs1_to_V_CU_i                   : out std_logic_vector(31 downto 0);
+        rs1_to_V_CU_i                   : out std_logic_vector(31 downto 0); --
         vmul_to_V_CU_o: out std_logic_vector(1 downto 0);
         vl_to_V_CU_o: out std_logic_vector(clogb2(VECTOR_LENGTH * 8) downto 0);
         vector_instr_to_V_CU_o : out std_logic_vector(31 downto 0));
@@ -203,7 +202,7 @@ begin
                     vl_to_V_CU_o <= vl_reg_s;
                     vmul_to_V_CU_o <= vmul_reg_s;
                     vector_instr_to_V_CU_s <= vector_instruction_i;
-                elsif (ready_i = '1' and not(V_CU_rdy_for_load_s) = '1') then
+                elsif (ready_i = '1') then
                     vector_instr_to_V_CU_s <= (others => '0');
                     rs1_to_V_CU_i <= (others => '0');
                     vl_to_V_CU_o <= (others => '0');
@@ -373,7 +372,7 @@ begin
     --st_instr_fifo_re_s <= not(store_fifo_empty_i) and not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
 
     
-    st_instr_fifo_re_s <= not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s);
+    st_instr_fifo_re_s <= not(rs1_rs2_st_fifo_empty_s) and not(M_CU_store_valid_s) ;
 
     --logic for generating valid signal to signalaze that valid data has been
     --read from fifo.
