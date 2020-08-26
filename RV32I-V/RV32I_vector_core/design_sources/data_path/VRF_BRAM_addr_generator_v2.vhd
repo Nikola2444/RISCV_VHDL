@@ -242,7 +242,7 @@ begin
     -- zero is neccesary because mask_bram_r_address_o is 10 bits wide, and synth
     -- wont pass unless one of the operand is 10 bits wide.
     
-    vd_address_extended_s <= '0'&mask_we_zero&vd_address_i;
+    --vd_address_extended_s <= '0'&mask_we_zero&vd_address_i;
     -- Generates addresses for mask bram which containt mask bits. Genereting mask
     -- register addresses and mask register write enable starts one clock cycle
     -- before BRAM write enable.

@@ -32,7 +32,7 @@ class vector_core_driver extends uvm_driver#(vector_core_seq_item);
    task main_phase(uvm_phase phase);       
        forever begin
 	   if (vif.reset) begin	       	       
-	       /*State machine that send instructions to vector core if there is no get_instruction*/
+
 	       #1;	       
 	       while(vif.vector_stall_s)begin		 
 		 @(posedge(vif.clk));	    
